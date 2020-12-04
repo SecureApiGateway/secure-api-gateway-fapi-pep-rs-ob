@@ -2,7 +2,7 @@
 
 This repository contains a demonstration deployment of the ForgeRock platform along with the ForgeRock Open Banking Accelerators. These accelerators are a set of plugins and configuration for meeting the UK Open Banking requirements, based on the [PSD2 Accelerator assets](https://github.com/ForgeRock/PSD2-Accelerators/tree/OpenBankingAccelerators).
 
-The deployment is based on the [ForgeRock Cloud Developer Kit (CDK)](https://backstage.forgerock.com/docs/forgeops/7/index-forgeops.html) kubernetes deployment model.
+The deployment is based on the [ForgeRock Cloud Developer Kit (CDK)](https://backstage.forgerock.com/docs/forgeops/7/index-forgeops.html) kubernetes deployment model
 
 ## Quick Start
 

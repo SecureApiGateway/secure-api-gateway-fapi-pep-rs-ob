@@ -1,7 +1,7 @@
 {
   "name" : "OB AS token endpoint",
-  "baseURI" : "https://&{am.server.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/openbanking/access_token')}",
+  "baseURI" : "https://&{iam.fqdn}",
+  "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",
 "heap" : [ {
     "name" : "ReverseProxyHandler",
     "type" : "ReverseProxyHandler",

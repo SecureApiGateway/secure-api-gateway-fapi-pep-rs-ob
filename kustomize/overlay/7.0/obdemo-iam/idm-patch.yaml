@@ -1,9 +1,0 @@
-- op: add
-  path: /spec/template/spec/containers/0/envFrom
-  value:
-    - configMapRef:
-        name: idm
-    - secretRef:
-        name: idm-env-secrets
-    - secretRef:
-        name: am-env-secrets

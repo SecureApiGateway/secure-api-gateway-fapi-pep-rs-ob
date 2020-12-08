@@ -1,7 +1,7 @@
 {
   "name": "OB Register TPP",
-  "baseURI": "https://&{am.server.fqdn}",
-  "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/openbanking/register')}",
+  "baseURI": "https://&{iam.fqdn}",
+  "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
   "heap": [
     {
       "name": "capture",
@@ -57,7 +57,7 @@
             "type": "application/x-groovy",
             "file": "CreateTPP.groovy",
             "args": {
-              "idmBaseUri": "https://&{am.server.fqdn}",
+              "idmBaseUri": "https://&{iam.fqdn}",
               "objTpp": "obTpp",
               "objSsa": "obTppSsa"
             },
@@ -69,20 +69,14 @@
                   {
                     "type": "ClientCredentialsOAuth2ClientFilter",
                     "config": {
-                      "clientId": "ig-client",
-                      "clientSecretId": "client.secret.id",
-                      "secretsProvider": {
-                        "type": "Base64EncodedSecretStore",
-                        "config": {
-                          "secrets": {
-                            "client.secret.id": "cGFzc3dvcmQ="
-                          }
-                        }
-                      },
-                      "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
+                      "clientId": "&{ig.client.id}",
+                      "clientSecretId": "ig.client.secret",
+                      "secretsProvider": "SystemAndEnvSecretStore-IAM",
+                      "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
                       "scopes": [
                         "fr:idm:*"
-                      ]
+                      ],
+                      "handler": "TokenRequestHandler"
                     }
                   }
                 ],
@@ -98,48 +92,26 @@
             "messageType" : "REQUEST",
             "remove" : [ "host", "X-Forwarded-Host" ],
             "add" : {
-              "X-Forwarded-Host" : [ "&{am.server.fqdn}" ]
+              "X-Forwarded-Host" : [ "&{iam.fqdn}" ]
             }
+          }
+        },
+        {
+          "type": "ClientCredentialsOAuth2ClientFilter",
+          "config": {
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "dynamic_client_registration"
+            ],
+            "handler": "TokenRequestHandler"
           }
         }
       ],
-      "handler": {
-        "type": "ScriptableHandler",
-        "config": {
-          "type": "application/x-groovy",
-          "clientHandler": {
-            "type": "Chain",
-            "capture": "all",
-            "config": {
-              "filters": [
-                {
-                  "type": "ClientCredentialsOAuth2ClientFilter",
-                  "config": {
-                    "clientId": "ig-client",
-                    "clientSecretId": "client.secret.id",
-                    "secretsProvider": {
-                      "type": "Base64EncodedSecretStore",
-                      "config": {
-                        "secrets": {
-                          "client.secret.id": "cGFzc3dvcmQ="
-                        }
-                      }
-                    },
-                    "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-                    "scopes": [
-                      "dynamic_client_registration"
-                    ]
-                  }
-                }
-              ],
-              "handler": "ForgeRockClientHandler"
-            }
-          },
-          "source": [
-            "return http.send(context, request);"
-          ]
-        }
+      "handler": "ReverseProxyHandler"
       }
-    }
+
   }
 }

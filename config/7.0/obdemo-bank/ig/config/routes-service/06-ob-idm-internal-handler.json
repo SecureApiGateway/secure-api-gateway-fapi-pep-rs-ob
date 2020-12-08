@@ -1,37 +1,27 @@
 {
-  "name" : "OB IDM Internal Requests",
-  "baseURI" : "https://&{am.server.fqdn}",
+  "name" : "OB IDM Authorized Requests",
+  "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/openidm-internal')}",
   "heap": [
-    {
-      "name": "capture",
-      "type": "CaptureDecorator",
-      "config": {
-        "captureEntity": true
-      }
-    },
-    {
-      "name": "ReverseProxyHandler",
-      "type": "ReverseProxyHandler",
-      "capture": [
-        "request",
-        "response"
-      ]
-    },
-    {
-      "name" : "ForgeRockClientHandler",
-      "type" : "Chain",
-      "config" : {
-        "filters" : [ "TransactionIdOutboundFilter" ],
-        "handler" : "ClientHandler"
-      },
-      "capture" : [ "response", "request" ]
-    }
+
   ],
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "type": "ClientCredentialsOAuth2ClientFilter",
+          "config": {
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "fr:idm:*"
+            ],
+            "handler": "TokenRequestHandler"
+          }
+        },
         {
           "type": "UriPathRewriteFilter",
           "config": {
@@ -53,24 +43,7 @@
           }
         },
         {
-          "type": "ClientCredentialsOAuth2ClientFilter",
-          "config": {
-            "clientId": "ig-client",
-            "clientSecretId": "client.secret.id",
-            "secretsProvider": {
-              "type": "Base64EncodedSecretStore",
-              "config": {
-                "secrets": {
-                  "client.secret.id": "cGFzc3dvcmQ="
-                }
-              }
-            },
-            "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-            "scopes" : ["fr:idm:*"]
-          }
-        },
-        {
-          "name": "HeaderFilter-ChangeHostToIAM",
+          "name": "HeaderFilter-IAM",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
@@ -80,7 +53,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "obdemo-iam.idhub.cc"
+                "&{iam.fqdn}"
               ]
             }
           }

@@ -1,9 +1,8 @@
-namespace: obdemo-bank
+namespace: default
 commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
 - ../../../base/kustomizeConfig
-- ../../../base/forgeops-secrets
 - ../../../base/7.0/ingress
 - ../../../base/ig
 - ../../../base/obdemo-rcs-ui
@@ -24,15 +23,41 @@ patchesJson6902:
       kind: Ingress
       name: forgerock
       version: v1beta1
+#  - path: config-patch.yaml
+#    target:
+#      kind: ConfigMap
+#      name: platform-config
+#      version: v1
 
 patchesStrategicMerge:
+
 - |-
   apiVersion: v1
   kind: ConfigMap
   metadata:
     name: platform-config
   data:
-    FQDN: default.bank.example.com
-    AM_SERVER_FQDN: default.iam.example.com
+    FQDN: obdemo-bank.idhub.cc
+    AM_SERVER_FQDN: openam-solutionarchitecture-hlobpoc.forgeblocks.com
+    IAM_FQDN: openam-solutionarchitecture-hlobpoc.forgeblocks.com
+    AM_REALM: alpha
 
+- |-
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: platform-config
+  data:
+    IG_CLIENT_ID: ig-client
+    IG_CLIENT_SECRET: password
+    IG_IDM_USER: service_user.ig
+    IG_IDM_PASSWORD: 0penBanking!
 
+- |-
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: platform-config
+  data:
+    IG_AGENT_ID: ig-agent
+    IG_AGENT_PASSWORD: password

@@ -30,3 +30,6 @@ cue/
 dev/
 .CONFIGURED
 forgeops-toolbox/
+docker/7.0/ig/config/
+docker/7.0/ig/lib/
+docker/7.0/ig/scripts/

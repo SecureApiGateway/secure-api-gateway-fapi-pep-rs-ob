@@ -4,35 +4,16 @@
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/accounts')}",
   "capture" : [ "response", "request" ],
   "heap" : [
-    {
-    "name" : "ReverseProxyHandler",
-    "type" : "ReverseProxyHandler",
-    "capture" : [ "response", "request" ]
-  }, {
-    "name" : "capture",
-    "type" : "CaptureDecorator",
-    "config" : {
-      "captureEntity" : true,
-      "captureContext" : true
-    }
-  }, {
-    "name" : "ForgeRockClientHandler",
-    "type" : "Chain",
-    "config" : {
-      "filters" : [ "TransactionIdOutboundFilter" ],
-      "handler" : "ClientHandler"
-    },
-    "capture" : [ "response", "request" ]
-  }
   ],
   "handler" : {
     "type" : "Chain",
     "config" : {
-      "filters" : [ {
-        "name" : "FormatJsonFilter",
-        "type" : "FormatJsonFilter",
-        "config" : { }
-      },
+      "filters" : [
+        {
+          "name" : "FormatJsonFilter",
+          "type" : "FormatJsonFilter",
+          "config" : { }
+        },
         {
           "type": "UriPathRewriteFilter",
           "config": {
@@ -52,134 +33,24 @@
               }
             }
           }
-        },{
-        "name" : "HeaderFilter-AddResponseHeaders",
-        "type" : "HeaderFilter",
-        "config" : {
-          "messageType" : "RESPONSE",
-          "remove" : [ "Location", "Set-Cookie", "Server", "Strict-Transport-Security" ],
-          "add" : {
-            "x-fapi-interaction-id" : [ "${attributes.xfapiinteractionid != null ?  attributes.xfapiinteractionid : (context.id).substring(0,36)}" ],
-            "Content-Type" : [ "application/json" ]
-          }
-        }
-      }, {
-        "name" : "ErrorResponseSwitch",
-        "type" : "SwitchFilter",
-        "config" : {
-          "onResponse" : [ {
-            "condition" : "${response.status.code == 400}",
-            "handler" : {
-              "name" : "FilterFailureHandler-400",
-              "type" : "StaticResponseHandler",
-              "config" : {
-                "status" : 400,
-                "reason" : "Bad Request",
-                "entity" : "${attributes.error400}"
-              }
-            }
-          }, {
-            "condition" : "${response.status.code == 401}",
-            "handler" : {
-              "name" : "FilterFailureHandler-401",
-              "type" : "StaticResponseHandler",
-              "config" : {
-                "status" : 401,
-                "reason" : "Unauthorized",
-                "entity" : "${attributes.error401}"
-              }
-            }
-          }, {
-            "condition" : "${response.status.code == 403}",
-            "handler" : {
-              "name" : "FilterFailureHandler-403",
-              "type" : "StaticResponseHandler",
-              "config" : {
-                "status" : 403,
-                "reason" : "Forbidden",
-                "entity" : "${attributes.error403}"
-              }
-            }
-          }, {
-            "condition" : "${response.status.code == 404}",
-            "handler" : {
-              "name" : "FilterFailureHandler-404",
-              "type" : "StaticResponseHandler",
-              "config" : {
-                "status" : 404,
-                "reason" : "Not Found",
-                "entity" : "${attributes.error404}"
-              }
-            }
-          }, {
-            "condition" : "${response.status.code == 500}",
-            "handler" : {
-              "name" : "FilterFailureHandler-500",
-              "type" : "StaticResponseHandler",
-              "config" : {
-                "status" : 500,
-                "reason" : "Internal Server Error",
-                "entity" : "${attributes.error500}"
-              }
-            }
-          } ]
-        }
-      }, {
-        "name" : "AssignmentFilter-ErrorHandling",
-        "type" : "AssignmentFilter",
-        "config" : {
-          "onRequest" : [ {
-            "target" : "${attributes.requestUriPath}",
-            "value" : "${request.uri.path}"
-          } ],
-          "onResponse" : [ {
-            "target" : "${attributes.error400}",
-            "value" : "${toString('{\"Code\":\"400 BadRequest\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Invalid request parameters.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.Bad.Request\",\"Message\":\"Invalid request parameters.\",\"Path\":\"\",\"Url\":\"').concat(attributes.requestUriPath).concat('\"}]}')}"
-          }, {
-            "target" : "${attributes.error401}",
-            "value" : "${toString('{\"status\":\"401\",\"error\":\"Unauthorized\",\"message\":\"Unauthorized\",\"path\":\"').concat(attributes.requestUriPath).concat('\"}')}"
-          }, {
-            "target" : "${attributes.error403}",
-            "value" : "${toString('{\"status\":\"403\",\"error\":\"Forbidden\",\"message\":\"Forbidden\",\"path\":\"').concat(attributes.requestUriPath).concat('\"}')}"
-          }, {
-            "target" : "${attributes.error404}",
-            "value" : "${toString('{\"Code\":\"404 Not Found\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Resource Not Found.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.NotFound\",\"Message\":\"Not Found.\",\"Path\":\"\",\"Url\":\"').concat(attributes.requestUriPath).concat('\"}]}')}"
-          }, {
-            "target" : "${attributes.error500}",
-            "value" : "${toString('{\"Code\":\"500 Internal Server Error\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Internal Server Error.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.UnexpectedError\",\"Message\":\"Unexpected Error.\",\"Path\":\"\",\"Url\":\"').concat(attributes.requestUriPath).concat('\"}]}')}"
-          } ]
-        }
-      },   {
-        "name" : "OAuth2ResourceServerFilter-OBIE",
-        "type" : "OAuth2ResourceServerFilter",
-        "config" : {
-          "scopes" : [ "accounts", "openid" ],
-          "requireHttps" : false,
-          "realm" : "OpenIG",
-          "accessTokenResolver" : {
-            "name" : "token-resolver-1",
-            "type" : "TokenIntrospectionAccessTokenResolver",
-            "config" : {
-              "endpoint" : "https://&{am.server.fqdn}/am/oauth2/introspect",
-              "providerHandler" : {
-                "type" : "Chain",
-                "config" : {
-                  "filters" : [ {
-                    "type" : "HeaderFilter",
-                    "config" : {
-                      "messageType" : "request",
-                      "add" : {
-                        "Authorization" : [ "Basic ${encodeBase64('ig-agent:password')}" ]
-                      }
-                    }
-                  } ],
-                  "handler" : "ForgeRockClientHandler"
-                }
-              }
+        },
+        {
+          "name" : "OAuth2ResourceServerFilter-OBIE",
+          "type" : "OAuth2ResourceServerFilter",
+          "config" : {
+            "scopes" : [ "accounts", "openid" ],
+            "requireHttps" : false,
+            "realm" : "OpenIG",
+            "accessTokenResolver" : {
+              "type": "StatelessAccessTokenResolver",
+              "config": {
+                "secretsProvider": "SecretsProvider-AmJWK",
+                "issuer": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                "verificationSecretId": "any.value.in.regex.format"
+               }
             }
           }
-        }
-      },
+        },
         {
           "name" : "CertificateExtensionValidatorFilter",
           "type" : "CertificateExtensionValidatorFilter",
@@ -192,7 +63,7 @@
           "name" : "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
           "type" : "PolicyEnforcementFilter",
           "config" : {
-            "pepRealm" : "/openbanking",
+            "pepRealm" : "/&{am.realm}",
             "application" : "Open Banking",
             "claimsSubject" : {
               "sub": "${contexts.oauth2.accessToken.info.sub}",
@@ -200,9 +71,9 @@
             },
             "environment": {
               "sub": [ "${contexts.oauth2.accessToken.info.sub}" ],
-              "tpp_client_id" : [ "${contexts.oauth2.accessToken.info.client_id}" ],
+              "tpp_client_id" : [ "${contexts.oauth2.accessToken.info.aud}" ],
               "tpp_cert_id" : [ "${attributes.tppId}" ],
-              "intent_id": [ "${contexts.oauth2.accessToken.info.openbanking_intent_id}" ]
+              "intent_id": [ "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}" ]
             },
             "amService" : "AmService-OBIE"
           }

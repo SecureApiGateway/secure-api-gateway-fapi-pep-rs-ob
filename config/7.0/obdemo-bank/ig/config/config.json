@@ -48,22 +48,22 @@
       "name": "JwtSession",
       "type": "JwtSession"
     },
-{
-    "name" : "ForgeRockClientHandler",
-    "type" : "Chain",
-    "config" : {
-      "filters" : [ "TransactionIdOutboundFilter" ],
-      "handler" : "ClientHandler"
+    {
+      "name" : "ForgeRockClientHandler",
+      "type" : "Chain",
+      "config" : {
+        "filters" : [ "TransactionIdOutboundFilter" ],
+        "handler" : "ClientHandler"
+      },
+      "capture" : [ "response", "request" ]
     },
-    "capture" : [ "response", "request" ]
-  }, 
     {
       "name" : "AmService-OBIE",
       "type" : "AmService",
       "config" : {
-        "url" : "https://&{am.server.fqdn}/am",
-        "realm" : "/",
-        "ssoTokenHeader" : "iPlanetDirectoryPro",
+        "url" : "https://&{iam.fqdn}/am",
+        "realm" : "/&{am.realm}",
+        "ssoTokenHeader" : "4e3ac4710f8be28",
         "version" : "6.5.1",
         "agent" : {
           "username" : "ig-agent",
@@ -84,7 +84,45 @@
           "enabled" : false
         }
      }
-   }
+   },
+    {
+      "name": "SystemAndEnvSecretStore-IAM",
+      "type": "SystemAndEnvSecretStore",
+      "config": {
+        "format": "PLAIN"
+      }
+    },
+    {
+      "name": "TokenRequestHandler",
+      "type": "ScriptableHandler",
+      "config": {
+        "type": "application/x-groovy",
+        "args": {
+          "userId": "&{ig.idm.user}",
+          "password": "&{ig.idm.password}"
+        },
+        "source": [
+          "def newEntity = request.getEntity().toString().replace('grant_type=client_credentials','grant_type=password&username=' + userId + '&password=' + java.net.URLEncoder.encode(password, 'UTF-8'))",
+          "request.setEntity(newEntity)",
+          "return http.send(context, request)"
+        ],
+        "clientHandler": "ForgeRockClientHandler"
+      }
+    },
+    {
+      "name": "SecretsProvider-AmJWK",
+      "type": "SecretsProvider",
+      "config": {
+        "stores": [
+          {
+            "type": "JwkSetSecretStore",
+            "config": {
+              "jwkUrl": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/connect/jwk_uri"
+            }
+          }
+        ]
+      }
+    }
   ],
   "monitor": true
 }

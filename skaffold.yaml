@@ -11,83 +11,8 @@ kind: Config
 ## The yaml anchors are used to make it easier to compose skaffold profiles.
 ## You should not need to edit this section
 .YamlAnchors:
-  kaniko:
-    kaniko-ops: &kaniko-opts
-      # Disable build cache for now. This is causing intermittent problems
-      # cache: {}
-      image: gcr.io/kaniko-project/executor:v0.20.0
-      # The flags is deprecated - but without it we are seeing Kaniko bugs.
-      # CLOUD-1955
-      flags:
-        - '--single-snapshot'
-      # This is the recommended way of passing the single-snapshot arg - but we see issues.
-      # buildArgs:
-        # single-snapshot: "true"
-    cluster: &kaniko-cluster
-      namespace: kaniko
-      pullSecretName: kaniko-secret
 
   artifactDefinitions:
-    - &AM
-      image: am
-      context: docker/7.0/am
-    - &AM_KANIKO
-      <<: *AM
-      kaniko: *kaniko-opts
-    - &AMSTER
-      image: amster
-      context: docker/7.0/amster
-    - &AMSTER_KANIKO
-      <<: *AMSTER
-      kaniko: *kaniko-opts
-    - &IDM
-      image: idm
-      context: docker/7.0/idm
-    - &IDM_KANIKO
-      <<: *IDM
-      kaniko: *kaniko-opts
-    - &DS-CTS_BASE
-      image: ds-cts
-      context: docker/7.0/ds
-    - &DS-CTS
-      <<: *DS-CTS_BASE
-      docker:
-        dockerfile: cts/Dockerfile
-    - &DS-CTS_KANIKO
-      <<: *DS-CTS_BASE
-      kaniko:
-        <<: *kaniko-opts
-        dockerfile: cts/Dockerfile
-
-    - &DS-IDREPO_BASE
-      image: ds-idrepo
-      context: docker/7.0/ds/
-    - &DS-IDREPO
-      <<: *DS-IDREPO_BASE
-      docker:
-        dockerfile: idrepo/Dockerfile
-    - &DS-IDREPO_KANIKO
-      <<: *DS-IDREPO_BASE
-      kaniko:
-        <<: *kaniko-opts
-        dockerfile: idrepo/Dockerfile
-
-    - &FORGEOPS-SECRETS
-      image: forgeops-secrets
-      context: docker/forgeops-secrets
-    - &FORGEOPS-SECRETS_KANIKO
-      <<: *FORGEOPS-SECRETS
-      kaniko: *kaniko-opts
-
-    - &LDIF-IMPORTER
-      image: ldif-importer
-      context: docker/7.0/ldif-importer
-
-    - &LDIF-IMPORTER_KANIKO
-      image: ldif-importer
-      context: docker/7.0/ldif-importer
-      kaniko: *kaniko-opts
-
     - &IG
       image: ig
       context: docker/7.0/ig
@@ -106,75 +31,12 @@ kind: Config
 
   commonArtifactSets:
     default-artifacts: &default-artifacts
-    - *AM
-    - *AMSTER
-    - *IDM
-    - *DS-CTS
-    - *DS-IDREPO
-    - *FORGEOPS-SECRETS
     - *IG
-    - *LDIF-IMPORTER
     - *OBDEMO-RCS-UI
     - *OBDEMO-RCS-API
     - *OBDEMO-RS
-    kaniko-artifacts: &kaniko-artifacts
-    - *AM_KANIKO
-    - *AMSTER_KANIKO
-    - *IDM_KANIKO
-    - *DS-CTS_KANIKO
-    - *DS-IDREPO_KANIKO
-    - *FORGEOPS-SECRETS_KANIKO
-    - *LDIF-IMPORTER_KANIKO
 
 ## End YAML Anchors
-
-#---------------------
-# Skaffold profiles
-#---------------------
-
-# profiles
-
-profiles:
-- name: amster-export
-  build:
-    artifacts:
-    - *AMSTER
-    tagPolicy:
-      gitCommit: {}
-  deploy:
-    kustomize:
-      path: ./kustomize/overlay/7.0/amster-export
-
-- name: obdemo-iam 
-  build:
-    artifacts:
-    - *AM
-    - *AMSTER
-    - *IDM
-    - *DS-CTS
-    - *DS-IDREPO
-    - *FORGEOPS-SECRETS
-    - *LDIF-IMPORTER
-    tagPolicy:
-      gitCommit: {}
-  deploy:
-    kustomize:
-      path: ./kustomize/overlay/7.0/obdemo-iam
-
-- name: obdemo-bank
-  build:
-    artifacts:
-    - *FORGEOPS-SECRETS
-    - *IG
-    - *OBDEMO-RCS-UI
-    - *OBDEMO-RCS-API
-    - *OBDEMO-RS
-    tagPolicy:
-      gitCommit: {}
-  deploy:
-    kustomize:
-      path: ./kustomize/overlay/7.0/obdemo-bank
-
 
 # Default profile
 build: &default-build
@@ -184,5 +46,5 @@ build: &default-build
 deploy: &default-deploy
   statusCheckDeadlineSeconds: 600
   kustomize:
-    path: ./kustomize/overlay/7.0/obdemo
+    path: ./kustomize/overlay/7.0/obdemo-bank
 

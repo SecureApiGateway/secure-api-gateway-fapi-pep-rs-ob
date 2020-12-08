@@ -1,21 +1,22 @@
 {
   "name" : "OB RS Account Consent",
-  "baseURI" : "https://&{am.server.fqdn}",
+  "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/account-access-consents')}",
-"heap" : [ {
-    "name" : "ReverseProxyHandler",
-    "type" : "ReverseProxyHandler",
-    "capture" : [ "response", "request" ]
-  }, {
-    "name" : "capture",
-    "type" : "CaptureDecorator",
-    "config" : {
-      "captureEntity" : true,
-      "captureContext" : true
+  "heap" : [
+    {
+      "name" : "ReverseProxyHandler",
+      "type" : "ReverseProxyHandler",
+      "capture" : [ "response", "request" ]
+    },
+    {
+      "name" : "capture",
+      "type" : "CaptureDecorator",
+      "config" : {
+        "captureEntity" : true,
+        "captureContext" : true
+      }
     }
-  }
-],
-
+  ],
   "handler": {
     "type": "Chain",
     "config": {
@@ -32,90 +33,6 @@
             }
           }
         },
-        {
-          "name" : "ErrorResponseSwitch",
-          "type" : "SwitchFilter",
-          "config" : {
-            "onResponse" : [ {
-              "condition" : "${response.status.code == 400}",
-              "handler" : {
-                "name" : "FilterFailureHandler-400",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 400,
-                  "reason" : "Bad Request",
-                  "entity" : "${attributes.error400}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 401}",
-              "handler" : {
-                "name" : "FilterFailureHandler-401",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 401,
-                  "reason" : "Unauthorized",
-                  "entity" : "${attributes.error401}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 403}",
-              "handler" : {
-                "name" : "FilterFailureHandler-403",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 403,
-                  "reason" : "Forbidden",
-                  "entity" : "${attributes.error403}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 404}",
-              "handler" : {
-                "name" : "FilterFailureHandler-404",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 404,
-                  "reason" : "Not Found",
-                  "entity" : "${attributes.error404}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 500}",
-              "handler" : {
-                "name" : "FilterFailureHandler-500",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 500,
-                  "reason" : "Internal Server Error",
-                  "entity" : "${attributes.error500}"
-                }
-              }
-            } ]
-          }
-        }, {
-          "name" : "AssignmentFilter-ErrorHandling",
-          "type" : "AssignmentFilter",
-          "config" : {
-            "onResponse" : [ {
-              "target" : "${attributes.error400}",
-              "value" : "${toString('{\"Code\":\"400 BadRequest\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Invalid request parameters.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.Bad.Request\",\"Message\":\"Invalid request parameters.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            }, {
-              "target" : "${attributes.error401}",
-              "value" : "${toString('{\"status\":\"401\",\"error\":\"Unauthorized\",\"message\":\"Unauthorized\",\"path\":\"').concat(request.uri.path).concat('\"}')}"
-            }, {
-              "target" : "${attributes.error403}",
-              "value" : "${toString('{\"status\":\"403\",\"error\":\"Forbidden\",\"message\":\"Forbidden\",\"path\":\"').concat(request.uri.path).concat('\"}')}"
-            }, {
-              "target" : "${attributes.error404}",
-              "value" : "${toString('{\"Code\":\"404 Not Found\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Resource Not Found.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.NotFound\",\"Message\":\"Not Found.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            }, {
-              "target" : "${attributes.error500}",
-              "value" : "${toString('{\"Code\":\"500 Internal Server Error\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Internal Server Error.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.UnexpectedError\",\"Message\":\"Unexpected Error.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            } ]
-          }
-        },
-
         {
           "name" : "CertificateExtensionValidatorFilter",
           "type" : "CertificateExtensionValidatorFilter",
@@ -156,7 +73,7 @@
                   "name": "token-resolver-1",
                   "type": "TokenIntrospectionAccessTokenResolver",
                   "config": {
-                    "endpoint": "https://&{am.server.fqdn}/am/oauth2/introspect",
+                    "endpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
                     "providerHandler": {
                       "type": "Chain",
                       "config": {
@@ -164,16 +81,9 @@
                           {
                             "type": "HttpBasicAuthenticationClientFilter",
                             "config": {
-                              "username": "ig-agent",
-                              "passwordSecretId": "agent.secret.id",
-                              "secretsProvider": {
-                                "type": "Base64EncodedSecretStore",
-                                "config": {
-                                  "secrets": {
-                                    "agent.secret.id": "cGFzc3dvcmQ="
-                                  }
-                                }
-                              }
+                              "username": "&{ig.agent.id}",
+                              "passwordSecretId": "ig.agent.password",
+                              "secretsProvider": "SystemAndEnvSecretStore-IAM"
                             }
                           }
                         ],
@@ -210,58 +120,18 @@
         {
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
-            "clientId": "ig-client",
-            "clientSecretId": "client.secret.id",
-            "secretsProvider": {
-              "type": "Base64EncodedSecretStore",
-              "config": {
-                "secrets": {
-                  "client.secret.id": "cGFzc3dvcmQ="
-                }
-              }
-            },
-            "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-            "scopes" : ["fr:idm:*"]
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "fr:idm:*"
+            ],
+            "handler": "TokenRequestHandler"
           }
         }
       ],
-      "handler": {
-        "type": "ScriptableHandler",
-        "config": {
-          "type": "application/x-groovy",
-          "clientHandler": {
-            "type": "Chain",
-            "capture": "all",
-            "config": {
-              "filters": [
-                {
-                  "type": "ClientCredentialsOAuth2ClientFilter",
-                  "config": {
-                    "clientId": "ig-client",
-                    "clientSecretId": "client.secret.id",
-                    "secretsProvider": {
-                      "type": "Base64EncodedSecretStore",
-                      "config": {
-                        "secrets": {
-                          "client.secret.id": "cGFzc3dvcmQ="
-                        }
-                      }
-                    },
-                    "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-                    "scopes": [
-                      "fr:idm:*"
-                    ]
-                  }
-                }
-              ],
-              "handler": "ForgeRockClientHandler"
-            }
-          },
-          "source": [
-            "return http.send(context, request);"
-          ]
-        }
-      }
+      "handler": "ReverseProxyHandler"
     }
   }
 } 

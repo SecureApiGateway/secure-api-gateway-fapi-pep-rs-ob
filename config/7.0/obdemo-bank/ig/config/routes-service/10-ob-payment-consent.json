@@ -1,40 +1,9 @@
 {
   "name" : "OB RS Payment Consent",
-  "baseURI" : "https://&{am.server.fqdn}",
+  "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payment-consents((?!funds-confirmation).)*$')}",
-"heap" : [ {
-    "name" : "ReverseProxyHandler",
-    "type" : "ReverseProxyHandler",
-    "capture" : [ "response", "request" ]
-  }, {
-    "name" : "capture",
-    "type" : "CaptureDecorator",
-    "config" : {
-      "captureEntity" : true,
-      "captureContext" : true
-    }
-  }, {
-    "name" : "ForgeRockClientHandler",
-    "type" : "Chain",
-    "config" : {
-      "filters" : [ "TransactionIdOutboundFilter" ],
-      "handler" : "ClientHandler"
-    },
-    "capture" : [ "response", "request" ]
-  },
-  {
-    "name" : "IDMClientHandler",
-    "type" : "ClientHandler",
-    "config" : {
-
-    },
-
-    "capture" : [ "response", "request" ]
-
-  }
-
-],
-
+  "heap" : [
+  ],
   "handler": {
     "type": "Chain",
     "config": {
@@ -48,45 +17,60 @@
           }
         },
         {
-          "name" : "OAuth2ResourceServerFilter-OB-1",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "source": [
+                  "def response = new Response(Status.TEAPOT);",
+                  "response.entity = 'Failure in CertificateThumbprintFilter'",
+                  "return response"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
             "scopes" : [ "payments" ],
             "requireHttps" : false,
             "realm" : "OpenIG",
             "accessTokenResolver" : {
-              "name" : "token-resolver-2",
-              "type" : "TokenIntrospectionAccessTokenResolver",
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
-                "endpoint": "https://&{am.server.fqdn}/am/oauth2/introspect",
-                "providerHandler": {
-                  "type": "Chain",
+                "delegate": {
+                  "name": "token-resolver-1",
+                  "type": "TokenIntrospectionAccessTokenResolver",
                   "config": {
-                    "filters": [
-                      {
-                        "type": "HttpBasicAuthenticationClientFilter",
-                        "config": {
-                          "username": "ig-agent",
-                          "passwordSecretId": "agent.secret.id",
-                          "secretsProvider": {
-                            "type": "Base64EncodedSecretStore",
+                    "endpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
+                    "providerHandler": {
+                      "type": "Chain",
+                      "config": {
+                        "filters": [
+                          {
+                            "type": "HttpBasicAuthenticationClientFilter",
                             "config": {
-                              "secrets": {
-                                "agent.secret.id": "cGFzc3dvcmQ="
-                              }
+                              "username": "&{ig.agent.id}",
+                              "passwordSecretId": "ig.agent.password",
+                              "secretsProvider": "SystemAndEnvSecretStore-IAM"
                             }
                           }
-                        }
+                        ],
+                        "handler": "ForgeRockClientHandler"
                       }
-                    ],
-                    "handler": "ForgeRockClientHandler"
+                    }
                   }
                 }
               }
             }
           }
         },
-
         {
           "name": "ProcessPaymentConsent",
           "type": "ScriptableFilter",
@@ -111,58 +95,18 @@
         {
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
-            "clientId": "ig-client",
-            "clientSecretId": "client.secret.id",
-            "secretsProvider": {
-              "type": "Base64EncodedSecretStore",
-              "config": {
-                "secrets": {
-                  "client.secret.id": "cGFzc3dvcmQ="
-                }
-              }
-            },
-            "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-            "scopes" : ["fr:idm:*"]
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "fr:idm:*"
+            ],
+            "handler": "TokenRequestHandler"
           }
         }
       ],
-      "handler": {
-        "type": "ScriptableHandler",
-        "config": {
-          "type": "application/x-groovy",
-          "clientHandler": {
-            "type": "Chain",
-            "capture": "all",
-            "config": {
-              "filters": [
-                {
-                  "type": "ClientCredentialsOAuth2ClientFilter",
-                  "config": {
-                    "clientId": "ig-client",
-                    "clientSecretId": "client.secret.id",
-                    "secretsProvider": {
-                      "type": "Base64EncodedSecretStore",
-                      "config": {
-                        "secrets": {
-                          "client.secret.id": "cGFzc3dvcmQ="
-                        }
-                      }
-                    },
-                    "tokenEndpoint": "https://&{am.server.fqdn}/am/oauth2/realms/root/realms/openbanking/access_token",
-                    "scopes": [
-                      "fr:idm:*"
-                    ]
-                  }
-                }
-              ],
-              "handler": "ForgeRockClientHandler"
-            }
-          },
-          "source": [
-            "return http.send(context, request);"
-          ]
-        }
-      }
+      "handler": "ReverseProxyHandler"
     }
   }
 } 

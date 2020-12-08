@@ -1,6 +1,6 @@
 {
   "name" : "OBIE AS General",
-  "baseURI" : "https://&{am.server.fqdn}",
+  "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am')}",
   "heap": [
     {
@@ -30,7 +30,7 @@
             "messageType" : "REQUEST",
             "remove" : [ "host", "X-Forwarded-Host" ],
             "add" : {
-              "X-Forwarded-Host" : [ "&{am.server.fqdn}" ]
+              "X-Forwarded-Host" : [ "&{iam.fqdn}" ]
             }
           }
         }

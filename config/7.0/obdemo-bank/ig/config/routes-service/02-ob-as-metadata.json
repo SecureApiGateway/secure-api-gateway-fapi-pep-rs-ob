@@ -1,7 +1,7 @@
 {
   "name" : "OB AS Metadata",
-  "baseURI" : "https://&{am.server.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/openbanking/.well-known/openid-configuration')}",
+  "baseURI" : "https://&{iam.fqdn}",
+  "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/.well-known/openid-configuration')}",
   "handler": {
     "type": "Chain",
     "config": {
@@ -13,7 +13,7 @@
             "messageType" : "REQUEST",
             "remove" : [ "host", "X-Forwarded-Host" ],
             "add" : {
-              "X-Forwarded-Host" : [ "&{am.server.fqdn}" ]
+              "X-Forwarded-Host" : [ "&{iam.fqdn}" ]
             }
           }
         },
@@ -24,8 +24,8 @@
             "type": "application/x-groovy",
             "file": "WellKnownFilter.groovy",
             "args": {
-              "internalUri" : "obdemo-iam",
-              "externalUri" : "obdemo-bank"
+              "internalUri" : "&{iam.fqdn}",
+              "externalUri" : "&{fqdn}"
             }
           }
         }

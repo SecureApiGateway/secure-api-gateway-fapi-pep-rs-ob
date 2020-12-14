@@ -1,9 +1,0 @@
-kind: ""
-apiversion: ""
-commonLabels:
-  app: login-ui
-  vendor: forgerock
-  tier: ui
-resources:
-- deployment.yaml
-- service.yaml

@@ -1,0 +1,20 @@
+{
+  "heap": [
+    {
+      "name": "ClientHandler",
+      "type": "ClientHandler",
+      "capture": "all"
+    },
+    {
+      "name": "ApiProtectionFilter",
+      "type": "ScriptableFilter",
+      "config": {
+        "type": "application/x-groovy",
+        "source": [
+          "return next.handle(context, request)"
+        ]
+      }
+    }
+  ],
+  "mode": "DEVELOPMENT"
+}

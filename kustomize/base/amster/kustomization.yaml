@@ -1,7 +1,0 @@
-kind: ""
-apiVersion: ""
-commonLabels:
-  app: amster
-  vendor: forgerock
-resources:
-- job.yaml

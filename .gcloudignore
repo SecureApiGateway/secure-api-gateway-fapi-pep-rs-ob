@@ -1,8 +1,0 @@
-.git
-tmp/
-__pycache__/
-*.pyc
-helm/
-tmp
-node_modules
-.virt

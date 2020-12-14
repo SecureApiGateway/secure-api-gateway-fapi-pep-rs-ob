@@ -6,7 +6,8 @@
 # Note: Upgrade to skaffold/v2alpha3 for skaffold 1.4
 apiVersion: skaffold/v1
 kind: Config
-
+metadata:
+  name: obdemo-bank
 ## Common YAML anchors
 ## The yaml anchors are used to make it easier to compose skaffold profiles.
 ## You should not need to edit this section
@@ -38,6 +39,24 @@ kind: Config
 
 ## End YAML Anchors
 
+#---------------------
+# Skaffold profiles
+#---------------------
+
+# profiles
+# add your profile here
+
+profiles:
+- name: prod
+  build:
+    artifacts: *default-artifacts
+    tagPolicy:
+      sha256: {}
+  deploy:
+    statusCheckDeadlineSeconds: 600
+    kustomize:
+      path: ./kustomize/overlay/7.0/obdemo-bank/prod
+
 # Default profile
 build: &default-build
   artifacts: *default-artifacts
@@ -46,5 +65,5 @@ build: &default-build
 deploy: &default-deploy
   statusCheckDeadlineSeconds: 600
   kustomize:
-    path: ./kustomize/overlay/7.0/obdemo-bank
+    path: ./kustomize/overlay/7.0/obdemo-bank/dev
 

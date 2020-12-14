@@ -1,0 +1,17 @@
+namespace: default
+commonLabels:
+  app.kubernetes.io/name: "forgerock"
+resources:
+- ../kustomizeConfig
+- ../7.0/ingress
+- ../ig
+- ../obdemo-rcs-ui
+- ../obdemo-rcs-api
+- ../obdemo-rs
+
+secretGenerator:
+- name: obri-ca
+  files:
+  - ca.crt
+generatorOptions:
+  disableNameSuffixHash: true

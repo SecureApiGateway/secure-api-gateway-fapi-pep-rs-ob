@@ -24,18 +24,20 @@ begins_with_short_option()
 
 # THE DEFAULTS INITIALIZATION - POSITIONALS
 _positionals=()
-# THE DEFAULTS INITIALIZATION - OPTIONALS
-_arg_component="all"
 
 # Profile defaults to cdk if not provided
-_arg_profile="${CDK_PROFILE:-cdk}"
-_arg_version="${CDK_VERSION:-7.0}"
+_arg_profile="${_PROFILE:-obdemo-bank}"
+_arg_environment="${_ENVIRONMENT:-dev}"
+_arg_version="${_VERSION:-7.0}"
+_arg_ig_mode=${_IGMODE:-development}
+_IGMODES=(production development)
 
 print_help()
 {
 	printf '%s\n' "manage ForgeRock platform configurations"
 	printf 'Usage: %s [-p|--profile <arg>] [-c|--component <arg>] [-v|--version <arg>] [-h|--help] <operation>\n' "$0"
 	printf '\t%s\n' "<operation>: operation is one of"
+	printf '\t\t%s\n' "test   - Prints main script values"
 	printf '\t\t%s\n' "init   - to copy initial configuration. This deletes any existing configuration in docker/"
 	printf '\t\t%s\n' "add    - to add to the configuration. Same as init, but will not remove existing configuration"
 	printf '\t\t%s\n' "diff   - to run the git diff command"
@@ -43,11 +45,12 @@ print_help()
 	printf '\t\t%s\n' "save   - save to git"
 	printf '\t\t%s\n' "restore - restore git (abandon changes)"
 	printf '\t\t%s\n' "sync   - export and save"
-	printf '\t%s\n' "-c, --component: Select component - am, amster, idm, ig or all  (default: 'all')"
-	printf '\t%s\n' "-p, --profile: Select configuration source (default: 'cdk')"
+	printf '\t%s\n' "-p, --profile: Select configuration source (default: 'obdemo-bank')"
+	printf '\t%s\n' "-e, --env: Select configuration environment source (default: 'dev')"
+	printf '\t%s\n' "-igm, --igmode: Select configuration environment source values['production', 'development'(default)]"
 	printf '\t%s\n' "-v, --version: Select configuration version (default: '7.0')"
 	printf '\t%s\n' "-h, --help: Prints help"
-	printf '\n%s\n' "example to copy idm files: config.sh -c idm -p cdk init"
+	printf '\n%s\n' "example: config.sh -e dev -igm development init"
 }
 
 
@@ -58,17 +61,6 @@ parse_commandline()
 	do
 		_key="$1"
 		case "$_key" in
-			-c|--component)
-				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-				_arg_component="$2"
-				shift
-				;;
-			--component=*)
-				_arg_component="${_key##--component=}"
-				;;
-			-c*)
-				_arg_component="${_key##-c}"
-				;;
 			-p|--profile)
 				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
 				_arg_profile="$2"
@@ -98,6 +90,39 @@ parse_commandline()
 			-h*)
 				print_help
 				exit 0
+				;;
+		  -e|--env)
+				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+			    _arg_environment="$2"
+				shift
+				;;
+			--env=*)
+				_arg_environment="${_key##--env=}"
+				;;
+			-e*)
+				_arg_environment="${_key##-e}"
+				;;
+		  -igm|--igmode)
+				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+				modefounded="false"
+        for v in "${_IGMODES[@]}"; do
+          if [ "$2" == "$v" ]; then
+            modefounded="true"
+          fi
+        done
+          if [ "$modefounded" != "true" ]; then
+            echo "ERROR: $2 isn't a valid value for the argument '$_key'."
+            print_help
+            exit 0
+          fi
+			    _arg_ig_mode="$2"
+				shift
+				;;
+			--igmode=*)
+				_arg_ig_mode="${_key##--igmode=}"
+				;;
+			-igm*)
+				_arg_ig_mode="${_key##-igm}"
 				;;
 			*)
 				_last_positional="$1"
@@ -148,25 +173,49 @@ clean_config()
     if [ "$1" == "amster" ]; then
         rm -rf "$DOCKER_ROOT/$1/config"
     elif [ "$1" == "am" ]; then
-	rm -rf "$DOCKER_ROOT/$1/config"
+	      rm -rf "$DOCKER_ROOT/$1/config"
     elif [ "$1" == "idm" ]; then
         rm -rf "$DOCKER_ROOT/$1/conf"
-	rm -rf "$DOCKER_ROOT/$1/script"
-	rm -rf "$DOCKER_ROOT/$1/ui"
+	      rm -rf "$DOCKER_ROOT/$1/script"
+	      rm -rf "$DOCKER_ROOT/$1/ui"
     elif [ "$1" == "ig" ]; then
         rm -rf "$DOCKER_ROOT/$1/config"
         rm -rf "$DOCKER_ROOT/$1/scripts"
-	rm -rf "$DOCKER_ROOT/$1/lib"
+	      rm -rf "$DOCKER_ROOT/$1/lib"
     fi
 }
 
-# Copy the product config $1 to the docker directory.
 init_config()
 {
-    if [ -d "${PROFILE_ROOT}/$1" ]; then
-        echo "cp -r ${PROFILE_ROOT}/$1" "$DOCKER_ROOT"
-        cp -r "${PROFILE_ROOT}/$1" "$DOCKER_ROOT"
+  if [ -d "${PROFILE_ROOT}/$1" ]; then
+    echo "*********************************************************************************************"
+    echo "Initialisation of 'docker/7.0/$1' for [$_arg_environment] environment in [$_arg_ig_mode] mode"
+    echo "*********************************************************************************************"
+    echo "copy ${PROFILE_ROOT}/$1/lib to $DOCKER_ROOT/$1/"
+    cp -r "${PROFILE_ROOT}/$1/lib" "$DOCKER_ROOT/$1/"
+    echo "copy ${PROFILE_ROOT}/$1/scripts to $DOCKER_ROOT/$1/"
+    cp -r "${PROFILE_ROOT}/$1/scripts" "$DOCKER_ROOT/$1/"
+    echo "copy ${PROFILE_ROOT}/$1/config/$_arg_environment/config to $DOCKER_ROOT/$1/"
+    cp -r "${PROFILE_ROOT}/$1/config/$_arg_environment/config" "$DOCKER_ROOT/$1/"
+    jq --arg mode "${_arg_ig_mode^^}" '.mode = $mode' "$DOCKER_ROOT/$1/config/"admin.json > "$DOCKER_ROOT/$1/config/"admin.json.tmp
+    mv "$DOCKER_ROOT/$1/config/"admin.json.tmp "$DOCKER_ROOT/$1/config/"admin.json
+    echo "IG mode $_arg_ig_mode"
+    if [ "$_arg_ig_mode" == "development" ]; then
+      init_routes_dev "$1"
+    else
+      echo "copy ${PROFILE_ROOT}/$1/routes/ to $DOCKER_ROOT/$1/config"
+      cp -r "${PROFILE_ROOT}/$1/routes/" "$DOCKER_ROOT/$1/config"
     fi
+  fi
+}
+
+init_routes_dev(){
+  echo "copy ${PROFILE_ROOT}/$1/routes/ to $DOCKER_ROOT/$1/config"
+  if [ ! -d "$DOCKER_ROOT/ig-local/config/routes" ]; then
+    echo "Creating the Directory $DOCKER_ROOT/$1/config/routes"
+    mkdir "$DOCKER_ROOT/$1/config/routes"
+  fi
+  find "${PROFILE_ROOT}/$1/routes/"*/ -type f -print0 | xargs -0 -I {} cp {} "$DOCKER_ROOT/$1/config/routes/"
 }
 
 # Show the differences between the source configuration and the current Docker configuration
@@ -318,13 +367,22 @@ PROFILE_ROOT="config/$_arg_version/$_arg_profile"
 DOCKER_ROOT="docker/$_arg_version"
 
 
-if [ "$_arg_component" == "all" ]; then
-	COMPONENTS=(idm ig amster am)
-else
-	COMPONENTS=( "$_arg_component" )
-fi
+# if [ "$_arg_component" == "all" ]; then
+# COMPONENTS=(idm ig amster am)
+# else
+#	COMPONENTS=( "$_arg_component" )
+# fi
+# obdemo-bank only uses IG component
+COMPONENTS=(ig)
 
 case "$_arg_operation" in
+test)
+  echo "Environment: " $_arg_environment
+  echo "Docker root: " $DOCKER_ROOT
+  echo "Operation:" $1
+  echo "Profile root: " ${PROFILE_ROOT}
+  echo "Components: " ${COMPONENTS}
+  ;;
 init)
 	for p in "${COMPONENTS[@]}"; do
 		clean_config "$p"

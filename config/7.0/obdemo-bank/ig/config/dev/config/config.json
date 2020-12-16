@@ -1,22 +1,5 @@
 {
-  "handler": {
-    "type": "DispatchHandler",
-    "config": {
-      "bindings": [
-        {
-          "condition": "${request.uri.host == env['MY_POD_IP']}",
-          "handler": {
-            "name": "router-pod",
-            "type": "Router",
-            "config": {
-              "scanInterval": "disabled",
-              "directory": "${openig.configDirectory}/routes"
-            }
-          }
-        }
-      ]
-    }
-  },
+  "handler": "_router",
   "heap": [
     {
       "name": "_router",
@@ -150,6 +133,29 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "IDMClientHandler",
+      "type": "Chain",
+      "capture": "all",
+      "config": {
+        "filters": [
+          {
+            "type": "ClientCredentialsOAuth2ClientFilter",
+            "config": {
+              "clientId": "&{ig.client.id}",
+              "clientSecretId": "ig.client.secret",
+              "secretsProvider": "SystemAndEnvSecretStore-IAM",
+              "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+              "scopes": [
+                "fr:idm:*"
+              ],
+              "handler": "TokenRequestHandler"
+            }
+          }
+        ],
+        "handler": "ForgeRockClientHandler"
       }
     }
   ],

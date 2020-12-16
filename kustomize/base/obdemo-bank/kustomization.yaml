@@ -6,7 +6,6 @@ resources:
 - ../7.0/ingress
 - ../ig
 - ../obdemo-rcs-ui
-- ../obdemo-rcs-api
 - ../obdemo-rs
 
 secretGenerator:

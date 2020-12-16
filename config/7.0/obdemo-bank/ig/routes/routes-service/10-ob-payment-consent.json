@@ -2,8 +2,6 @@
   "name" : "OB RS Payment Consent",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payment-consents((?!funds-confirmation).)*$')}",
-  "heap" : [
-  ],
   "handler": {
     "type": "Chain",
     "config": {

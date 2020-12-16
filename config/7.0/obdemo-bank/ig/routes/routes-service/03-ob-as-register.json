@@ -2,24 +2,6 @@
   "name": "OB Register TPP",
   "baseURI": "https://&{iam.fqdn}",
   "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
-  "heap": [
-    {
-      "name": "capture",
-      "type": "CaptureDecorator",
-      "config": {
-        "captureEntity": true
-      }
-    },
-    {
-      "name" : "ForgeRockClientHandler",
-      "type" : "Chain",
-      "config" : {
-        "filters" : [ "TransactionIdOutboundFilter" ],
-        "handler" : "ClientHandler"
-      },
-      "capture" : [ "response", "request" ]
-    }
-  ],
   "handler": {
     "type": "Chain",
     "config": {

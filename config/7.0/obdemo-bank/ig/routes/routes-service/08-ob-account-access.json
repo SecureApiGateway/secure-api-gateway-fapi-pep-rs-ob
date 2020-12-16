@@ -3,8 +3,6 @@
   "baseURI" : "http://obdemo-rs:8089",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/accounts')}",
   "capture" : [ "response", "request" ],
-  "heap" : [
-  ],
   "handler" : {
     "type" : "Chain",
     "config" : {

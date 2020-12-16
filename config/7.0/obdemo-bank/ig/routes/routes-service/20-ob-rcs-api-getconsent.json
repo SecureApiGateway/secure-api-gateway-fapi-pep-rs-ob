@@ -1,0 +1,36 @@
+{
+  "name" : "OB RCS Get Consent",
+  "condition" : "${matches(request.uri.path, '^/rcs-api/api/rcs/consent$')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "JwtValidationFilter-RCS",
+          "type": "JwtValidationFilter",
+          "config": {
+            "jwt": "${split(request.uri.query,'=')[1]}",
+            "verificationSecretId": "verify",
+            "secretsProvider": "SecretsProvider-AmJWK"
+          }
+        }
+
+      ],
+      "handler": {
+        "type": "ScriptableHandler",
+        "config": {
+          "type": "application/x-groovy",
+          "clientHandler": "IDMClientHandler",
+          "file": "RCSGetConsent.groovy",
+          "args": {
+            "consent_request": "${contexts.jwtValidation.value}",
+            "claims": "${contexts.jwtValidation.claims}",
+            "objAccountConsent": "ObAccountAccess",
+            "objPaymentConsent": "ObDomesticPayment",
+            "idmBaseUri": "https://&{iam.fqdn}"
+          }
+        }
+      }
+    }
+  }
+}

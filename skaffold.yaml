@@ -22,10 +22,6 @@ metadata:
       image: obdemo-rcs-ui
       context: docker/obdemo-rcs-ui
 
-    - &OBDEMO-RCS-API
-      image: obdemo-rcs-api
-      context: docker/obdemo-rcs-api
-
     - &OBDEMO-RS
       image: obdemo-rs
       context: docker/obdemo-rs
@@ -34,7 +30,6 @@ metadata:
     default-artifacts: &default-artifacts
     - *IG
     - *OBDEMO-RCS-UI
-    - *OBDEMO-RCS-API
     - *OBDEMO-RS
 
 ## End YAML Anchors

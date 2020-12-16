@@ -4,9 +4,6 @@ metadata:
   name: obdemo-rcs-ui
   annotations:
     cert-manager.io/cluster-issuer: $(CERT_ISSUER)
-#    nginx.ingress.kubernetes.io/rewrite-target: /$1
-#    nginx.ingress.kubernetes.io/configuration-snippet: |
-#      rewrite ^(/rcs)$ $1/ redirect;
 spec:
   rules:
   - host: $(FQDN)
@@ -15,7 +12,7 @@ spec:
       - backend:
           serviceName: obdemo-rcs-ui
           servicePort: 80
-        path: /rcs/?(.*)
+        path: /rcs?
   tls:
   - hosts:
     - $(FQDN)

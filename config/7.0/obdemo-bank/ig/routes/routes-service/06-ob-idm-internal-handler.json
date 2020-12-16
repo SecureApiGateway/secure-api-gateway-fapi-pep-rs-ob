@@ -2,9 +2,6 @@
   "name" : "OB IDM Authorized Requests",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/openidm-internal')}",
-  "heap": [
-
-  ],
   "handler": {
     "type": "Chain",
     "config": {

@@ -2,23 +2,6 @@
   "name" : "OBIE AS General",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am')}",
-  "heap": [
-    {
-      "name": "capture",
-      "type": "CaptureDecorator",
-      "config": {
-        "captureEntity": true
-      }
-    },
-    {
-      "name": "ReverseProxyHandler",
-      "type": "ReverseProxyHandler",
-      "capture": [
-        "request",
-        "response"
-      ]
-    }
-  ],
   "handler": {
     "type": "Chain",
     "config": {

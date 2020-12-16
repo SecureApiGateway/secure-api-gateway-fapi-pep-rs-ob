@@ -12,6 +12,10 @@
             serviceName: ig
             servicePort: 8080
           path: /am
+        - backend:
+            serviceName: ig
+            servicePort: 8080
+          path: /rcs-api
 
 - op: add
   path: /metadata/annotations

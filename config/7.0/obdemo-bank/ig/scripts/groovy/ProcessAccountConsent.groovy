@@ -10,34 +10,7 @@ import java.text.SimpleDateFormat
 
 def tppId = contexts.oauth2.accessToken.info.client_id
 
-/*
 
-Request tppRequest = new Request();
-
-tppRequest.setMethod('GET');
-tppRequest.setUri(idmBaseUri + "/openidm/managed/" + objTpp + "?_queryFilter=/identifier+eq+" + tppId)
-
-http.send(tppRequest).then(tppResponse -> {
-        ssaRequest.close()
-        logger.debug("Back from IDM")
-
-  def tppResponseContent = ssaResponse.getEntity();
-  def tppResponseStatus = ssaResponse.getStatus();
-
-  logger.debug("status " + tppResponseStatus);
-  logger.debug("entity " + tppResponseContent);
-
-  if (tppResponseStatus != Status.OK) {
-      logger.error("Failed to get response from IDM");
-      error = true;
-  }
-  else {
-
-      def ssaObj = ssaResponse.entity.getJson();
-
-      def ssaId = ssaObj._id
-  }
-*/
 
 accountIntentData = request.entity.getJson()
 

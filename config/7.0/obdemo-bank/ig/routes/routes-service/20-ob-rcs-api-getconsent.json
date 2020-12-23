@@ -1,5 +1,6 @@
 {
   "name" : "OB RCS Get Consent",
+  "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/rcs-api/api/rcs/consent$')}",
   "handler": {
     "type": "Chain",

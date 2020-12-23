@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: platform-config
 data:
-  FQDN: default.bank.example.com
-  IAM_FQDN: default.cdk.example.com
+  FQDN: obdemo-bank.idhub.cc # default.bank.example.com
+  IAM_FQDN: openam-solutionarchitecture-hlobpoc.forgeblocks.com # default.cdk.example.com
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password

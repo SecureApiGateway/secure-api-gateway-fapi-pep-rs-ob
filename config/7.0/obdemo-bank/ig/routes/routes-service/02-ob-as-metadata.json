@@ -1,5 +1,6 @@
 {
   "name" : "OB AS Metadata",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/.well-known/openid-configuration')}",
   "handler": {

@@ -157,7 +157,56 @@
         ],
         "handler": "ForgeRockClientHandler"
       }
+    },
+    {
+      "name": "AuditService-OB-Route",
+      "type": "AuditService",
+      "config": {
+        "config": {
+          "filterPolicies": {
+            "field": {
+              "includeIf": [
+                "/access/http/request/headers/x-fapi-interaction-id"
+              ]
+            }
+          }
+        },
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "access"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AuditService-OB-Consent",
+      "type": "AuditService",
+      "config": {
+        "config": {
+
+        },
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "ObConsentTopic"
+              ]
+            }
+          }
+        ]
+      }
     }
+
   ],
   "monitor": true
 }

@@ -1,5 +1,6 @@
 {
   "name" : "OB RS Account Consent",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/account-access-consents')}",
   "handler": {
@@ -7,15 +8,11 @@
     "config": {
       "filters": [
         {
-          "name" : "HeaderFilter-AddResponseHeaders",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "RESPONSE",
-            "remove" : [ "Location", "Set-Cookie", "Server", "Strict-Transport-Security" ],
-            "add" : {
-              "x-fapi-interaction-id" : [ "${attributes.xfapiinteractionid != null ?  attributes.xfapiinteractionid : (context.id).substring(0,36)}" ],
-              "Content-Type" : [ "application/json" ]
-            }
+          "name": "ResponseHeaderFilter",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ResponseHeaderFilter.groovy"
           }
         },
         {
@@ -91,6 +88,20 @@
               "objAccountConsent": "ObAccountAccess",
               "objTpp": "obTpp",
               "tppClientId" : "${contexts.oauth2.accessToken.info.client_id}"
+            }
+          }
+        },
+        {
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
+              "role": "AISP",
+              "event": "CREATE"
             }
           }
         },

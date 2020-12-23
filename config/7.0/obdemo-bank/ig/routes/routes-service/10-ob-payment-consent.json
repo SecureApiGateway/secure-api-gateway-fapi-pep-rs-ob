@@ -1,5 +1,6 @@
 {
   "name" : "OB RS Payment Consent",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payment-consents((?!funds-confirmation).)*$')}",
   "handler": {
@@ -79,6 +80,20 @@
               "objPaymentConsent": "ObDomesticPayment",
               "objTpp": "obTpp",
               "tppClientId" : "${contexts.oauth2.accessToken.info.client_id}"
+            }
+          }
+        },
+        {
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
+              "role": "PISP",
+              "event": "CREATE"
             }
           }
         },

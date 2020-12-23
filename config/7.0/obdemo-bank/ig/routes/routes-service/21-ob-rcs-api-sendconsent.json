@@ -1,5 +1,6 @@
 {
   "name" : "OB RCS Send Consent",
+  "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/rcs-api/api/rcs/consent/sendconsent')}",
   "heap": [
     {
@@ -68,6 +69,20 @@
             "signature": {
               "secretId": "ig.rcs.secret",
               "algorithm": "HS256"
+            }
+          }
+        },
+        {
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "contexts.jwtValidation.claims.claims.id_token.openbanking_intent_id.value.toString().replaceAll('\"','')",
+              "role": "${toJson(request.entity.toString()).flow}",
+              "event": "CONSENT"
             }
           }
         }

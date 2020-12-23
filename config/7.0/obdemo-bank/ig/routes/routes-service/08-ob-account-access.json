@@ -1,5 +1,6 @@
 {
   "name" : "OB Account Access",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "http://obdemo-rs:8089",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/accounts')}",
   "capture" : [ "response", "request" ],
@@ -93,6 +94,20 @@
             "file": "TranslateAccountsResource.groovy",
             "args": {
               "accounts": "${contexts.jwtBuilder.value}"
+            }
+          }
+        },
+        {
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
+              "role": "AISP",
+              "event": "EXEC"
             }
           }
         }

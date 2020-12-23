@@ -1,5 +1,6 @@
 {
   "name" : "OB Payment Submission",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "http://obdemo-rs:8089",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payments$')}",
   "capture" : [ "response", "request" ],
@@ -102,6 +103,20 @@
             "file": "TranslatePaymentResource.groovy",
             "args": {
               "accounts": "${contexts.jwtBuilder.value}"
+            }
+          }
+        },
+        {
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
+              "role": "PISP",
+              "event": "EXEC"
             }
           }
         }

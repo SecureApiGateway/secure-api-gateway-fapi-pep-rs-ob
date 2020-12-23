@@ -1,5 +1,6 @@
 {
   "name" : "OBIE AS General",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am')}",
   "handler": {

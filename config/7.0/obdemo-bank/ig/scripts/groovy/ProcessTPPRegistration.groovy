@@ -49,6 +49,7 @@ oidcRegistration.setClaim("tls_client_certificate_bound_access_tokens", true)
 
 // TODO: Map scopes to roles
 // TODO: Subject DN for cert bound access tokens
+// TODO: Cross check software id with transport cert
 
 // Convert to JSON and pass it on
 

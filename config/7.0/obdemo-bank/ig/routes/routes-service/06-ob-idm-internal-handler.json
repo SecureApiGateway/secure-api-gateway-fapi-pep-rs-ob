@@ -1,5 +1,6 @@
 {
   "name" : "OB IDM Authorized Requests",
+  "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/openidm-internal')}",
   "handler": {

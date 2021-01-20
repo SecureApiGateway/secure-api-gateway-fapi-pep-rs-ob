@@ -31,6 +31,7 @@ next.handle(context, request).thenOnResult(response -> {
   def ssaClaims = ssaJws.getClaimsSet();
   def clientName = ssaClaims.getClaim("org_name", String.class);
   def clientCertId = ssaClaims.getClaim("org_id", String.class);
+  def clientJwksUri = ssaClaims.getClaim("software_jwks_endpoint", String.class)
 
   // Create the SSA object
 
@@ -76,6 +77,7 @@ next.handle(context, request).thenOnResult(response -> {
                "name": clientName,
                "identifier": clientIdentifier,
                "certId": clientCertId,
+               "jwksUri" : clientJwksUri,
                "ssa": clientSsa,
                "ssas" : [[ "_ref" : "managed/" + objSsa + "/" + ssaId ]]
        ]

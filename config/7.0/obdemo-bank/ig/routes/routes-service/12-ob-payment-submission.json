@@ -3,36 +3,21 @@
   "auditService": "AuditService-OB-Route",
   "baseURI" : "http://obdemo-rs:8089",
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payments$')}",
+  "heap": [
+    {
+      "name": "JwkSetSecretStore-TppJwks",
+      "type": "JwkSetSecretStore",
+      "config": {
+        "jwkUrl": "https://&{iam.fqdn}/openidm/endpoint/tppjwks",
+        "handler": "IDMClientHandler"
+      }
+    }
+  ],
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",
     "config" : {
       "filters" : [
-        {
-          "name" : "FormatJsonFilter",
-          "type" : "FormatJsonFilter",
-          "config" : { }
-        },
-        {
-          "type": "UriPathRewriteFilter",
-          "config": {
-            "mappings": {
-              "/rs": "/"
-            },
-            "failureHandler": {
-              "type": "StaticResponseHandler",
-              "config": {
-                "status": 500,
-                "headers": {
-                  "Content-Type": [
-                    "text/plain"
-                  ]
-                },
-                "entity": "Invalid URL produced"
-              }
-            }
-          }
-        },
         {
           "name" : "CertificateExtensionValidatorFilter",
           "type" : "CertificateExtensionValidatorFilter",
@@ -56,6 +41,59 @@
                 "verificationSecretId": "any.value.in.regex.format"
               }
 
+            }
+          }
+        },
+        {
+          "name": "ProcessDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ProcessDetachedSig.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "headerName": "x-jws-signature",
+              "idmBaseUri": "https://&{iam.fqdn}",
+              "objTpp": "obTpp",
+              "secretStore": "${heap['JwkSetSecretStore-ClientJwks']}"
+            }
+          }
+        },
+        {
+          "name": "JwtValidationFilter-Detached",
+          "type": "JwtValidationFilter",
+          "config": {
+            "jwt": "${attributes.detachedJWT}",
+            "verificationSecretId": "verify",
+            "secretsProvider": {
+              "type": "SecretsProvider",
+              "config": {
+                "stores": [
+                  {
+                    "name": "JwkSetSecretStore-TppJwks"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
             }
           }
         },

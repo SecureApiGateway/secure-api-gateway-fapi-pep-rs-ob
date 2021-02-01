@@ -19,6 +19,14 @@
     "config" : {
       "filters" : [
         {
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
           "name" : "CertificateExtensionValidatorFilter",
           "type" : "CertificateExtensionValidatorFilter",
           "config" : {

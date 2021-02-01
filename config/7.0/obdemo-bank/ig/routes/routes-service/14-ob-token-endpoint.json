@@ -8,98 +8,11 @@
     "config": {
       "filters": [
         {
-          "name" : "HeaderFilter-AddResponseHeaders",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "RESPONSE",
-            "remove" : [ "Location", "Set-Cookie", "Server", "Strict-Transport-Security" ],
-            "add" : {
-              "x-fapi-interaction-id" : [ "${attributes.xfapiinteractionid != null ?  attributes.xfapiinteractionid : (context.id).substring(0,36)}" ],
-              "Content-Type" : [ "application/json" ]
-            }
-          }
-        },
-        {
-          "name" : "ErrorResponseSwitch",
-          "type" : "SwitchFilter",
-          "config" : {
-            "onResponse" : [ {
-              "condition" : "${response.status.code == 400}",
-              "handler" : {
-                "name" : "FilterFailureHandler-400",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 400,
-                  "reason" : "Bad Request",
-                  "entity" : "${attributes.error400}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 401}",
-              "handler" : {
-                "name" : "FilterFailureHandler-401",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 401,
-                  "reason" : "Unauthorized",
-                  "entity" : "${attributes.error401}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 403}",
-              "handler" : {
-                "name" : "FilterFailureHandler-403",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 403,
-                  "reason" : "Forbidden",
-                  "entity" : "${attributes.error403}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 404}",
-              "handler" : {
-                "name" : "FilterFailureHandler-404",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 404,
-                  "reason" : "Not Found",
-                  "entity" : "${attributes.error404}"
-                }
-              }
-            }, {
-              "condition" : "${response.status.code == 500}",
-              "handler" : {
-                "name" : "FilterFailureHandler-500",
-                "type" : "StaticResponseHandler",
-                "config" : {
-                  "status" : 500,
-                  "reason" : "Internal Server Error",
-                  "entity" : "${attributes.error500}"
-                }
-              }
-            } ]
-          }
-        }, {
-          "name" : "AssignmentFilter-ErrorHandling",
-          "type" : "AssignmentFilter",
-          "config" : {
-            "onResponse" : [ {
-              "target" : "${attributes.error400}",
-              "value" : "${toString('{\"Code\":\"400 BadRequest\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Invalid request parameters.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.Bad.Request\",\"Message\":\"Invalid request parameters.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            }, {
-              "target" : "${attributes.error401}",
-              "value" : "${toString('{\"status\":\"401\",\"error\":\"Unauthorized\",\"message\":\"Unauthorized\",\"path\":\"').concat(request.uri.path).concat('\"}')}"
-            }, {
-              "target" : "${attributes.error403}",
-              "value" : "${toString('{\"status\":\"403\",\"error\":\"Forbidden\",\"message\":\"Forbidden\",\"path\":\"').concat(request.uri.path).concat('\"}')}"
-            }, {
-              "target" : "${attributes.error404}",
-              "value" : "${toString('{\"Code\":\"404 Not Found\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Resource Not Found.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.NotFound\",\"Message\":\"Not Found.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            }, {
-              "target" : "${attributes.error500}",
-              "value" : "${toString('{\"Code\":\"500 Internal Server Error\",\"Id\":\"').concat(request.headers['x-request-id'][0]).concat('\",\"Message\":\"Internal Server Error.\",\"Errors\":[{\"ErrorCode\":\"UK.OBIE.UnexpectedError\",\"Message\":\"Unexpected Error.\",\"Path\":\"\",\"Url\":\"').concat(request.uri.path).concat('\"}]}')}"
-            } ]
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
           }
         },
         {

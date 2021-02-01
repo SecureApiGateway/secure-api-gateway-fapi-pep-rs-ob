@@ -8,11 +8,11 @@
     "config": {
       "filters": [
         {
-          "name": "ResponseHeaderFilter",
+          "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ResponseHeaderFilter.groovy"
+            "file": "ObResponseCheck.groovy"
           }
         },
         {

@@ -9,9 +9,12 @@
     "config" : {
       "filters" : [
         {
-          "name" : "FormatJsonFilter",
-          "type" : "FormatJsonFilter",
-          "config" : { }
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
         },
         {
           "type": "UriPathRewriteFilter",

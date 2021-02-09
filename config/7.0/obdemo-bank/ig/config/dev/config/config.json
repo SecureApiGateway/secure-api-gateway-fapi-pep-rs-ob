@@ -79,16 +79,9 @@
         "version" : "6.5.1",
         "agent" : {
           "username" : "ig-agent",
-          "passwordSecretId" : "ig.agent.secret"
+          "passwordSecretId" : "ig.agent.password"
         },
-        "secretsProvider": {
-          "type": "Base64EncodedSecretStore",
-          "config": {
-            "secrets": {
-              "ig.agent.secret": "cGFzc3dvcmQ="
-            }
-          }
-        },
+        "secretsProvider": "SystemAndEnvSecretStore-IAM",
         "sessionCache" : {
           "enabled" : false
         },
@@ -135,6 +128,30 @@
         ]
       }
     },
+    {
+      "name": "SecretsProvider-ASPSP",
+      "type": "SecretsProvider",
+      "config": {
+        "stores": [
+          {
+            "name":"KeyStoreSecretStore-ASPSP",
+            "type": "KeyStoreSecretStore",
+            "config": {
+              "file": "&{ig.instance.dir}&{aspsp.keystore.path}",
+              "storeType": "PKCS12",
+              "storePassword": "aspsp.keystore.password",
+              "keyEntryPassword": "aspsp.keystore.password",
+              "secretsProvider": "SystemAndEnvSecretStore-IAM",
+              "mappings": [{
+                "secretId": "&{aspsp.jwtsigner.alias}",
+                "aliases": [ "&{aspsp.jwtsigner.alias}" ]
+              }]
+            }
+          }
+        ]
+      }
+    },
+
     {
       "name": "IDMClientHandler",
       "type": "Chain",

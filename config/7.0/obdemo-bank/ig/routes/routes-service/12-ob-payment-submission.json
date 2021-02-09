@@ -19,6 +19,21 @@
     "config" : {
       "filters" : [
         {
+          "name": "AddDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AddDetachedSig.groovy",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgAlgorithm": "PS256",
+              "routeArgSecretId": "&{aspsp.jwtsigner.alias}",
+              "routeArgKid": "&{aspsp.jwtsigner.kid}",
+              "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}"
+            }
+          }
+        },
+        {
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -60,10 +75,7 @@
             "file": "ProcessDetachedSig.groovy",
             "clientHandler": "IDMClientHandler",
             "args": {
-              "headerName": "x-jws-signature",
-              "idmBaseUri": "https://&{iam.fqdn}",
-              "objTpp": "obTpp",
-              "secretStore": "${heap['JwkSetSecretStore-ClientJwks']}"
+              "_arg_headerName": "x-jws-signature"
             }
           }
         },

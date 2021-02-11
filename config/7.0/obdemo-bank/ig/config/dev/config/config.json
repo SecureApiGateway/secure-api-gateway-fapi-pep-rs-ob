@@ -75,7 +75,6 @@
       "config" : {
         "url" : "https://&{iam.fqdn}/am",
         "realm" : "/&{am.realm}",
-        "ssoTokenHeader" : "&{am.cookie.name}",
         "version" : "6.5.1",
         "agent" : {
           "username" : "ig-agent",

@@ -15,7 +15,7 @@ spec:
       - backend:
           serviceName: ig
           servicePort: 8080
-        path: /rs/?(.*)
+        path: /rs
   tls:
   - hosts:
     - $(FQDN)

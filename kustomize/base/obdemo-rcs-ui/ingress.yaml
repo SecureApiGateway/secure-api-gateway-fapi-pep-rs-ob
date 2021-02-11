@@ -12,7 +12,7 @@ spec:
       - backend:
           serviceName: obdemo-rcs-ui
           servicePort: 80
-        path: /rcs?
+        path: /rcs
   tls:
   - hosts:
     - $(FQDN)

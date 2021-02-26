@@ -17,6 +17,28 @@
           }
         },
         {
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "name" : "CertificateRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CertificateRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "AISP"
+            }
+          }
+        },
+        {
           "type": "UriPathRewriteFilter",
           "config": {
             "mappings": {
@@ -53,14 +75,7 @@
             }
           }
         },
-        {
-          "name" : "CertificateExtensionValidatorFilter",
-          "type" : "CertificateExtensionValidatorFilter",
-          "config" : {
-            "routeRole" : "Account Information",
-            "clientCertificateHeaderName" : "ssl-client-cert"
-          }
-        },
+
         {
           "name" : "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
           "type" : "PolicyEnforcementFilter",

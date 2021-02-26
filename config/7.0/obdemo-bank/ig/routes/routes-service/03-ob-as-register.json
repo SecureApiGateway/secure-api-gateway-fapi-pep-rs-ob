@@ -23,14 +23,22 @@
           }
         },
         {
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
           "name": "ProcessTPPRegistration",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessTPPRegistration.groovy",
-            "args": {
-              "certHeader": "ssl-client-cert"
-            }
+            "file": "ProcessTPPRegistration.groovy"
           }
         },
         {

@@ -16,11 +16,25 @@
           }
         },
         {
-          "name" : "CertificateExtensionValidatorFilter",
-          "type" : "CertificateExtensionValidatorFilter",
-          "config" : {
-            "routeRole" : "Payment Initiation",
-            "clientCertificateHeaderName" : "ssl-client-cert"
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "name" : "CertificateRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CertificateRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "PISP"
+            }
           }
         },
         {

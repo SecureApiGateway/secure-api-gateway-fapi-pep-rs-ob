@@ -61,8 +61,6 @@ def getAccountList(username) {
 
 // Pull consent details from intent id embedded in consent request from AM
 
-// TODO: Figure out why contexts expression doesn't work in route args
-
 def consentRequest = contexts.jwtValidation.value
 def intentId = contexts.jwtValidation.claims.claims.id_token.openbanking_intent_id.value.toString().replaceAll('"','')
 def username = contexts.jwtValidation.claims.username.toString()
@@ -94,7 +92,7 @@ else {
 Request intentRequest = new Request();
 intentRequest.setMethod('GET');
 
-def objName = (flow == "aisp") ? objAccountConsent : objPaymentConsent
+def objName = (flow == "aisp") ? routeArgObjAccountAccessConsent : routeArgObjDomesticPaymentConsent
 intentRequest.setUri(idmBaseUri + "/openidm/managed/" + objName + "/" + intentId)
 
 http.send(intentRequest).then(intentResponse -> {

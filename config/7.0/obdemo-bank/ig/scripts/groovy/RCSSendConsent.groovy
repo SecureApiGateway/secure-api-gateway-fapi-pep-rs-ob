@@ -12,11 +12,11 @@ FLOW_PISP = "pisp"
 
 // TODO: Figure out why expression doesn't work in script args from route
 
-def redirectUri = contexts.jwtValidation.claims.consentApprovalRedirectUri.toString().replaceAll('"','')
+def redirectUri = contexts.jwtValidation.claims.consentApprovalRedirectUri.asString()
 def consentJwt = contexts.jwtBuilder.value
 def requestObj = request.getEntity().getJson()
-def intentId = contexts.jwtValidation.claims.claims.id_token.openbanking_intent_id.value.toString().replaceAll('"','')
-def user = contexts.jwtValidation.claims.username.toString().replaceAll('"','')
+def intentId = contexts.jwtValidation.claims.claims.id_token.openbanking_intent_id.value.asString()
+def user = contexts.jwtValidation.claims.username.asString()
 
 
 /*
@@ -49,13 +49,13 @@ def authorisePatchRequest (intentId, account, user, flow) {
       ],
       [
         "operation":"replace",
-        "field":"/User",
-        "value": [ "_ref": "managed/" + objUser + "/" + user ]
+        "field":"/user",
+        "value": [ "_ref": "managed/" + routeArgObjUser + "/" + user ]
       ],
       flow == FLOW_AISP ?
         [
               "operation":"replace",
-              "field":"/Accounts",
+              "field":"/accounts",
               "value": account
         ] :
         [
@@ -86,7 +86,7 @@ logger.debug("Updating account intent " + intentId)
 
 Request patchRequest = new Request();
 patchRequest.setMethod('POST');
-patchRequest.setUri(idmBaseUri + "/openidm/managed/" + (requestObj.flow == FLOW_AISP ? objAccountConsent : objPaymentConsent) + "/" + intentId + "?_action=patch");
+patchRequest.setUri(idmBaseUri + "/openidm/managed/" + (requestObj.flow == FLOW_AISP ? routeArgObjAccountAccessConsent : routeArgObjDomesticPaymentConsent) + "/" + intentId + "?_action=patch");
 patchRequest.getHeaders().add("Content-Type","application/json");
 patchRequest.setEntity(JsonOutput.toJson(authorisePatchRequest(intentId, requestObj.account, user, requestObj.flow)))
 

@@ -94,11 +94,9 @@
           "clientHandler": "IDMClientHandler",
           "file": "RCSSendConsent.groovy",
           "args": {
-            "consent_response": "${contexts.jwtBuilder.value}",
-            "claims": "${contexts.jwtValidation.claims}",
-            "objAccountConsent": "ObAccountAccess",
-            "objPaymentConsent": "ObDomesticPayment",
-            "objUser": "&{am.realm}_user",
+            "routeArgObjAccountAccessConsent": "accountAccessIntent",
+            "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
+            "routeArgObjUser": "&{am.realm}_user",
             "idmBaseUri": "https://&{iam.fqdn}"
           }
         }

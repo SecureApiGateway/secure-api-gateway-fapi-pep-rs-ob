@@ -5,10 +5,10 @@
   "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payments$')}",
   "heap": [
     {
-      "name": "JwkSetSecretStore-TppJwks",
+      "name": "JwkSetSecretStore-ApiClientJwks",
       "type": "JwkSetSecretStore",
       "config": {
-        "jwkUrl": "https://&{iam.fqdn}/openidm/endpoint/tppjwks",
+        "jwkUrl": "https://&{iam.fqdn}/openidm/endpoint/apiclientjwks",
         "handler": "IDMClientHandler"
       }
     }
@@ -104,7 +104,7 @@
               "config": {
                 "stores": [
                   {
-                    "name": "JwkSetSecretStore-TppJwks"
+                    "name": "JwkSetSecretStore-ApiClientJwks"
                   }
                 ]
               }

@@ -99,9 +99,8 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "objPaymentConsent": "ObDomesticPayment",
-              "objTpp": "obTpp",
-              "tppClientId" : "${contexts.oauth2.accessToken.info.client_id}"
+              "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
+              "routeArgObjApiClient": "apiClient"
             }
           }
         },

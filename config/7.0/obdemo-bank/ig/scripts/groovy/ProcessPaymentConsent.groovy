@@ -6,9 +6,7 @@ import java.text.SimpleDateFormat
  * Output: IDM create object
  */
 
-// TODO: figure out why we can't pass the tpp id in as an arg from the route
-
-def tppId = contexts.oauth2.accessToken.info.client_id
+def apiClientId = contexts.oauth2.accessToken.info.client_id
 
 
 paymentIntentData = request.entity.getJson()
@@ -21,13 +19,13 @@ def nowAsISO = df.format(new Date());
 paymentIntentData.Data.Status = "AwaitingAuthorisation";
 paymentIntentData.Data.CreationDateTime = nowAsISO
 paymentIntentData.Data.StatusUpdateDateTime = nowAsISO
-paymentIntentData.Tpp = [ "_ref" : "managed/" + objTpp + "/" + tppId ]
+paymentIntentData.apiClient = [ "_ref" : "managed/" + routeArgObjApiClient + "/" + apiClientId ]
 
 logger.debug("final json [" + paymentIntentData + "]")
 request.setEntity(paymentIntentData)
 
 
-request.uri.path = "/openidm/managed/" + objPaymentConsent
+request.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent
 request.uri.query = "action=create";
 
 next.handle(context, request)

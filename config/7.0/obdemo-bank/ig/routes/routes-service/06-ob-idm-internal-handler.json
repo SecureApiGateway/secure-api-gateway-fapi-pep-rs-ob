@@ -2,7 +2,7 @@
   "name" : "OB IDM Authorized Requests",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/openidm-internal')}",
+  "condition" : "${matches(request.uri.path, '^/store')}",
   "handler": {
     "type": "Chain",
     "config": {
@@ -24,7 +24,7 @@
           "type": "UriPathRewriteFilter",
           "config": {
             "mappings": {
-              "/openidm-internal": "/openidm"
+              "/store/consent/": "/openidm/"
             },
             "failureHandler": {
               "type": "StaticResponseHandler",

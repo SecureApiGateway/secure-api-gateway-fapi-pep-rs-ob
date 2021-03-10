@@ -24,10 +24,8 @@
           "clientHandler": "IDMClientHandler",
           "file": "RCSGetConsent.groovy",
           "args": {
-            "consent_request": "${contexts.jwtValidation.value}",
-            "claims": "${contexts.jwtValidation.claims}",
-            "objAccountConsent": "ObAccountAccess",
-            "objPaymentConsent": "ObDomesticPayment",
+            "routeArgObjAccountAccessConsent": "accountAccessIntent",
+            "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
             "idmBaseUri": "https://&{iam.fqdn}"
           }
         }

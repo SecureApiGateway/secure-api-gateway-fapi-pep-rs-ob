@@ -4,8 +4,8 @@ import org.forgerock.json.jose.common.JwtReconstruction
 import org.forgerock.json.jose.jws.SignedJwt
 
 /*
- * Script to verify the TPP registration request, and prepare AM OIDC dynamic client reg
- * Input: TPP registration JWT
+ * Script to verify the registration request, and prepare AM OIDC dynamic client reg
+ * Input:  Registration JWT
  * Output: Verified OIDC registration JSON
  */
 
@@ -24,18 +24,18 @@ def ROLE_CARD_BASED_PAYMENT_INSTRUMENTS = "0.4.0.19495.1.4"
 // Check we have everything we need from the client certificate
 
 if (!attributes.clientCertificate) {
-    logger.error("No client certificate for TPP registration")
+    logger.error("No client certificate for registration")
     return new Response(Status.BAD_REQUEST)
 }
 
 if (!attributes.clientCertificate.roles) {
-    logger.error("No roles in client certificate for TPP registration")
+    logger.error("No roles in client certificate for registration")
     return new Response(Status.BAD_REQUEST)
 }
 
 // Parse incoming registration JWT
 
-logger.debug("Parsing TPP request");
+logger.debug("Parsing registration request");
 
 def regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(),SignedJwt.class)
 
@@ -59,20 +59,20 @@ def ssaJwt = new JwtReconstruction().reconstructJwt(ssa,SignedJwt.class)
 // Going to delegate ssa signature verification to AM
 
 def ssaClaims = ssaJwt.getClaimsSet();
-def tppName = ssaClaims.getClaim("software_client_name", String.class);
-def tppCertId = ssaClaims.getClaim("org_id", String.class);
-def tppJwksUri = ssaClaims.getClaim("software_jwks_endpoint");
+def apiClientOrgName = ssaClaims.getClaim("software_client_name", String.class);
+def apiClientOrgCertId = ssaClaims.getClaim("org_id", String.class);
+def apiClientOrgJwksUri = ssaClaims.getClaim("software_jwks_endpoint");
 
-logger.debug("Inbound TPP details from SSA: tppName: {} tppCertId: {} tppJwksUri: {}",
-        tppName,
-        tppCertId,
-        tppJwksUri
+logger.debug("Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {}",
+        apiClientOrgName,
+        apiClientOrgCertId,
+        apiClientOrgJwksUri
 )
 
 // Update OIDC registration request
 
-oidcRegistration.setClaim("jwks_uri",tppJwksUri)
-oidcRegistration.setClaim("client_name",tppName)
+oidcRegistration.setClaim("jwks_uri",apiClientOrgJwksUri)
+oidcRegistration.setClaim("client_name",apiClientOrgName)
 oidcRegistration.setClaim("tls_client_certificate_bound_access_tokens", true)
 
 // Sanity check on scopes
@@ -96,7 +96,7 @@ if (scopes.contains(SCOPE_PAYMENTS) && !(roles.contains(ROLE_PAYMENT_INITIATION)
     return new Response(Status.FORBIDDEN)
 }
 
-// Cross check TPP ID with cert
+// Cross check ID with cert
 //
 // e.g. PSDGB-FFA-5f563e89742b2800145c7da1
 
@@ -116,8 +116,8 @@ if (oiComponents.length != 3) {
 
 def dnId = oiComponents[2]
 
-if (dnId != tppCertId) {
-    logger.error("TPP ID in cert {} does not match id in SSA {}",dnId,tppCertId)
+if (dnId != apiClientOrgCertId) {
+    logger.error("apiClientOrg ID in cert {} does not match id in SSA {}",dnId,apiClientOrgCertId)
     return new Response(Status.FORBIDDEN)
 }
 

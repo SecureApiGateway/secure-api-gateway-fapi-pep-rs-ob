@@ -99,9 +99,8 @@
             "type": "application/x-groovy",
             "file": "ProcessAccountConsent.groovy",
             "args": {
-              "objAccountConsent": "ObAccountAccess",
-              "objTpp": "obTpp",
-              "tppClientId" : "${contexts.oauth2.accessToken.info.client_id}"
+              "routeArgObjAccountAccessConsent": "accountAccessIntent",
+              "routeArgObjApiClient": "apiClient"
             }
           }
         },

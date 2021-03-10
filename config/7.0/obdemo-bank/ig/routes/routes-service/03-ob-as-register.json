@@ -34,23 +34,23 @@
           }
         },
         {
-          "name": "ProcessTPPRegistration",
+          "name": "ProcessRegistration",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessTPPRegistration.groovy"
+            "file": "ProcessRegistration.groovy"
           }
         },
         {
-          "name": "CreateTpp",
+          "name": "CreateApiClient",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "CreateTPP.groovy",
+            "file": "CreateApiClient.groovy",
             "args": {
               "idmBaseUri": "https://&{iam.fqdn}",
-              "objTpp": "obTpp",
-              "objSsa": "obTppSsa"
+              "routeArgObjApiClientOrg": "apiClientOrg",
+              "routeArgObjApiClient": "apiClient"
             },
             "clientHandler": {
               "type": "Chain",

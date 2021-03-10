@@ -1,0 +1,61 @@
+{
+  "name" : "Internal Repo Route - for RCS",
+  "auditService": "AuditService-OB-Route",
+  "baseURI" : "https://&{iam.fqdn}",
+  "condition" : "${matches(request.uri.path, '^/repo/')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "SwitchFilter-RequestRouter",
+          "type": "SwitchFilter",
+          "config": {
+            "onRequest": [
+              {
+                "condition": "${matches(request.uri.path, '^/repo/apiclients')}",
+                "handler": {
+                  "type": "ScriptableHandler",
+                  "config": {
+                    "type": "application/x-groovy",
+                    "clientHandler": "IDMClientHandler",
+                    "file": "RepoApiClient.groovy",
+                    "args": {
+                      "routeArgObjApiClient": "apiClient",
+                      "routeArgIdmBaseUri": "https://&{iam.fqdn}"
+                    }
+                  }
+                }
+              },
+              {
+                "condition": "${matches(request.uri.path, '^/repo/consents')}",
+                "handler": {
+                  "type": "ScriptableHandler",
+                  "config": {
+                    "type": "application/x-groovy",
+                    "clientHandler": "IDMClientHandler",
+                    "file": "RepoConsent.groovy",
+                    "args": {
+                      "routeArgConsentPathAccountAccess": "account-access",
+                      "routeArgObjAccountAccessIntent": "accountAccessIntent",
+                      "routeArgConsentDomesticPayment": "domestic-payment",
+                      "routeArgObjDomesticPaymentIntent": "domesticPaymentIntent",
+                      "routeArgIdmBaseUri": "https://&{iam.fqdn}"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "handler": {
+        "type": "StaticResponseHandler",
+        "config": {
+          "status": 404,
+          "reason": "Not Found"
+         }
+      }
+    }
+  }
+} 

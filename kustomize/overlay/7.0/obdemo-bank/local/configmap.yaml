@@ -3,8 +3,9 @@ kind: ConfigMap
 metadata:
   name: platform-config
 data:
-  FQDN: obdemo.dev.forgerock.financial # default.bank.example.com
-  IAM_FQDN: iam.dev.forgerock.financial # default.cdk.example.com
+  INGRESS_IP: "192.168.64.13"
+  FQDN: default.bank.example.com
+  IAM_FQDN: default.cdk.example.com
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password
@@ -14,8 +15,4 @@ data:
   IG_AGENT_PASSWORD: password
   IG_RCS_SECRET: password
   AM_COOKIE_NAME: replace-with-amcookiename
-  CERT_ISSUER: default-issuer
-  ASPSP_KEYSTORE_PATH: /secrets/aspsp.test.p12
-  ASPSP_KEYSTORE_PASSWORD: password
-  ASPSP_JWTSIGNER_ALIAS: jwtsigner
-  ASPSP_JWTSIGNER_KID: R3MviZ4QUPEDJm7RS3Mw
+  CERT_ISSUER: null-issuer

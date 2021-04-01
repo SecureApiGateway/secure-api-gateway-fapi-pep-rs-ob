@@ -12,11 +12,6 @@
             serviceName: ig
             servicePort: 8080
           path: /rcs-api
-# Temporary - this will be internal
-        - backend:
-            serviceName: ig
-            servicePort: 8080
-          path: /repo
 
 - op: add
   path: /metadata/annotations

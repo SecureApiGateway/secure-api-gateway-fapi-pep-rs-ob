@@ -1,0 +1,4 @@
+kind: ""
+apiversion: ""
+resources:
+- am-secret.yaml

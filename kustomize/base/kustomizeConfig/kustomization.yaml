@@ -15,6 +15,7 @@ configMapGenerator:
   - FQDN=default.bank.example.com # secure banking platform domain
   - IAM_FQDN=default.iplatform.example.com # forgerock identity platform domain
   - CERT_ISSUER="default-issuer" # cert manager issuer. Patch with letsencrypt-prod for LE SSL certs.
+  - INGRESS_IP=127.0.0.1 # For local (minikube) use only
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -24,6 +25,20 @@ vars:
 - name: FQDN
   fieldref:
     fieldpath: data.FQDN
+  objref:
+    apiVersion: v1
+    kind: ConfigMap
+    name: platform-config
+- name: IAM_FQDN
+  fieldref:
+    fieldpath: data.IAM_FQDN
+  objref:
+    apiVersion: v1
+    kind: ConfigMap
+    name: platform-config
+- name: INGRESS_IP
+  fieldref:
+    fieldpath: data.INGRESS_IP
   objref:
     apiVersion: v1
     kind: ConfigMap

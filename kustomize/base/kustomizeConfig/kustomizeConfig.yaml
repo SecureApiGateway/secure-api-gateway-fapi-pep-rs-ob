@@ -1,4 +1,8 @@
 # This enables kustomize to replace variables in ConfigMap (data is the path spec for replacement)
 varReference:
-- path: data
-  kind: ConfigMap
+- kind: ConfigMap
+  path: data
+- kind: Deployment
+  path: spec/template/spec/hostAliases/hostnames
+- kind: Deployment
+  path: spec/template/spec/hostAliases/ip

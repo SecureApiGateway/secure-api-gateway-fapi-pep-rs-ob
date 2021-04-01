@@ -38,7 +38,7 @@
                     "args": {
                       "routeArgConsentPathAccountAccess": "account-access",
                       "routeArgObjAccountAccessIntent": "accountAccessIntent",
-                      "routeArgConsentDomesticPayment": "domestic-payment",
+                      "routeArgConsentPathDomesticPayment": "domestic-payment",
                       "routeArgObjDomesticPaymentIntent": "domesticPaymentIntent",
                       "routeArgIdmBaseUri": "https://&{iam.fqdn}"
                     }

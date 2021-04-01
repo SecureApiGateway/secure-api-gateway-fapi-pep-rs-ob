@@ -38,7 +38,7 @@ http.send(apiClientRequest).then(apiClientResponse -> {
             "id": apiClientResponseObject.id,
             "name": apiClientResponseObject.name,
             "officialName": apiClientResponseObject.name,
-            "clientId": apiClientResponseObject.oauth2ClientId,
+            "oauth2ClientId": apiClientResponseObject.oauth2ClientId,
             "logoUri": apiClientResponseObject.logoUri
     ]
 

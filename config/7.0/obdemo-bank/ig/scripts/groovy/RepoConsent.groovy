@@ -28,7 +28,7 @@ def intentId = splitUri[splitUri.length - 1]
 Request intentRequest = new Request();
 intentRequest.setMethod('GET');
 
-intentRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=Data,user/userName,accounts,apiClient/oauth2ClientId")
+intentRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/userName,accounts,account,apiClient/oauth2ClientId,apiClient/name")
 
 
 http.send(intentRequest).then(intentResponse -> {
@@ -45,12 +45,29 @@ http.send(intentRequest).then(intentResponse -> {
     def intentResponseContent = intentResponse.getEntity();
     def intentResponseObject = intentResponseContent.getJson();
 
-    def responseObj = [
-            "data": intentResponseObject.Data,
-            "accounts": intentResponseObject.accounts,
-            "user": intentResponseObject.user.userName,
-            "oauth2ClientId": intentResponseObject.apiClient.oauth2ClientId
-    ]
+    def responseObj = []
+
+    if (consentType == routeArgConsentPathAccountAccess) {
+        responseObj = [
+                "id": intentResponseObject._id,
+                "data": intentResponseObject.Data,
+                "accountIds": intentResponseObject.accounts,
+                "resourceOwnerUsername": intentResponseObject.user.userName,
+                "oauth2ClientId": intentResponseObject.apiClient.oauth2ClientId,
+                "oauth2ClientName": intentResponseObject.apiClient.name
+        ]
+    }
+    else if (consentType == routeArgConsentPathDomesticPayment) {
+        responseObj = [
+                "id": intentResponseObject._id,
+                "data": intentResponseObject.Data,
+                "accountId": intentResponseObject.account,
+                "resourceOwnerUsername": intentResponseObject.user.userName,
+                "oauth2ClientId": intentResponseObject.apiClient.oauth2ClientId,
+                "oauth2ClientName": intentResponseObject.apiClient.name
+        ]
+    }
+
     def responseJson = JsonOutput.toJson(responseObj);
     logger.debug("Final JSON " + responseJson)
     def response = new Response(Status.OK)

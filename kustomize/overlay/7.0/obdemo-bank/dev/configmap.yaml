@@ -8,7 +8,7 @@ data:
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password
-  IG_IDM_USER: service_user.ig
+  IG_IDM_USER: service_account.ig
   IG_IDM_PASSWORD: 0penBanking!
   IG_AGENT_ID: ig-agent
   IG_AGENT_PASSWORD: password

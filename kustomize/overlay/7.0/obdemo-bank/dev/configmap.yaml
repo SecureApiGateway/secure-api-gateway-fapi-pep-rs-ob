@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: platform-config
 data:
-  FQDN: obdemo.dev.forgerock.financial # default.bank.example.com
-  IAM_FQDN: iam.dev.forgerock.financial # default.cdk.example.com
+  FQDN: obdemo.dev.forgerock.financial
+  IAM_FQDN: iam.dev.forgerock.financial
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password
@@ -13,7 +13,6 @@ data:
   IG_AGENT_ID: ig-agent
   IG_AGENT_PASSWORD: password
   IG_RCS_SECRET: password
-  AM_COOKIE_NAME: replace-with-amcookiename
   CERT_ISSUER: default-issuer
   ASPSP_KEYSTORE_PATH: /secrets/aspsp.test.p12
   ASPSP_KEYSTORE_PASSWORD: password

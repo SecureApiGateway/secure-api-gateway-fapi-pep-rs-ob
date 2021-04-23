@@ -17,6 +17,11 @@
             serviceName: ig
             servicePort: 8080
           path: /repo
+# Temporary - this will be internal
+        - backend:
+            serviceName: ig
+            servicePort: 8080
+          path: /jwkms
 
 - op: add
   path: /metadata/annotations

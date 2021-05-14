@@ -1,8 +1,8 @@
 - op: add
   path: /spec/template/spec/initContainers
   value:
-    - name: cdk-initializer
-      image: eu.gcr.io/sbat-gcr-develop/securebanking/secureopenbanking-uk-fidc-initializer:latest
+    - name: iam-init
+      image: eu.gcr.io/sbat-gcr-release/securebanking/secureopenbanking-uk-fidc-initializer:latest
       imagePullPolicy: Always
       env:
       - name: OPEN_AM_PASSWORD
@@ -22,7 +22,7 @@
         - |
           until $(curl -X GET --output /dev/null --silent --head --fail -H "X-OpenIDM-Username: anonymous" \
           -H "X-OpenIDM-Password: anonymous" -H "X-OpenIDM-NoSession: true" \
-          $IAM_FQDN/openidm/info/ping)
+          https://$IAM_FQDN/openidm/info/ping)
           do
           echo "IDM not ready"
           sleep 10

@@ -8,6 +8,14 @@ import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
+import org.bouncycastle.asn1.ASN1OctetString
+import java.security.KeyFactory
+import java.security.PrivateKey
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.interfaces.RSAPublicKey;
 
 
 /*
@@ -146,6 +154,7 @@ class CertificateParserHelper {
 
     */
 
+
     public static getRoles(Certificate certificate, loghandler) {
         def roles = []
 
@@ -226,12 +235,53 @@ def certToObject(Certificate certificate) {
       signature: certificate.getSignature(),
       type: certificate.getType(),
       version: certificate.getVersion(),
-      roles: CertificateParserHelper.getRoles(certificate,logger)
+      roles: CertificateParserHelper.getRoles(certificate,logger),
+      publicKey: certificate.getPublicKey(),
+      privateKey: getEmbeddedPrivateKey(certificate)
+
     ]
 
     return object
 }
 
+def getEmbeddedPrivateKey(Certificate certificate) {
+    if (!binding.hasVariable('routeArgPrivateKeyOid')) {
+        logger.debug("No routeArgPrivateKeyOid value - not looking for private key")
+        return null
+    }
+
+    byte[] encryptedPrivateKey = certificate.getExtensionValue(routeArgPrivateKeyOid)
+
+    if (!encryptedPrivateKey) {
+        logger.debug("No encrypted key in cert")
+        return null
+    }
+
+    logger.debug("Got encoded encrypted private key - {} bytes",encryptedPrivateKey.length)
+
+    ASN1OctetString octString = ASN1OctetString.fromByteArray(encryptedPrivateKey)
+    encryptedPrivateKeyBytes = octString.getOctets();
+
+    logger.debug("Got raw encrypted private key - {} bytes",encryptedPrivateKeyBytes.length)
+
+
+    String keyB64 = routeArgEncryptionKey;
+    logger.debug("Using decryption key " + keyB64);
+    byte[] decodedKey = Base64.getDecoder().decode(keyB64);
+
+    SecretKey decryptionKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+
+    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+    cipher.init(Cipher.DECRYPT_MODE, decryptionKey);
+
+    byte[] encodedPrivateKey = cipher.doFinal(encryptedPrivateKeyBytes);
+
+    KeyFactory kf = KeyFactory.getInstance("RSA");
+    PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(encodedPrivateKey));
+
+    return privateKey
+
+}
 
 
 def header = request.headers.get(routeArgCertificateHeader)

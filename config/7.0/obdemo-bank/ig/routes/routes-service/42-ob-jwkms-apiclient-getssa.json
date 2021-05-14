@@ -1,0 +1,80 @@
+{
+  "name" : "OB Generate Test SSA",
+  "auditService": "AuditService-OB-Route",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/getssa')}",
+  "heap": [
+    {
+      "name": "SecretKeyPropertyFormat-SSA",
+      "type": "SecretKeyPropertyFormat",
+      "config": {
+        "format": "PLAIN",
+        "algorithm": "AES"
+      }
+    },
+    {
+      "name": "SystemAndEnvSecretStore-SSA",
+      "type": "SystemAndEnvSecretStore",
+      "config": {
+        "mappings": [{
+          "secretId": "ig.ssa.secret",
+          "format": "SecretKeyPropertyFormat-SSA"
+        }]
+      }
+    }
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "name": "JwkmsBuildSSA",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "JwkmsBuildSSA.groovy",
+            "args": {
+                "routeArgJwtIssuer": "test-publisher",
+                "routeArgJwtValidity": 300
+            }
+          }
+        },
+
+        {
+          "name": "JwtBuilderFilter-SSA",
+          "type": "JwtBuilderFilter",
+          "config": {
+            "template": "${attributes.ssaPayload}",
+            "secretsProvider": "SystemAndEnvSecretStore-SSA",
+            "signature": {
+              "secretId": "ig.ssa.secret",
+              "algorithm": "HS256"
+            }
+          }
+        }
+      ],
+      "handler": {
+        "type": "ScriptableHandler",
+        "config": {
+          "type": "application/x-groovy",
+          "source": [
+            "def response = new Response(Status.OK);",
+            "response.setEntity(contexts.jwtBuilder.value);",
+            "response.getHeaders().add(\"Content-Type\",\"text/plain\");",
+            "return response"
+          ]
+        }
+      }
+    }
+  }
+}

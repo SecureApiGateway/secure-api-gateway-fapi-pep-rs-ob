@@ -1,0 +1,37 @@
+{
+  "name" : "OB Sign Test JWT",
+  "auditService": "AuditService-OB-Route",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/signclaims')}",
+  "heap": [
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert",
+              "routeArgPrivateKeyOid": "1.3.6.1.4.1.36733.10101",
+              "routeArgEncryptionKey": "&{ca.kek}"
+            }
+          }
+        }
+      ],
+      "handler": {
+        "name": "JwkmsSignClientClaims",
+        "type": "ScriptableHandler",
+        "config": {
+          "type": "application/x-groovy",
+          "file": "JwkmsSignClientClaims.groovy",
+          "args": {
+          }
+        }
+      }
+    }
+  }
+}

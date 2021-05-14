@@ -62,16 +62,31 @@ def ssaClaims = ssaJwt.getClaimsSet();
 def apiClientOrgName = ssaClaims.getClaim("software_client_name", String.class);
 def apiClientOrgCertId = ssaClaims.getClaim("org_id", String.class);
 def apiClientOrgJwksUri = ssaClaims.getClaim("software_jwks_endpoint");
+def apiClientOrgJwks = ssaClaims.getClaim("software_jwks");
 
-logger.debug("Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {}",
+logger.debug("Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {} apiClientOrgJwks: {}",
         apiClientOrgName,
         apiClientOrgCertId,
-        apiClientOrgJwksUri
+        apiClientOrgJwksUri,
+        apiClientOrgJwks
 )
 
 // Update OIDC registration request
 
-oidcRegistration.setClaim("jwks_uri",apiClientOrgJwksUri)
+if (apiClientOrgJwksUri) {
+    logger.debug("Using jwks uri")
+    oidcRegistration.setClaim("jwks_uri", apiClientOrgJwksUri)
+}
+else if (apiClientOrgJwks) {
+    logger.debug("Using jwks")
+    oidcRegistration.setClaim("jwks",  apiClientOrgJwks )
+}
+else {
+    logger.error("No JWKS or JWKS URI in SSA")
+    return new Response(Status.BAD_REQUEST)
+}
+
+
 oidcRegistration.setClaim("client_name",apiClientOrgName)
 oidcRegistration.setClaim("tls_client_certificate_bound_access_tokens", true)
 

@@ -48,32 +48,11 @@
             "type": "application/x-groovy",
             "file": "CreateApiClient.groovy",
             "args": {
-              "idmBaseUri": "https://&{iam.fqdn}",
+              "routeArgIdmBaseUri": "https://&{iam.fqdn}",
               "routeArgObjApiClientOrg": "apiClientOrg",
               "routeArgObjApiClient": "apiClient"
             },
-            "clientHandler": {
-              "type": "Chain",
-              "capture": "all",
-              "config": {
-                "filters": [
-                  {
-                    "type": "ClientCredentialsOAuth2ClientFilter",
-                    "config": {
-                      "clientId": "&{ig.client.id}",
-                      "clientSecretId": "ig.client.secret",
-                      "secretsProvider": "SystemAndEnvSecretStore-IAM",
-                      "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
-                      "scopes": [
-                        "fr:idm:*"
-                      ],
-                      "handler": "TokenRequestHandler"
-                    }
-                  }
-                ],
-                "handler": "ForgeRockClientHandler"
-              }
-            }
+            "clientHandler": "IDMClientHandler"
           }
         },
         {

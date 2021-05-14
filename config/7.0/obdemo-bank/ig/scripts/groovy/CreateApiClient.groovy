@@ -37,6 +37,7 @@ next.handle(context, request).thenOnResult(response -> {
 
 
   def clientJwksUri = ssaClaims.getClaim("software_jwks_endpoint", String.class)
+  def clientJwks = ssaClaims.getClaim("software_jwks")
   def ssaLogoUri = ssaClaims.getClaim("software_logo_uri", String.class)
 
   // Create the apiClient object
@@ -50,6 +51,7 @@ next.handle(context, request).thenOnResult(response -> {
           "description": ssaSoftwareDescription,
           "ssa" : ssa,
           "jwksUri" : clientJwksUri,
+          "jwks": JsonOutput.toJson(clientJwks),
           "logoUri" : ssaLogoUri,
           "oauth2ClientId": oauth2ClientId
   ]
@@ -57,7 +59,7 @@ next.handle(context, request).thenOnResult(response -> {
   Request apiClientRequest = new Request();
 
   apiClientRequest.setMethod('POST');
-  apiClientRequest.setUri(idmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create")
+  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create")
   apiClientRequest.getHeaders().add("Content-Type","application/json");
   apiClientRequest.setEntity(JsonOutput.toJson(apiClientConfig));
 
@@ -99,7 +101,7 @@ next.handle(context, request).thenOnResult(response -> {
        Request apiClientOrgRequest = new Request();
 
        apiClientOrgRequest.setMethod('POST');
-       apiClientOrgRequest.setUri(idmBaseUri + "/openidm/managed/" + routeArgObjApiClientOrg + "?_action=create");
+       apiClientOrgRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClientOrg + "?_action=create");
        apiClientOrgRequest.getHeaders().add("Content-Type","application/json");
        apiClientOrgRequest.setEntity(JsonOutput.toJson(apiClientOrgConfig));
 

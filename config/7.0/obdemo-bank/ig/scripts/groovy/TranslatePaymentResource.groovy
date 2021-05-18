@@ -1,2 +1,3 @@
-request.uri.path = request.uri.path.replace("/openbanking/v3.1","")
+
+request.uri.path = request.uri.path.replaceFirst("/openbanking/.*?/","/")
 next.handle(context, request)

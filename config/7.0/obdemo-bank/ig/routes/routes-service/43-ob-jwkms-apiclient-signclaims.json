@@ -15,9 +15,9 @@
             "type": "application/x-groovy",
             "file": "ParseCertificate.groovy",
             "args": {
-              "routeArgCertificateHeader": "ssl-client-cert",
               "routeArgPrivateKeyOid": "1.3.6.1.4.1.36733.10101",
-              "routeArgEncryptionKey": "&{ca.kek}"
+              "routeArgEncryptionKey": "&{ca.kek}",
+              "routeArgCertificateHeader": "ssl-client-cert"
             }
           }
         }
@@ -29,6 +29,7 @@
           "type": "application/x-groovy",
           "file": "JwkmsSignClientClaims.groovy",
           "args": {
+            "routeArgOptionsHeader": "X-Signing-Options"
           }
         }
       }

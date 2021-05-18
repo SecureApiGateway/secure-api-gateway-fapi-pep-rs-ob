@@ -2,7 +2,7 @@
   "name" : "OB Payment Submission",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "http://obdemo-rs:8089",
-  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payments$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1.*/domestic-payments$')}",
   "heap": [
     {
       "name": "JwkSetSecretStore-ApiClientJwks",
@@ -89,24 +89,31 @@
             "file": "ProcessDetachedSig.groovy",
             "clientHandler": "IDMClientHandler",
             "args": {
-              "_arg_headerName": "x-jws-signature"
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgJwkUrl": "https://&{iam.fqdn}/openidm/endpoint/apiclientjwks"
             }
           }
         },
         {
-          "name": "JwtValidationFilter-Detached",
-          "type": "JwtValidationFilter",
+          "type": "ConditionalFilter",
           "config": {
-            "jwt": "${attributes.detachedJWT}",
-            "verificationSecretId": "verify",
-            "secretsProvider": {
-              "type": "SecretsProvider",
+            "condition": "${attributes.encodedPayload == true}",
+            "delegate": {
+              "name": "JwtValidationFilter-Detached",
+              "type": "JwtValidationFilter",
               "config": {
-                "stores": [
-                  {
-                    "name": "JwkSetSecretStore-ApiClientJwks"
+                "jwt": "${attributes.detachedJWT}",
+                "verificationSecretId": "verify",
+                "secretsProvider": {
+                  "type": "SecretsProvider",
+                  "config": {
+                    "stores": [
+                      {
+                        "name": "JwkSetSecretStore-ApiClientJwks"
+                      }
+                    ]
                   }
-                ]
+                }
               }
             }
           }

@@ -2,7 +2,7 @@
   "name" : "OB RS Account Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/account-access-consents')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/account-access-consents')}",
   "handler": {
     "type": "Chain",
     "config": {

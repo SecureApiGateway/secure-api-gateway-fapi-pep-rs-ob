@@ -2,7 +2,7 @@
   "name" : "OB RS Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/domestic-payment-consents((?!funds-confirmation).)*$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/domestic-payment-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {

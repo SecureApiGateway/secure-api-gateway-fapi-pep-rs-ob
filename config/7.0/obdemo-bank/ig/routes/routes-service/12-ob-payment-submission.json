@@ -1,8 +1,8 @@
 {
   "name" : "OB Payment Submission",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "http://obdemo-rs:8089",
-  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1.*/domestic-payments$')}",
+  "baseURI" : "&{rs.url}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1.*/domestic-payments$')}",
   "heap": [
     {
       "name": "JwkSetSecretStore-ApiClientJwks",

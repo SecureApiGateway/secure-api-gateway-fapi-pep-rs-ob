@@ -1,8 +1,8 @@
 {
   "name" : "OB RS Metadata",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "http://obdemo-rs:8089",
-  "condition" : "${matches(request.uri.path, '^/rs/obRSDiscovery')}",
+  "baseURI" : "&{rs.url}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {
     "type": "Chain",
     "config": {

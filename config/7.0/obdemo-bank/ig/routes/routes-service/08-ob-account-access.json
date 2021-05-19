@@ -1,8 +1,8 @@
 {
   "name" : "OB Account Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "http://obdemo-rs:8089",
-  "condition" : "${matches(request.uri.path, '^/rs/openbanking/v3.1/accounts')}",
+  "baseURI" : "&{rs.url}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/accounts')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

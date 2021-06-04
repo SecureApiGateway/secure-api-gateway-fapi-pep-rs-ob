@@ -25,6 +25,11 @@ cd kustomize/overlay/{version}/all
 kustomize build
 ```
 
+## Prometheus
+IG comes bundled with prometheus support, the details of which can be found [here](https://backstage.forgerock.com/docs/ig/7/maintenance-guide/monitoring-eps.html). The `dev` overlay comes with an example on how to protect the ig metrics endpoint with basic auth. A simple [secret](../base/ig/secret.yaml) is used in the example with an exposed user/pass credentials. You wouldnt have this secret exposed in github like this for a production environment, you would probably use a secrets manager to create the necessary secret.
+
+The created secret is referenced in our deployment [manifest](../base/ig/deployment.yaml). The environment variables created from that secret is interpolated by our [admin config](../../config/7.0/obdemo-bank/ig/config/dev/config/admin.json). In this example `&{ig.metrics.username}` maps to the environment variable `IG_METRICS_USERNAME` and so on.
+
 ## Images
 
 The images referenced in the kustomize files are generic (example: `am`, `ig`), and not

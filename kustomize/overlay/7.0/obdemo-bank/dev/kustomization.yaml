@@ -18,6 +18,11 @@ patchesJson6902:
       kind: Deployment
       name: ig
       version: v1
+  - path: secrets-prometheus-patch.yaml
+    target:
+      kind: Secret
+      name: openig-secrets-env
+      version: v1
 
 patchesStrategicMerge:
   - configmap.yaml

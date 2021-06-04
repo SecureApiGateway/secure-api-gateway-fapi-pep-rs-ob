@@ -14,6 +14,19 @@
           "return next.handle(context, request)"
         ]
       }
+    },
+    {
+      "name": "MetricsProtectionFilter",
+      "type": "ScriptableFilter",
+      "config": {
+        "type": "application/x-groovy",
+        "file": "BasicAuthResourceServerFilter.groovy",
+        "args": {
+          "realm": "/",
+          "username": "&{ig.metrics.username}",
+          "password": "&{ig.metrics.password}"
+        }
+      }
     }
   ],
   "mode": "DEVELOPMENT"

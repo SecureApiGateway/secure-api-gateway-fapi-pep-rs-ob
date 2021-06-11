@@ -68,7 +68,7 @@ logger.debug("API version " + apiVersion)
 def header = request.headers.get(routeArgHeaderName)
 
 if (header == null) {
-    logger.error("No detached signature header on inbound request " + _arg_headerName)
+    logger.error("No detached signature header on inbound request " + routeArgHeaderName)
     Response response = new Response(Status.BAD_REQUEST)
     return response
 }

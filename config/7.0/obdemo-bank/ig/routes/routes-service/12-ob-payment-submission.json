@@ -2,7 +2,7 @@
   "name" : "OB Payment Submission",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "&{rs.url}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1.*/domestic-payments$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1.*/pisp/domestic-payments$')}",
   "heap": [
     {
       "name": "JwkSetSecretStore-ApiClientJwks",
@@ -196,6 +196,17 @@
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
               "role": "PISP",
               "event": "EXEC"
+            }
+          }
+        },
+        {
+          "name" : "HeaderFilter-ChangeHostToRS",
+          "type" : "HeaderFilter",
+          "config" : {
+            "messageType" : "REQUEST",
+            "remove" : [ "host", "X-Forwarded-Host" ],
+            "add" : {
+              "X-Forwarded-Host" : [ "rs.dev.forgerock.financial" ]
             }
           }
         }

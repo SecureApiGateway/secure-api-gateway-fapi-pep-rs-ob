@@ -1,4 +1,5 @@
 import java.text.SimpleDateFormat
+import java.util.UUID
 
 /*
  * Script to prepare account access consent
@@ -15,6 +16,10 @@ def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
 df.setTimeZone(tz);
 def nowAsISO = df.format(new Date());
 
+def consentId = routeArgConsentIdPrefix + UUID.randomUUID().toString()
+
+accountIntentData._id = consentId
+accountIntentData.Data.ConsentId = consentId
 accountIntentData.Data.Status = "AwaitingAuthorisation";
 accountIntentData.Data.CreationDateTime = nowAsISO
 accountIntentData.Data.StatusUpdateDateTime = nowAsISO

@@ -26,7 +26,8 @@
           "args": {
             "routeArgObjAccountAccessConsent": "accountAccessIntent",
             "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
-            "idmBaseUri": "https://&{iam.fqdn}"
+            "idmBaseUri": "https://&{iam.fqdn}",
+            "routeArgRSBaseUri": "&{rs.url}"
           }
         }
       }

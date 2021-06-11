@@ -2,7 +2,7 @@
   "name" : "OB Account Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "&{rs.url}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/accounts')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/accounts')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",
@@ -96,22 +96,14 @@
           }
         },
         {
-          "name" : "JwtBuilderFilter-AccountsList",
-          "type" : "JwtBuilderFilter",
-          "config" : {
-            "template" : {
-              "accounts" : "${contexts.policyDecision.attributes.grantedAccounts}"
-            }
-          }
-        },
-        {
           "name": "TranslateAccountsResource",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "TranslateAccountsResource.groovy",
             "args": {
-              "accounts": "${contexts.jwtBuilder.value}"
+              "routeArgAccountIdsHeader": "x-ob-account-ids",
+              "routeArgPermissionsHeader": "x-ob-permissions"
             }
           }
         },
@@ -126,6 +118,17 @@
               "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
               "role": "AISP",
               "event": "EXEC"
+            }
+          }
+        },
+        {
+          "name" : "HeaderFilter-ChangeHostToRS",
+          "type" : "HeaderFilter",
+          "config" : {
+            "messageType" : "REQUEST",
+            "remove" : [ "host", "X-Forwarded-Host" ],
+            "add" : {
+              "X-Forwarded-Host" : [ "rs.dev.forgerock.financial" ]
             }
           }
         }

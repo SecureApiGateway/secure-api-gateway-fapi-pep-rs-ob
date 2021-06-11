@@ -16,6 +16,10 @@ def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
 df.setTimeZone(tz);
 def nowAsISO = df.format(new Date());
 
+def consentId = routeArgConsentIdPrefix + UUID.randomUUID().toString()
+
+paymentIntentData._id = consentId
+paymentIntentData.Data.ConsentId = consentId
 paymentIntentData.Data.Status = "AwaitingAuthorisation";
 paymentIntentData.Data.CreationDateTime = nowAsISO
 paymentIntentData.Data.StatusUpdateDateTime = nowAsISO

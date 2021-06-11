@@ -28,6 +28,22 @@
           }
         },
         {
+          "name": "HeaderFilter-",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "&{rs.fqdn}"
+              ]
+            }
+          }
+        },
+        {
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",

@@ -1,6 +1,6 @@
 gcr-repo := sbat-gcr-develop
 
-build-docker: config
+build-docker: conf
 ifndef tag
 	$(warning no tag supplied; latest assumed)
 	$(eval tag=latest)

@@ -5,7 +5,7 @@
       hostnames:
       - "$(IAM_FQDN)"
 
-- op: add
+- op: replace
   path: /spec/template/spec/initContainers
   value:
     - name: cdk-initializer

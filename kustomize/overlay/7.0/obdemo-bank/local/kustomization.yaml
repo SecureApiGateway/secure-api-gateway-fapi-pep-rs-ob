@@ -3,7 +3,6 @@ commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
 - ../../../../base/obdemo-bank
-- ../../../../base/7.0/am
 
 patchesJson6902:
   - path: ingress-patch.yaml

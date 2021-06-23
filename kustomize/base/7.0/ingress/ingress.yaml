@@ -5,42 +5,41 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
-    haproxy.router.openshift.io/cookie_name: route
-    nginx.ingress.kubernetes.io/affinity: cookie
-    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
-    nginx.ingress.kubernetes.io/session-cookie-name: route
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # CORS is now set in the AM and IDM configurations
-    nginx.ingress.kubernetes.io/enable-cors: "false"
-    cert-manager.io/cluster-issuer: $(CERT_ISSUER)
-    nginx.ingress.kubernetes.io/body-size: "64m"
-    nginx.ingress.kubernetes.io/send-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    nginx.ingress.kubernetes.io/http2-max-field-size: "16k"
-    nginx.ingress.kubernetes.io/http2-max-header-size: "128k"
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    nginx.ingress.kubernetes.io/auth-tls-secret: $(NAMESPACE)/obri-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
+    nginx.ingress.kubernetes.io/http2-max-field-size: 16k
+    nginx.ingress.kubernetes.io/http2-max-header-size: 128k
+    nginx.ingress.kubernetes.io/proxy-body-size: 64m
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
     nginx.ingress.kubernetes.io/proxy-buffering: "on"
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-    nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers_size: "256k"
-#    nginx.ingress.kubernetes.io/client_header_buffer_size: "64k"
+    nginx.ingress.kubernetes.io/proxy-buffers: 4 256k
+    nginx.ingress.kubernetes.io/proxy-busy-buffers_size: 256k
+    nginx.ingress.kubernetes.io/error-log-level: "debug"
   name: forgerock
 spec:
   rules:
   - host: $(FQDN)
-    #http:
-      #paths:
-      # end user UI currently has its own ingress. Needs to rewrite the url path...
-      # - backend:
-      #     serviceName: end-user-ui
-      #     servicePort: 80
-      #   path: /enduser-ui
-      # IG currently has its own ingress. Needs to rewrite the url path...
-      # - backend:
-      #    serviceName: ig
-      #    servicePort: 80
-      #  path: /ig
+    http:
+      paths:
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+        path: /am
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+        path: /rcs-api
+# Temporary - this will be internal
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+        path: /repo
+# Temporary - this will be internal
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+        path: /jwkms
   tls:
   - hosts:
     - $(FQDN)

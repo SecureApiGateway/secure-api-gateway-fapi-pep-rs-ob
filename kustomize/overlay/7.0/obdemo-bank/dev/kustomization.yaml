@@ -3,21 +3,8 @@ commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
 - ../../../../base/obdemo-bank
-- ../../../../base/7.0/am
 
 patchesJson6902:
-  - path: ingress-patch.yaml
-    target:
-      group: extensions
-      kind: Ingress
-      name: forgerock
-      version: v1beta1
-  - path: deployment-patch.yaml
-    target:
-      group: apps
-      kind: Deployment
-      name: ig
-      version: v1
   - path: secrets-prometheus-patch.yaml
     target:
       kind: Secret

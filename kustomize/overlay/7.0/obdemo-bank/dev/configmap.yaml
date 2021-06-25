@@ -5,7 +5,7 @@ metadata:
 data:
   FQDN: obdemo.dev.forgerock.financial
   IAM_FQDN: iam.dev.forgerock.financial
-  RS_URL: http://securebanking-openbanking-uk-rs.dev.svc.cluster.local:8080
+  RS_URL: http://securebanking-openbanking-uk-rs:8080
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password

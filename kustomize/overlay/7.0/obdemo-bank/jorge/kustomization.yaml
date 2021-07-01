@@ -1,0 +1,16 @@
+namespace: jorge
+commonLabels:
+  app.kubernetes.io/name: "forgerock"
+resources:
+- ../../../../base/kustomizeConfig
+- ../../../../base/7.0/ingress
+- ../../../../base/ig
+
+patchesStrategicMerge:
+  - configmap.yaml
+
+images:
+- name: ig
+  newName: eu.gcr.io/sbat-gcr-release/securebanking/gate/ig
+  newTag: latest
+  

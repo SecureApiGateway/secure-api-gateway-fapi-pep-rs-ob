@@ -16,7 +16,7 @@ spec:
     spec:
       initContainers:
       - name: iam-init
-        image: eu.gcr.io/sbat-gcr-release/securebanking/secureopenbanking-uk-fidc-initializer:latest
+        image: eu.gcr.io/sbat-gcr-develop/securebanking/secureopenbanking-uk-fidc-initializer:latest
         imagePullPolicy: Always
         env:
         - name: OPEN_AM_PASSWORD

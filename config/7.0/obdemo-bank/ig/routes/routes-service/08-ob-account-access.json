@@ -1,7 +1,7 @@
 {
   "name" : "OB Account Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "&{rs.url}",
+  "baseURI" : "https://&{rs.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/accounts')}",
   "capture" : [ "response", "request" ],
   "handler" : {
@@ -69,7 +69,7 @@
               "type": "StatelessAccessTokenResolver",
               "config": {
                 "secretsProvider": "SecretsProvider-AmJWK",
-                "issuer": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                "issuer": "https://&{iam.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
                 "verificationSecretId": "any.value.in.regex.format"
                }
             }

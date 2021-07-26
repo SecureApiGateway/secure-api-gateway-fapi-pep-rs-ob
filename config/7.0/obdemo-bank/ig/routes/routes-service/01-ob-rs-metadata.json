@@ -1,7 +1,7 @@
 {
   "name" : "OB RS Metadata",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "&{rs.url}",
+  "baseURI" : "https://&{rs.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {
     "type": "Chain",

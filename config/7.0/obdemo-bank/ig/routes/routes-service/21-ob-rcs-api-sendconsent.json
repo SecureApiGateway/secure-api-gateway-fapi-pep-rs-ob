@@ -57,7 +57,7 @@
               "clientId": "${attributes.requestClientId}",
               "decision": true,
               "csrf": "${attributes.requestCsrf}",
-              "aud": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+              "aud": "https://&{iam.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
               "save_consent_enabled": false,
               "claims": "${attributes.requestClaims}",
               "scopes": "${attributes.requestScopes}",

@@ -1,7 +1,7 @@
 {
   "name" : "OB Payment Submission",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "&{rs.url}",
+  "baseURI" : "https://&{rs.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1.*/pisp/domestic-payments$')}",
   "heap": [
     {

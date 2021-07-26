@@ -64,7 +64,7 @@ spec:
             name: platform-config
         #image: gcr.io/forgerock-io/ig/docker-build:7.0.0-af5592b
         image: ig
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /kube/liveness

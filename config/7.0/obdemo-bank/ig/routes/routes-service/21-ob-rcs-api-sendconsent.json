@@ -96,7 +96,7 @@
           "args": {
             "routeArgObjAccountAccessConsent": "accountAccessIntent",
             "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
-            "routeArgObjUser": "&{am.realm}_user",
+            "routeArgObjUser": "&{user.object}",
             "idmBaseUri": "https://&{iam.fqdn}"
           }
         }

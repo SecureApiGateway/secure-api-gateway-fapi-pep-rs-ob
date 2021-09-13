@@ -10,6 +10,10 @@ import groovy.json.JsonOutput
 FLOW_AISP = "aisp"
 FLOW_PISP = "pisp"
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
+
 // TODO: Figure out why expression doesn't work in script args from route
 
 def redirectUri = contexts.jwtValidation.claims.consentApprovalRedirectUri.asString()
@@ -71,13 +75,19 @@ def authorisePatchRequest (intentId, account, user, flow) {
 // Integrity check
 
 if (requestObj.decision != "allow") {
-    logger.error("Bad decision " + requestObj.decision)
-    return new Response(Status.BAD_REQUEST);
+    message = "Bad decision " + requestObj.decision
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 if (requestObj.flow != FLOW_AISP && requestObj.flow != FLOW_PISP) {
-    logger.error("Bad flow " + requestObj.flow)
-    return new Response(Status.BAD_REQUEST);
+    message = "Bad flow " + requestObj.flow
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 // Update the account info or payment intent to authorised
@@ -100,8 +110,11 @@ http.send(patchRequest).then(patchResponse -> {
   logger.debug("entity " + patchResponseContent);
 
   if (patchResponseStatus != Status.OK) {
-    logger.error("Failed to patch consent");
-      return new Response(patchResponseStatus);
+      message = "Failed to patch consent"
+      logger.error(message)
+      response.status = patchResponseStatus
+      response.entity = "{ \"error\":\"" + message + "\"}"
+      return response
   }
   def responseObj = [
         "consentJwt": consentJwt,

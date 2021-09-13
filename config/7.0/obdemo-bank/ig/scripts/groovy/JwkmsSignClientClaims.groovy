@@ -20,17 +20,26 @@ import groovy.json.JsonSlurper
 
 logger.debug("Signing claims as ApiClient")
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
 
 // Check we have everything we need from the client certificate
 
 if (!attributes.clientCertificate) {
-    logger.error("No client certificate for signing claims")
-    return new Response(Status.BAD_REQUEST)
+    message = "No client certificate for signing claims"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 if (!attributes.clientCertificate.privateKey) {
-    logger.error("No private key in cert")
-    return new Response(Status.BAD_REQUEST)
+    message = "No private key in cert"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def optionsHeaders = request.headers.get(routeArgOptionsHeader)
@@ -44,8 +53,11 @@ if (optionsHeaders != null) {
     def slurper = new JsonSlurper()
     signingOptions = slurper.parseText(optionsJson)
     if (signingOptions == null) {
-        logger.error("Couldn't parse signing options")
-        return new Response(Status.BAD_REQUEST)
+        message = "Couldn't parse signing options"
+        logger.error(message)
+        response.status = Status.BAD_REQUEST
+        response.entity = "{ \"error\":\"" + message + "\"}"
+        return response
     }
 }
 
@@ -94,8 +106,10 @@ else {
         String[] jwtElements = jwt.split("\\.")
 
         if (jwtElements.length != 3) {
-            logger.error("Wrong number of dots on generated jwt " +  jwt.length)
-            Response response = new Response(Status.INTERNAL_SERVER_ERROR)
+            message = "Wrong number of dots on generated jwt " +  jwt.length
+            logger.error(message)
+            response.status = Status.INTERNAL_SERVER_ERROR
+            response.entity = "{ \"error\":\"" + message + "\"}"
             return response
         }
 

@@ -189,8 +189,13 @@ else if (scopes.contains("payments")) {
     flow = "pisp"
 }
 else {
-    logger.error("Error: cannot find flow from scopes")
-    return new Response(Status.FORBIDDEN)
+    // response object
+    response = new Response(Status.FORBIDDEN)
+    response.headers['Content-Type'] = "application/json"
+    message = "Error: cannot find flow from scopes"
+    logger.error(message)
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 

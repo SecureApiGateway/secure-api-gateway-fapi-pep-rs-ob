@@ -9,6 +9,10 @@ import org.forgerock.json.jose.jwk.KeyUseConstants
 
 logger.debug("Creating SSA")
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
+
 def requestObj = request.entity.getJson()
 
 def iss = routeArgJwtIssuer
@@ -19,29 +23,41 @@ def exp = iat + routeArgJwtValidity;
 // Check we have everything we need from the client certificate
 
 if (!attributes.clientCertificate) {
-    logger.error("No client certificate for registration")
-    return new Response(Status.BAD_REQUEST)
+    message = "No client certificate for registration"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 
 if (!attributes.clientCertificate.subjectDNComponents.CN) {
-    logger.error("No CN in cert")
-    return new Response(Status.BAD_REQUEST)
+    message = "No CN in cert"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 
 def  organizationalIdentifier = attributes.clientCertificate.subjectDNComponents.OI
 
 if (!organizationalIdentifier) {
-    logger.error("No org identifier in cert")
-    return new Response(Status.BAD_REQUEST)
+    message = "No org identifier in cert"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def oiComponents = organizationalIdentifier.split("-")
 
 if (oiComponents.length != 3) {
-    logger.error("Wrong number of dashes in OI {} - expected 2",organizationalIdentifier)
-    return new Response(Status.FORBIDDEN)
+    message = "Wrong number of dashes in OI " + organizationalIdentifier + " - expected 2"
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def org_id = oiComponents[2]

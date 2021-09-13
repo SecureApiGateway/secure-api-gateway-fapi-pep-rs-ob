@@ -287,9 +287,13 @@ def getEmbeddedPrivateKey(Certificate certificate) {
 def header = request.headers.get(routeArgCertificateHeader)
 
 if (header == null) {
-  logger.error("No certificate header on inbound request " + routeArgCertificateHeader)
-  Response response = new Response(Status.BAD_REQUEST)
-  return response
+    // response object
+    response = new Response(Status.BAD_REQUEST)
+    response.headers['Content-Type'] = "application/json"
+    message = "No certificate header on inbound request " + routeArgCertificateHeader
+    logger.error(message)
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 String certPem = URLDecoder.decode(header.firstValue.toString())

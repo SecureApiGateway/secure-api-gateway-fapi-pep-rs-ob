@@ -20,17 +20,25 @@ def ROLE_PAYMENT_INITIATION             = "0.4.0.19495.1.2"
 def ROLE_ACCOUNT_INFORMATION            = "0.4.0.19495.1.3"
 def ROLE_CARD_BASED_PAYMENT_INSTRUMENTS = "0.4.0.19495.1.4"
 
-
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
 // Check we have everything we need from the client certificate
 
 if (!attributes.clientCertificate) {
-    logger.error("No client certificate for registration")
-    return new Response(Status.BAD_REQUEST)
+    message = "No client certificate for registration"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 if (!attributes.clientCertificate.roles) {
-    logger.error("No roles in client certificate for registration")
-    return new Response(Status.BAD_REQUEST)
+    message = "No roles in client certificate for registration"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 // Parse incoming registration JWT
@@ -48,8 +56,10 @@ def oidcRegistration = regJwt.getClaimsSet();
 def ssa = oidcRegistration.getClaim("software_statement", String.class);
 
 if (!ssa) {
-    logger.error("No SSA")
-    return new Response(Status.BAD_REQUEST)
+    message = "No SSA"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
 }
 
 logger.debug("Got ssa [" + ssa + "]")
@@ -82,8 +92,11 @@ else if (apiClientOrgJwks) {
     oidcRegistration.setClaim("jwks",  apiClientOrgJwks )
 }
 else {
-    logger.error("No JWKS or JWKS URI in SSA")
-    return new Response(Status.BAD_REQUEST)
+    message = "No JWKS or JWKS URI in SSA"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 
@@ -96,44 +109,54 @@ def scopes = oidcRegistration.getClaim("scope")
 def roles = attributes.clientCertificate.roles
 
 if (scopes.contains(SCOPE_ACCOUNTS) && !(roles.contains(ROLE_ACCOUNT_INFORMATION))) {
-    logger.error("Requested scope {} requires certificate role {}",
-            SCOPE_ACCOUNTS,
-            ROLE_ACCOUNT_INFORMATION
-    )
-    return new Response(Status.FORBIDDEN)
+    message = "Requested scope " + SCOPE_ACCOUNTS + " requires certificate role " + ROLE_ACCOUNT_INFORMATION
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 if (scopes.contains(SCOPE_PAYMENTS) && !(roles.contains(ROLE_PAYMENT_INITIATION))) {
-    logger.error("Requested scope {} requires certificate role {}",
-            SCOPE_PAYMENTS,
-            ROLE_PAYMENT_INITIATION
-    )
-    return new Response(Status.FORBIDDEN)
+    message = "Requested scope " + SCOPE_PAYMENTS + " requires certificate role " + ROLE_PAYMENT_INITIATION
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 // Cross check ID with cert
 //
-// e.g. PSDGB-FFA-5f563e89742b2800145c7da1
+// e.g. PSDGB-FFA-5f563e89742b2800145c7da1 or PSDGB-OB-Unknown0015800001041REAAY (issue by OB)
 
 def  organizationalIdentifier = attributes.clientCertificate.subjectDNComponents.OI
 
 if (!organizationalIdentifier) {
-    logger.error("No organizational identifier in cert")
-    return new Response(Status.FORBIDDEN)
+    message = "No organizational identifier in cert"
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def oiComponents = organizationalIdentifier.split("-")
 
-if (oiComponents.length != 3) {
-    logger.error("Wrong number of dashes in OI {} - expected 2",organizationalIdentifier)
-    return new Response(Status.FORBIDDEN)
+if (oiComponents.length > 3) {
+    message = "Wrong number of dashes in OI " + organizationalIdentifier +" - expected 2"
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
-def dnId = oiComponents[2]
+// Issue: https://github.com/SecureBankingAccessToolkit/securebanking-openbanking-demo/issues/53
+def dnId = oiComponents[2].toString().replace("Unknown","")
 
 if (dnId != apiClientOrgCertId) {
-    logger.error("apiClientOrg ID in cert {} does not match id in SSA {}",dnId,apiClientOrgCertId)
-    return new Response(Status.FORBIDDEN)
+    message = "apiClientOrg ID in cert " + dnId +" does not match id in SSA " + apiClientOrgCertId
+    logger.error(message)
+    response.status = Status.FORBIDDEN
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 // TODO: Subject DN for cert bound access tokens

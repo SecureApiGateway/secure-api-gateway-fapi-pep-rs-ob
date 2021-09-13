@@ -8,6 +8,10 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.jwk.*;
 
+// response object
+response = new Response(Status.BAD_REQUEST)
+response.headers['Content-Type'] = "application/json"
+
 def validateUnencodedPayload(jws, payload) {
     Payload detachedPayload = new Payload(payload);
     JWSObject parsedJWSObject = JWSObject.parse(jws, detachedPayload);
@@ -52,8 +56,11 @@ def validateUnencodedPayload(jws, payload) {
 def splitPath = request.uri.path.split("/")
 
 if (splitPath.length < 2) {
-    logger.error("Can't parse API version for inbound request")
-    return new Response(Status.BAD_REQUEST)
+    message = "Can't parse API version for inbound request"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def apiVersion = splitPath[splitPath.length - 2]
@@ -68,8 +75,10 @@ logger.debug("API version " + apiVersion)
 def header = request.headers.get(routeArgHeaderName)
 
 if (header == null) {
-    logger.error("No detached signature header on inbound request " + routeArgHeaderName)
-    Response response = new Response(Status.BAD_REQUEST)
+    message = "No detached signature header on inbound request " + routeArgHeaderName
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
@@ -79,8 +88,10 @@ logger.debug("Inbound detached sig " + detachedSig)
 String[] sigElements = detachedSig.split("\\.")
 
 if (sigElements.length != 3) {
-    logger.error("Wrong number of dots on inbound detached signature " +  sigElements.length)
-    Response response = new Response(Status.BAD_REQUEST)
+    message = "Wrong number of dots on inbound detached signature " +  sigElements.length
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
@@ -101,8 +112,10 @@ String jwtPayload = null
 
 
 if (headerObj.b64 != null && apiVersion > "v3.1.3") {
-    logger.error("B64 header not permitted in JWT header after 3.1.3")
-    Response response = new Response(Status.BAD_REQUEST)
+    message = "B64 header not permitted in JWT header after 3.1.3"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 else if (headerObj.b64 != null && headerObj.b64 == false) {
@@ -110,8 +123,10 @@ else if (headerObj.b64 != null && headerObj.b64 == false) {
     jwtPayload     = request.entity.getString()
     attributes.encodedPayload = false
     if (!validateUnencodedPayload(detachedSig,jwtPayload)) {
-        logger.error("Signature validation failed")
-        Response response = new Response(Status.UNAUTHORIZED)
+        message = "Signature validation failed"
+        logger.error(message)
+        response.status = Status.UNAUTHORIZED
+        response.entity = "{ \"error\":\"" + message + "\"}"
         return response
     }
     logger.debug("Detached signature verified against unencoded payload")

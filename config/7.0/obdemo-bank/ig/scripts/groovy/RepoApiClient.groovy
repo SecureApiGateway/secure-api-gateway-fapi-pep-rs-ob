@@ -6,12 +6,18 @@ import groovy.json.JsonOutput
 Request apiClientRequest = new Request();
 apiClientRequest.setMethod('GET');
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
 
 def splitUri =  request.uri.path.split("/")
 
 if (splitUri.length == 0) {
-    logger.error("Can't parse api client ID from inbound request")
-    return new Response(Status.BAD_REQUEST)
+    message = "Can't parse api client ID from inbound request"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def apiClientId = splitUri[splitUri.length - 1];
@@ -27,8 +33,11 @@ http.send(apiClientRequest).then(apiClientResponse -> {
     def apiClientResponseStatus = apiClientResponse.getStatus();
 
     if (apiClientResponseStatus != Status.OK) {
-        logger.error("Failed to get API Client details");
-        return new Response(apiClientResponseStatus);
+        message = "Failed to get API Client details"
+        logger.error(message)
+        response.status = apiClientResponseStatus
+        response.entity = "{ \"error\":\"" + message + "\"}"
+        return response
     }
 
     def apiClientResponseContent = apiClientResponse.getEntity();
@@ -45,9 +54,7 @@ http.send(apiClientRequest).then(apiClientResponse -> {
     def responseJson = JsonOutput.toJson(responseObj);
     logger.debug("Final JSON " + responseJson)
 
-    def response = new Response(Status.OK)
-    response.getHeaders().add("Content-Type","application/json");
-    response.setEntity(responseJson);
+    response.entity = responseJson;
     return response
 
 }).then(response -> { return response })

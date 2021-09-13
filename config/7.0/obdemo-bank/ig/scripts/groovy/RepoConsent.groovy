@@ -3,9 +3,16 @@ import groovy.json.JsonOutput
 
 def splitUri =  request.uri.path.split("/")
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
+
 if (splitUri.length < 2) {
-    logger.error("Can't parse consent id from inbound request")
-    return new Response(Status.BAD_REQUEST)
+    message = "Can't parse consent id from inbound request"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def consentType = splitUri[splitUri.length - 2]
@@ -18,8 +25,11 @@ else if (consentType == routeArgConsentPathDomesticPayment) {
     intentObject = routeArgObjDomesticPaymentIntent
 }
 else {
-    logger.error("Can't parse consent type from inbound request")
-    return new Response(Status.BAD_REQUEST)
+    message = "Can't parse consent type from inbound request"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 def intentId = splitUri[splitUri.length - 1]
@@ -38,8 +48,11 @@ http.send(intentRequest).then(intentResponse -> {
     def intentResponseStatus = intentResponse.getStatus();
 
     if (intentResponseStatus != Status.OK) {
-        logger.error("Failed to get consent details");
-        return new Response(intentResponseStatus);
+        message = "Failed to get consent details"
+        logger.error(message)
+        response.status = intentResponseStatus
+        response.entity = "{ \"error\":\"" + message + "\"}"
+        return response
     }
 
     def intentResponseContent = intentResponse.getEntity();
@@ -70,9 +83,8 @@ http.send(intentRequest).then(intentResponse -> {
 
     def responseJson = JsonOutput.toJson(responseObj);
     logger.debug("Final JSON " + responseJson)
-    def response = new Response(Status.OK)
-    response.getHeaders().add("Content-Type","application/json");
-    response.setEntity(responseJson);
+
+    response.entity = responseJson
     return response
 
 }).then(response -> { return response })

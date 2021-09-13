@@ -44,6 +44,11 @@ next.handle(context, request).thenOnResult(response -> {
 
   logger.debug("Sending apiClient create request to IDM endpoint");
 
+  // response object
+  response = new Response(Status.OK)
+  response.headers['Content-Type'] = "application/json"
+  responseMessage = "OK"
+
   def apiClientConfig = [
           "_id" : oauth2ClientId,
           "id" : ssaSoftwareId,
@@ -74,7 +79,8 @@ next.handle(context, request).thenOnResult(response -> {
     logger.debug("entity " + apiClientResponseContent);
 
      if (apiClientResponseStatus != Status.CREATED) {
-       logger.error("Failed to register apiClient with IDM");
+       responseMessage = "Failed to register apiClient with IDM"
+       logger.error(responseMessage);
        error = true;
      }
      else {
@@ -115,7 +121,8 @@ next.handle(context, request).thenOnResult(response -> {
          logger.debug("entity " + apiClientOrgResponseContent);
 
          if (apiClientOrgResponseStatus != Status.CREATED) {
-           logger.error("Failed to register apiClientOrg with IDM");
+           responseMessage = "Failed to register apiClientOrg with IDM"
+           logger.error(responseMessage);
            error = true;
          }
        })
@@ -123,7 +130,9 @@ next.handle(context, request).thenOnResult(response -> {
   })
 
   if (error) {
-    response = new Response(Status.INTERNAL_SERVER_ERROR)
+    logger.error(responseMessage)
+    response.status = Status.INTERNAL_SERVER_ERROR
+    response.entity = "{ \"error\":\"" + responseMessage + "\"}"
     return response
   }
 

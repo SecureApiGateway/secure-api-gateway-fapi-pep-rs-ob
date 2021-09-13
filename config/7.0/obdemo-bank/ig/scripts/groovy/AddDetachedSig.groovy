@@ -20,6 +20,9 @@ import org.forgerock.http.protocol.Response
 
 next.handle(context, request).thenOnResult({ response ->
 
+  // response object
+  response = new Response(Status.OK)
+  response.headers['Content-Type'] = "application/json"
 
   JwsAlgorithm signAlgorithm = JwsAlgorithm.parseAlgorithm(routeArgAlgorithm)
 
@@ -43,16 +46,20 @@ next.handle(context, request).thenOnResult({ response ->
     logger.debug("Signed JWT [" + jwt + "]")
 
     if (jwt == null || jwt.length() == 0) {
-      logger.error("Error creating signature JWT")
-      response = new Response(Status.INTERNAL_SERVER_ERROR)
+      message = "Error creating signature JWT"
+      logger.error(message)
+      response.status = Status.INTERNAL_SERVER_ERROR
+      response.entity = "{ \"error\":\"" + message + "\"}"
       return response
     }
 
     String[] jwtElements = jwt.split("\\.")
 
     if (jwtElements.length != 3) {
-      logger.error("Wrong number of dots on outbound detached signature")
-      response = new Response(Status.INTERNAL_SERVER_ERROR)
+      message = "Wrong number of dots on outbound detached signature"
+      logger.error(message)
+      response.status = Status.INTERNAL_SERVER_ERROR
+      response.entity = "{ \"error\":\"" + message + "\"}"
       return response
     }
 

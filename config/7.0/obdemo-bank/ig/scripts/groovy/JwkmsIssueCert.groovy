@@ -69,8 +69,13 @@ String subjectOI = requestObj.org_id;
 logger.debug("Issuing certificate for CN {} OI {}",subjectCN,subjectOI)
 
 if (!(subjectCN && subjectOI)) {
-    logger.error("Didn't get all input data")
-    return new Response(Status.BAD_REQUEST)
+    // response object
+    response = new Response(Status.BAD_REQUEST)
+    response.headers['Content-Type'] = "application/json"
+    message = "Didn't get all input data"
+    logger.error(message)
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 // Load up the CA keystore

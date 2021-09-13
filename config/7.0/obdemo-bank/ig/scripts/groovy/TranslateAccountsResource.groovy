@@ -1,17 +1,25 @@
 
 String[] grantedAccounts = contexts.policyDecision.attributes.grantedAccounts
 
+// response object
+response = new Response(Status.OK)
+response.headers['Content-Type'] = "application/json"
+
 if (grantedAccounts == null) {
-    logger.error("No granted accounts in policy response")
-    Response response = new Response(Status.INTERNAL_SERVER_ERROR)
+    message = "No granted accounts in policy response"
+    logger.error(message)
+    response.status = Status.INTERNAL_SERVER_ERROR
+    response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
 String[] grantedPermissions = contexts.policyDecision.attributes.grantedPermissions
 
 if (grantedPermissions == null) {
-    logger.error("No granted permissions in policy response")
-            Response response = new Response(Status.INTERNAL_SERVER_ERROR)
+    message = "No granted permissions in policy response"
+    logger.error(message)
+    response.status = Status.INTERNAL_SERVER_ERROR
+    response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 

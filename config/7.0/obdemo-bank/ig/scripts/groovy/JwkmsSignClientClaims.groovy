@@ -15,7 +15,10 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.jwk.*;
 
-import groovy.json.JsonSlurper
+import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jose.jwk.JWKSet
+
+import groovy.json.JsonOutput
 
 
 logger.debug("Signing claims as ApiClient")
@@ -24,113 +27,98 @@ logger.debug("Signing claims as ApiClient")
 response = new Response(Status.OK)
 response.headers['Content-Type'] = "application/json"
 
-// Check we have everything we need from the client certificate
+def getSigKey(jwks) {
+    List<RSAKey> jwkKeys = jwks.getKeys();
 
-if (!attributes.clientCertificate) {
-    message = "No client certificate for signing claims"
+    def key = null;
+
+    jwkKeys.forEach(k -> {
+    def use = k.getKeyUse().identifier();
+    logger.debug("Key use " + use);
+    if (use == "sig") {
+        logger.debug("Found signing key " + k);
+        key = k;
+    }
+});
+
+    return key;
+}
+
+def requestObject = request.entity.getJson();
+
+if (!requestObject) {
+    message = "Couldn't parse request JSON"
     logger.error(message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
-if (!attributes.clientCertificate.privateKey) {
-    message = "No private key in cert"
+if (!requestObject.claims) {
+    message = "No claims payload in request"
     logger.error(message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
-def optionsHeaders = request.headers.get(routeArgOptionsHeader)
+if (!requestObject.jwks) {
+    message = "No jwks in request"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
+}
 
-def signingOptions = []
+JWKSet jwks = JWKSet.parse(JsonOutput.toJson(requestObject.jwks));
 
-if (optionsHeaders != null) {
+if (!jwks) {
+    message = "Couldn't parse request body as JWK set"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
+}
 
-    String optionsJson = URLDecoder.decode(optionsHeaders.firstValue.toString())
-    logger.debug("Got options header " + optionsJson)
-    def slurper = new JsonSlurper()
-    signingOptions = slurper.parseText(optionsJson)
-    if (signingOptions == null) {
-        message = "Couldn't parse signing options"
-        logger.error(message)
-        response.status = Status.BAD_REQUEST
-        response.entity = "{ \"error\":\"" + message + "\"}"
-        return response
-    }
+RSAKey jwk = getSigKey(jwks);
+
+if (!jwk) {
+    message = "Couldn't find signing key in JWK set"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
+}
+
+PrivateKey privateKey = jwk.toPrivateKey();
+
+if (!privateKey) {
+    message = "Couldn't find private key in sig jwk"
+    logger.error(message)
+    response.status = Status.BAD_REQUEST
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
 }
 
 
-PrivateKey signingKey = attributes.clientCertificate.privateKey;
+def kid = jwk.getKeyID();
+def claimSet = new JwtClaimsSet(requestObject.claims)
 
-logger.debug("Recovered private key {}",signingKey)
+SigningHandler signingHandler = new SigningManager().newRsaSigningHandler(privateKey);
 
-def jwt = ""
-def isDetached = (signingOptions && signingOptions.detachedsig == true)
-def kid = attributes.clientCertificate.serialNumber.toString()
-
-if (signingOptions.unencodedpayload) {
-
-    Payload detachedPayload = new Payload(request.entity.getString());
-
-    JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.PS256)
-            .base64URLEncodePayload(false)
-            .criticalParams(Collections.singleton("b64"))
-            .keyID(kid)
-            .build();
-
-    JWSObject jwsObject = new JWSObject(header, detachedPayload);
-    // jwsObject.sign(new MACSigner(hmacJWK));
-    jwsObject.sign(new RSASSASigner(signingKey));
-
-    jwt = jwsObject.serialize(isDetached);
-}
-else {
-    def jwtClaims = new JwtClaimsSet(request.entity.getJson())
-
-    SigningHandler signingHandler = new SigningManager().newRsaSigningHandler(signingKey);
-
-
-
-    jwt = new JwtBuilderFactory()
-            .jws(signingHandler)
-            .headers()
-            .alg(JwsAlgorithm.PS256)
-            .kid(kid)
-            .done()
-            .claims(jwtClaims)
-            .build();
-
-    if (isDetached) {
-        String[] jwtElements = jwt.split("\\.")
-
-        if (jwtElements.length != 3) {
-            message = "Wrong number of dots on generated jwt " +  jwt.length
-            logger.error(message)
-            response.status = Status.INTERNAL_SERVER_ERROR
-            response.entity = "{ \"error\":\"" + message + "\"}"
-            return response
-        }
-
-        jwt = jwtElements[0] + ".." + jwtElements[2]
-
-        logger.debug("Removed payload - now {}",jwt)
-    }
-}
+def jwt = new JwtBuilderFactory()
+        .jws(signingHandler)
+        .headers()
+        .alg(JwsAlgorithm.PS256)
+        .kid(kid)
+        .done()
+        .claims(claimSet)
+        .build();
 
 logger.debug("Generated jwt {}", jwt)
-
-
 
 Response response = new Response(Status.OK)
 response.getHeaders().add("Content-Type","text/plain");
 response.setEntity(jwt);
 
 return response
-
-
-
-
-
-

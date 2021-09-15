@@ -64,19 +64,6 @@ def org_id = oiComponents[2]
 def org_name = attributes.clientCertificate.subjectDNComponents.CN;
 
 
-PublicKey  publicKey = attributes.clientCertificate.publicKey
-def algorithm = JwsAlgorithm.PS256
-def kid = attributes.clientCertificate.serialNumber.toString()
-
-RsaJWK jwk = RsaJWK.builder(publicKey)
-        .algorithm(algorithm)
-        .keyId(kid)
-        .keyUse(KeyUseConstants.SIG)
-        .build()
-
-def jwkString = jwk.toJsonString()
-
-
 def payload = [
     "iss": iss,
     "iat": iat,
@@ -94,7 +81,7 @@ def payload = [
     "software_policy_uri": requestObj.software_policy_uri,
     "software_logo_uri": requestObj.software_logo_uri,
     "software_roles": requestObj.software_roles,
-    "software_jwks": [ "keys": [ jwk.toJsonValue().object ]]
+    "software_jwks": requestObj.software_jwks
 ]
 
 

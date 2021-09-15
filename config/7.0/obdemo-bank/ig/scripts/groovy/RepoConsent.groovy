@@ -65,7 +65,7 @@ http.send(intentRequest).then(intentResponse -> {
                 "id": intentResponseObject._id,
                 "data": intentResponseObject.Data,
                 "accountIds": intentResponseObject.accounts,
-                "resourceOwnerUsername": intentResponseObject.user.userName,
+                "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user.userName : null,
                 "oauth2ClientId": intentResponseObject.apiClient.oauth2ClientId,
                 "oauth2ClientName": intentResponseObject.apiClient.name
         ]
@@ -75,7 +75,7 @@ http.send(intentRequest).then(intentResponse -> {
                 "id": intentResponseObject._id,
                 "data": intentResponseObject.Data,
                 "accountId": intentResponseObject.account,
-                "resourceOwnerUsername": intentResponseObject.user.userName,
+                "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user.userName : null,
                 "oauth2ClientId": intentResponseObject.apiClient.oauth2ClientId,
                 "oauth2ClientName": intentResponseObject.apiClient.name
         ]

@@ -1,7 +1,7 @@
 {
-  "name" : "API Client Onboarding",
+  "name" : "API Client Onboarding - Create Certs",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/getcert')}",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/issuecert')}",
   "handler":     {
     "name": "JwkmsIssueCert",
     "type": "ScriptableHandler",
@@ -14,7 +14,6 @@
         "routeArgKeystorePass": "&{ca.keystore.storepass}",
         "routeArgKeyPass": "&{ca.keystore.keypass}",
         "routeArgKeyAlias": "&{ca.keystore.alias}",
-        "routeArgPrivateKeyOid": "1.3.6.1.4.1.36733.10101",
         "routeArgValidityDays": 365,
         "routeArgKeySize": 2048,
         "routeArgSigningAlg": "SHA256withRSA",

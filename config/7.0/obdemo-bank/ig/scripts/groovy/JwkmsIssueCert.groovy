@@ -1,6 +1,8 @@
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jose.jwk.KeyUse;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -45,19 +47,140 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.SecretKey;
 import java.io.StringWriter;
+import java.util.Random;
 
 
 import java.util.Base64
 import java.security.KeyStore
 
-String OID_ORGANIZATIONAL_IDENTIFIER = "2.5.4.97"
-String QC_STATEMENTS = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAzAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE=";
+OID_ORGANIZATIONAL_IDENTIFIER = "2.5.4.97"
+QC_STATEMENTS_QWAC  = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAzAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE=";
+QC_STATEMENTS_QSEAL = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAjAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE="
+BC_PROVIDER = "BC";
+KEY_ALGORITHM = "RSA";
+
+enum EidasCertType{
+    SEAL, WAC
+}
 
 // Issue new transport certificate for API Client testing
 //
 // Certificate has its own private key embedded as a custom extension for use by test JWMKMS service
 //
 // Not for live clients!
+
+
+
+def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,caKey,providerName,keyAlg,sigAlg) {
+
+    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlg, providerName);
+    keyPairGenerator.initialize(keySize);
+
+    // Setup certificate start date to yesterday and end date from config
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DATE, -1);
+    Date startDate = calendar.getTime();
+
+    calendar.add(Calendar.DATE, validityDays);
+    Date endDate = calendar.getTime();
+
+    // Generate a new KeyPair and CSR
+
+    X500Name issuedCertSubject = new X500Name("CN=" + subjectCN + ",OID." + OID_ORGANIZATIONAL_IDENTIFIER + "=" + subjectOI);
+    // BigInteger issuedCertSerialNum = new BigInteger(Long.toString(new SecureRandom().nextLong()));
+    //  issuedCertSerialNum = new BigInteger(1, issuedCertSerialNum.toByteArray())
+    BigInteger issuedCertSerialNum = new BigInteger(128,new Random());
+    if (issuedCertSerialNum.signum() == -1) {
+        logger.debug("Negating serial")
+        issuedCertSerialNum = issuedCertSerialNum.negate();
+    }
+
+    logger.debug("Issuing with serial number " + issuedCertSerialNum);
+    KeyPair issuedCertKeyPair = keyPairGenerator.generateKeyPair();
+
+    PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(issuedCertSubject, issuedCertKeyPair.getPublic());
+    JcaContentSignerBuilder csrBuilder = new JcaContentSignerBuilder(sigAlg).setProvider(providerName);
+
+    // Sign the CSR with the CA key
+
+    ContentSigner csrContentSigner = csrBuilder.build(caKey);
+    PKCS10CertificationRequest csr = p10Builder.build(csrContentSigner);
+
+    X500Name certIssuer = new X500Name(caCertificate.getSubjectDN().getName())
+    X509v3CertificateBuilder issuedCertBuilder = new X509v3CertificateBuilder(certIssuer, issuedCertSerialNum, startDate, endDate, csr.getSubject(), csr.getSubjectPublicKeyInfo());
+
+    JcaX509ExtensionUtils issuedCertExtUtils = new JcaX509ExtensionUtils();
+
+    // Add Extensions
+
+    issuedCertBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
+    issuedCertBuilder.addExtension(Extension.authorityKeyIdentifier, false, issuedCertExtUtils.createAuthorityKeyIdentifier(caCertificate));
+    issuedCertBuilder.addExtension(Extension.subjectKeyIdentifier, false, issuedCertExtUtils.createSubjectKeyIdentifier(csr.getSubjectPublicKeyInfo()));
+    issuedCertBuilder.addExtension(Extension.keyUsage, false, new KeyUsage(KeyUsage.digitalSignature));
+    issuedCertBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(KeyPurposeId.id_kp_clientAuth));
+
+
+    // Currently build fixed qcstatements with all roles
+    issuedCertBuilder.addExtension(Extension.qCStatements, false, Base64.getDecoder().decode(certType == EidasCertType.SEAL ? QC_STATEMENTS_QSEAL : QC_STATEMENTS_QWAC));
+
+    X509CertificateHolder issuedCertHolder = issuedCertBuilder.build(csrContentSigner);
+    X509Certificate issuedCert = new JcaX509CertificateConverter().setProvider(BC_PROVIDER).getCertificate(issuedCertHolder);
+
+    // Verify the issued cert signature against the CA cert
+    issuedCert.verify(caCertificate.getPublicKey(), BC_PROVIDER);
+
+
+    def JWKJsonResponse = null
+
+    // build the JWK with private key representation and binding for the response to align the standard JSON Web Key
+    // https://datatracker.ietf.org/doc/html/rfc7517#page-9
+
+    def keyUse = (certType == EidasCertType.SEAL) ? "sig" : "tls";
+
+    PublicKey publicKey = issuedCert.getPublicKey()
+
+    if (publicKey instanceof RSAPublicKey) {
+        RSAKey rsaJWK = RSAKey.parse(issuedCert)
+
+        RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) issuedCertKeyPair.getPublic())
+                .privateKey((RSAPrivateKey) issuedCertKeyPair.getPrivate());
+
+        List<com.nimbusds.jose.util.Base64> x5c = new ArrayList<>(rsaJWK.getX509CertChain());
+
+        JWKJsonResponse = builder
+                .keyID(rsaJWK.getKeyID())
+                .keyUse(KeyUse.parse(keyUse))
+                .x509CertChain(x5c)
+                .x509CertSHA256Thumbprint(rsaJWK.getX509CertSHA256Thumbprint())
+                .x509CertURL(rsaJWK.getX509CertURL())
+                .algorithm(rsaJWK.getAlgorithm())
+                .build()
+                .toJSONString();
+
+    } else if (publicKey instanceof ECPublicKey) {
+        ECKey ecJWK = ECKey.parse(issuedCert)
+
+        ECKey.Builder builder = new ECKey.Builder((ECPublicKey) issuedCertKeyPair.getPublic())
+                .privateKey((ECPrivateKey) issuedCertKeyPair.getPrivate());
+
+        List<com.nimbusds.jose.util.Base64> x5c = new ArrayList<>(ecJWK.getX509CertChain());
+
+        JWKJsonResponse = builder
+                .keyID(ecJWK.getKeyID())
+                .keyUse(KeyUse.parse(keyUse))
+                .x509CertChain(x5c)
+                .x509CertSHA256Thumbprint(ecJWK.getX509CertSHA256Thumbprint())
+                .x509CertURL(ecJWK.getX509CertURL())
+                .algorithm(ecJWK.getAlgorithm())
+                .build()
+                .toJSONString();
+    } else {
+        // unknown type, should never happen
+    }
+
+    return JWKJsonResponse;
+}
 
 // Read in request details
 
@@ -80,9 +203,7 @@ if (!(subjectCN && subjectOI)) {
 
 // Load up the CA keystore
 
-String BC_PROVIDER = "BC";
-String KEY_ALGORITHM = "RSA";
-String SIGNATURE_ALGORITHM = routeArgSigningAlg;
+
 
 Security.addProvider(new BouncyCastleProvider());
 
@@ -96,125 +217,14 @@ X509Certificate caCertificate = (X509Certificate) keystore.getCertificate(routeA
 PrivateKey caKey = (PrivateKey) keystore.getKey(routeArgKeyAlias, routeArgKeyPass.toCharArray());
 PublicKey caPublicKey = caCertificate.getPublicKey();
 
-KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM, BC_PROVIDER);
-keyPairGenerator.initialize(routeArgKeySize);
-
-// Setup certificate start date to yesterday and end date from config
-
-Calendar calendar = Calendar.getInstance();
-calendar.add(Calendar.DATE, -1);
-Date startDate = calendar.getTime();
-
-calendar.add(Calendar.DATE, routeArgValidityDays);
-Date endDate = calendar.getTime();
-
-// Generate a new KeyPair and CSR
-
-X500Name issuedCertSubject = new X500Name("CN=" + subjectCN + ",OID." + OID_ORGANIZATIONAL_IDENTIFIER + "=" + subjectOI);
-BigInteger issuedCertSerialNum = new BigInteger(Long.toString(new SecureRandom().nextLong()));
-KeyPair issuedCertKeyPair = keyPairGenerator.generateKeyPair();
-
-PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(issuedCertSubject, issuedCertKeyPair.getPublic());
-JcaContentSignerBuilder csrBuilder = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM).setProvider(BC_PROVIDER);
-
-// Sign the CSR with the CA key
-
-ContentSigner csrContentSigner = csrBuilder.build(caKey);
-PKCS10CertificationRequest csr = p10Builder.build(csrContentSigner);
-
-X500Name certIssuer = new X500Name(caCertificate.getSubjectDN().getName())
-X509v3CertificateBuilder issuedCertBuilder = new X509v3CertificateBuilder(certIssuer, issuedCertSerialNum, startDate, endDate, csr.getSubject(), csr.getSubjectPublicKeyInfo());
-
-JcaX509ExtensionUtils issuedCertExtUtils = new JcaX509ExtensionUtils();
-
-// Add Extensions
-
-issuedCertBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-issuedCertBuilder.addExtension(Extension.authorityKeyIdentifier, false, issuedCertExtUtils.createAuthorityKeyIdentifier(caCertificate));
-issuedCertBuilder.addExtension(Extension.subjectKeyIdentifier, false, issuedCertExtUtils.createSubjectKeyIdentifier(csr.getSubjectPublicKeyInfo()));
-issuedCertBuilder.addExtension(Extension.keyUsage, false, new KeyUsage(KeyUsage.digitalSignature));
-issuedCertBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(KeyPurposeId.id_kp_clientAuth));
-
-
-// Currently build fixed qcstatements with all roles
-issuedCertBuilder.addExtension(Extension.qCStatements,false,Base64.getDecoder().decode(QC_STATEMENTS));
-
-// Embed the encrypted private key in the certificate. ECB used for simplicity - not production grade
-
-String keyB64 = routeArgEncryptionKey;
-logger.debug("Using encryption key " + keyB64);
-byte[] decodedKey = Base64.getDecoder().decode(keyB64);
-
-SecretKey encryptionKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-
-Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
-byte[] encryptedPrivateKey = cipher.doFinal(issuedCertKeyPair.getPrivate().getEncoded());
-
-logger.debug("encrypted private key - {} bytes",encryptedPrivateKey.length)
-
-ASN1ObjectIdentifier privateKeyOid = new ASN1ObjectIdentifier(routeArgPrivateKeyOid);
-Extension privateKeyExtension = new Extension(privateKeyOid, false, encryptedPrivateKey);
-
-issuedCertBuilder.addExtension(privateKeyExtension);
-
-X509CertificateHolder issuedCertHolder = issuedCertBuilder.build(csrContentSigner);
-X509Certificate issuedCert  = new JcaX509CertificateConverter().setProvider(BC_PROVIDER).getCertificate(issuedCertHolder);
-
-// Verify the issued cert signature against the CA cert
-issuedCert.verify(caCertificate.getPublicKey(), BC_PROVIDER);
-
-
-def JWKJsonResponse = null
-
-// build the JWK with private key representation and blinding for the response to align the standard JSON Web Key
-// https://datatracker.ietf.org/doc/html/rfc7517#page-9
-PublicKey publicKey = issuedCert.getPublicKey()
-
-if(publicKey instanceof RSAPublicKey){
-    RSAKey rsaJWK = RSAKey.parse(issuedCert)
-
-    RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) issuedCertKeyPair.getPublic())
-            .privateKey((RSAPrivateKey) issuedCertKeyPair.getPrivate());
-
-    List<com.nimbusds.jose.util.Base64> x5c = new ArrayList<>(rsaJWK.getX509CertChain());
-
-    JWKJsonResponse = builder.x509CertChain(x5c)
-            .x509CertSHA256Thumbprint(rsaJWK.getX509CertSHA256Thumbprint())
-            .x509CertURL(rsaJWK.getX509CertURL())
-            .algorithm(rsaJWK.getAlgorithm())
-            .keyID(rsaJWK.getKeyID())
-            .keyUse(rsaJWK.getKeyUse())
-            .build()
-            .toJSONString();
-
-} else if (publicKey instanceof ECPublicKey){
-    ECKey ecJWK = ECKey.parse(issuedCert)
-
-    ECKey.Builder builder = new ECKey.Builder((ECPublicKey) issuedCertKeyPair.getPublic())
-            .privateKey((ECPrivateKey) issuedCertKeyPair.getPrivate());
-
-    List<com.nimbusds.jose.util.Base64> x5c = new ArrayList<>(ecJWK.getX509CertChain());
-
-    JWKJsonResponse = builder.x509CertChain(x5c)
-            .x509CertSHA256Thumbprint(ecJWK.getX509CertSHA256Thumbprint())
-            .x509CertURL(ecJWK.getX509CertURL())
-            .algorithm(ecJWK.getAlgorithm())
-            .keyID(ecJWK.getKeyID())
-            .keyUse(ecJWK.getKeyUse())
-            .build()
-            .toJSONString();
-} else {
-    // unknown type, should never happen
-}
-
-
-
-
+def sealJWK = issueCert(EidasCertType.SEAL,routeArgKeySize,routeArgValidityDays,subjectCN,subjectOI,caCertificate,caKey,BC_PROVIDER,KEY_ALGORITHM,routeArgSigningAlg);
+def wacJWK = issueCert(EidasCertType.WAC,routeArgKeySize,routeArgValidityDays,subjectCN,subjectOI,caCertificate,caKey,BC_PROVIDER,KEY_ALGORITHM,routeArgSigningAlg);
 Response response = new Response(Status.OK)
 response.getHeaders().add("Content-Type","application/jwk+json");
 
-logger.debug("Final JSON " + JWKJsonResponse)
-response.setEntity(JWKJsonResponse)
+def keySet = "{ \"keys\": [" + wacJWK + "," + sealJWK + "]}";
+
+logger.debug("Final JSON " + keySet)
+response.setEntity(keySet)
 
 return response

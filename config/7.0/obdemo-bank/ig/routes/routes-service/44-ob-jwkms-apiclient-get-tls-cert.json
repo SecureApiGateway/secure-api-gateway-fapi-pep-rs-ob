@@ -1,0 +1,13 @@
+{
+  "name" : "API Client Onboarding - Extract TLS Cert",
+  "auditService": "AuditService-OB-Route",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/gettlscert')}",
+  "handler":     {
+    "name": "JwkmsIssueCert",
+    "type": "ScriptableHandler",
+    "config": {
+      "type": "application/x-groovy",
+      "file": "JwkmsGetTlsCert.groovy"
+    }
+  }
+}

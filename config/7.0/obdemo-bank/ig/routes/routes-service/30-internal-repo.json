@@ -40,7 +40,8 @@
                       "routeArgObjAccountAccessIntent": "accountAccessIntent",
                       "routeArgConsentPathDomesticPayment": "domestic-payment",
                       "routeArgObjDomesticPaymentIntent": "domesticPaymentIntent",
-                      "routeArgIdmBaseUri": "https://&{iam.fqdn}"
+                      "routeArgIdmBaseUri": "https://&{iam.fqdn}",
+                      "routeArgObjUser": "&{user.object}"
                     }
                   }
                 }

@@ -7,6 +7,7 @@ data:
   IAM_FQDN: openam-forgerock-securebankingaccelerato.forgeblocks.com
   RS_URL: http://securebanking-openbanking-uk-rs:8080
   AM_REALM: alpha
+  USER_OBJECT: alpha_user
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password
   IG_IDM_USER: service_account.ig

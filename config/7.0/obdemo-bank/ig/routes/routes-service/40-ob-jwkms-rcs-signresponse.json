@@ -1,7 +1,7 @@
 {
   "name" : "OB JWKMS",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${matches(request.uri.path, '^/jwkms/rcs/signClaims')}",
+  "condition" : "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
   "heap": [
     {
       "name": "SecretKeyPropertyFormat-RCS",
@@ -31,7 +31,7 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "JwkmsProcessRequest.groovy",
+            "file": "JwkmsProcessRCSClaims.groovy",
             "args": {
               "routeArgJwtIssuer": "forgerock-rcs",
               "routeArgJwtValidity": 300

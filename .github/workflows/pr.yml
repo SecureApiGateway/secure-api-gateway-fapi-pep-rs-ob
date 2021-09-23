@@ -1,0 +1,40 @@
+name: pull-request
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - README.md
+
+env:
+  PR_NUMBER: pr-${{ github.event.number }}
+  SERVICE_NAME: ig
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Check PR integrity
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCR_KEY }}
+          export_default_credentials: true
+        # Configure docker to use the gcloud command-line tool as a credential helper
+      - run: |
+          gcloud auth configure-docker
+      
+      - name: Build Docker Image
+        run: |
+          make build-docker-ig tag=$PR_NUMBER
+      
+      - name: 'run functional tests'
+        uses: codefresh-io/codefresh-pipeline-runner@master
+        with:
+          args: '-v TAG=${{ env.PR_NUMBER }} -v SERVICE_NAME=${{ env.SERVICE_NAME }} -v ENVIRONMENT=${{ github.actor }} -v BRANCH=${{ github.head_ref }}'
+        env:
+          PIPELINE_NAME: 'ForgeCloud/sbat-infra/service-build'
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+        id: run-pipeline

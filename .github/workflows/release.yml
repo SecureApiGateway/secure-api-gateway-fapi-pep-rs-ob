@@ -1,0 +1,16 @@
+name: Publish package to the ForgeRock artifactory
+on:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Deploy release
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Build Docker Image
+        run: |
+          make docker tag=${{ github.event.release.tag_name }} gcr-repo=${{ secrets.RELEASE_REPO }}

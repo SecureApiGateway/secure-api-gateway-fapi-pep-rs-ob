@@ -16,7 +16,7 @@ patchesStrategicMerge:
 
 images:
 - name: ig
-  newName: eu.gcr.io/sbat-gcr-release/securebanking/gate/ig
+  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/ig
   newTag: latest
 - name: obdemo-rcs-ui
   newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/obdemo-rcs-ui

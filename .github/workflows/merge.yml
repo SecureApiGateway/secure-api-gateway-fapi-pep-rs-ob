@@ -6,6 +6,7 @@ on:
 
 env:
   SERVICE_NAME: ig
+  GIT_SHA_SHORT: $(echo ${{ github.sha }} | cut -c1-7)
 
 jobs:
   build:
@@ -24,8 +25,8 @@ jobs:
       
       - name: docker build
         run: |
-          make build-docker-ig tag=${{ github.sha }}
-          docker tag eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ github.sha }} eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
+          make build-docker-ig tag=${{ env.GIT_SHA_SHORT }}
+          docker tag eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
           docker push eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
 
       - name: 'run functional tests'

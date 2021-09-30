@@ -18,9 +18,3 @@ images:
 - name: ig
   newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/ig
   newTag: latest
-- name: obdemo-rcs-ui
-  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/obdemo-rcs-ui
-  newTag: latest
-- name: obdemo-rs
-  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/obdemo-rs
-  newTag: latest

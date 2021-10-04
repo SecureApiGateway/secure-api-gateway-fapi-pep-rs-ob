@@ -30,6 +30,10 @@ spec:
           serviceName: ig
           servicePort: 8080
         path: /rcs-api
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+          path: /rs
 # Temporary - this will be internal
       - backend:
           serviceName: ig

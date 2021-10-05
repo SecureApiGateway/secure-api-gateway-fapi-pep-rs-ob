@@ -33,7 +33,7 @@ spec:
       - backend:
           serviceName: ig
           servicePort: 8080
-          path: /rs
+        path: /rs
 # Temporary - this will be internal
       - backend:
           serviceName: ig

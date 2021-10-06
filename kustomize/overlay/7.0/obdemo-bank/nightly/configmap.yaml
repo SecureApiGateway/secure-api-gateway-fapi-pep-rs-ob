@@ -5,7 +5,7 @@ metadata:
 data:
   FQDN: obdemo.nightly.forgerock.financial
   IAM_FQDN: openam-forgerock-securebankingaccelerato.forgeblocks.com
-  RS_URL: http://securebanking-openbanking-uk-rs:8080
+  RS_FQDN: rs.nightly.forgerock.financial
   AM_REALM: alpha
   USER_OBJECT: alpha_user
   IG_CLIENT_ID: ig-client

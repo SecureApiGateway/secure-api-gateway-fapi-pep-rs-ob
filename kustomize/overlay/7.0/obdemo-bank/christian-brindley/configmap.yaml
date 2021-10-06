@@ -5,7 +5,7 @@ metadata:
 data:
   FQDN: obdemo.christian-brindley.forgerock.financial
   IAM_FQDN: iam.dev.forgerock.financial
-  RS_URL: http://securebanking-openbanking-uk-rs:8080
+  RS_FQDN: rs.christian-brindley.forgerock.financial
   AM_REALM: alpha
   IG_CLIENT_ID: ig-client
   IG_CLIENT_SECRET: password

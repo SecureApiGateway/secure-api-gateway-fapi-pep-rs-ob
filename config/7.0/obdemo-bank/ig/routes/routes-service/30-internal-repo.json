@@ -45,6 +45,21 @@
                     }
                   }
                 }
+              },
+              {
+                "condition": "${matches(request.uri.path, '^/repo/users')}",
+                "handler": {
+                  "type": "ScriptableHandler",
+                  "config": {
+                    "type": "application/x-groovy",
+                    "clientHandler": "IDMClientHandler",
+                    "file": "RepoUser.groovy",
+                    "args": {
+                      "routeArgIdmBaseUri": "https://&{iam.fqdn}",
+                      "routeArgObjUser": "user"
+                    }
+                  }
+                }
               }
             ]
           }

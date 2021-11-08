@@ -56,7 +56,7 @@
                     "file": "RepoUser.groovy",
                     "args": {
                       "routeArgIdmBaseUri": "https://&{iam.fqdn}",
-                      "routeArgObjUser": "user"
+                      "routeArgObjUser": "&{user.object}"
                     }
                   }
                 }

@@ -221,6 +221,24 @@
           }
         ]
       }
+    },
+    {
+      "name": "SecretKeyPropertyFormat-Gateway",
+      "type": "SecretKeyPropertyFormat",
+      "config": {
+        "format": "PLAIN",
+        "algorithm": "AES"
+      }
+    },
+    {
+      "name": "SystemAndEnvSecretStore-Gateway",
+      "type": "SystemAndEnvSecretStore",
+      "config": {
+        "mappings": [{
+          "secretId": "ig.gw.secret",
+          "format": "SecretKeyPropertyFormat-Gateway"
+        }]
+      }
     }
 
   ],

@@ -56,6 +56,27 @@
             "type": "application/x-groovy",
             "file": "AddCnfKey.groovy"
           }
+        },
+        {
+          "type": "ClientCredentialsOAuth2ClientFilter",
+          "config": {
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "trusted_gateway"
+            ],
+            "handler": "TokenRequestHandler"
+          }
+        },
+        {
+          "name" : "AddGatewayAuthorization",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AddGatewayAuthorization.groovy"
+          }
         }
       ],
       "handler": "ReverseProxyHandler"

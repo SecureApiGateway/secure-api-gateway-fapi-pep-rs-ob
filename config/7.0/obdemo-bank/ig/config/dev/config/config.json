@@ -106,7 +106,8 @@
           "password": "&{ig.idm.password}"
         },
         "source": [
-          "def newEntity = request.getEntity().toString().replace('grant_type=client_credentials','grant_type=password&username=' + userId + '&password=' + java.net.URLEncoder.encode(password, 'UTF-8'))",
+          "def newEntity = request.getEntity().getString().replace('grant_type=client_credentials','grant_type=password&username=' + userId + '&password=' + java.net.URLEncoder.encode(password, 'UTF-8'))",
+          "logger.debug(\"Setting entity to [{}]\",newEntity)",
           "request.setEntity(newEntity)",
           "return http.send(context, request)"
         ],
@@ -239,8 +240,66 @@
           "format": "SecretKeyPropertyFormat-Gateway"
         }]
       }
+    },
+    {
+      "name": "TrustManager-OB",
+      "type": "TrustManager",
+      "config": {
+        "keystore": {
+          "type": "KeyStore",
+          "config": {
+            "url": "file://&{ig.instance.dir}/secrets/trust.p12",
+            "type": "PKCS12",
+            "passwordSecretId": "ca.keystore.storepass",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM"
+          }
+        }
+      }
+    },
+    {
+      "name": "OBClientHandler",
+      "type": "ClientHandler",
+      "capture": "all",
+      "config": {
+        "tls": {
+          "type": "ClientTlsOptions",
+          "config": {
+            "trustManager": "TrustManager-OB"
+          }
+        }
+      }
+    },
+    {
+      "name": "OBReverseProxyHandler",
+      "type": "ReverseProxyHandler",
+      "capture": [
+        "request",
+        "response"
+      ],
+      "config": {
+        "tls": {
+          "type": "ClientTlsOptions",
+          "config": {
+            "trustManager": "TrustManager-OB"
+          }
+        }
+      }
+    },
+    {
+      "name":"KeyStoreSecretStore-TA",
+      "type": "KeyStoreSecretStore",
+      "config": {
+        "file": "&{ig.instance.dir}/secrets/test.authority.p12",
+        "storeType": "PKCS12",
+        "storePassword": "ca.keystore.storepass",
+        "keyEntryPassword": "ca.keystore.storepass",
+        "secretsProvider": "SystemAndEnvSecretStore-IAM",
+        "mappings": [{
+          "secretId": "jwt.signer",
+          "aliases": [ "jwt-signer" ]
+        }]
+      }
     }
-
   ],
   "monitor": true
 }

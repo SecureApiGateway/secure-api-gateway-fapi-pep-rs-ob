@@ -1,0 +1,16 @@
+{
+  "name" : "Test Signer JWKS",
+  "auditService": "AuditService-OB-Route",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/jwks')}",
+  "handler":     {
+    "name": "JwkSetHandler-TA",
+    "type": "JwkSetHandler",
+    "config": {
+      "secretsProvider": "KeyStoreSecretStore-TA",
+      "purposes": [{
+        "secretId": "jwt.signer",
+        "keyUsage": "SIGN"
+      }]
+    }
+  }
+}

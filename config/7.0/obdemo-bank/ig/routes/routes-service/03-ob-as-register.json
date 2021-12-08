@@ -38,7 +38,27 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessRegistration.groovy"
+            "file": "ProcessRegistration.groovy",
+            "args": {
+              "_comment": "TODO: use env variable",
+              "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
+              "routeArgProxyBaseUrl": "https://&{fqdn}/jwkms/jwksproxy"
+            }
+          }
+        },
+        {
+          "name": "SSAVerifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SSAVerifier.groovy",
+            "clientHandler": "OBClientHandler",
+            "args": {
+              "routeArgSSAIssuerJwksUrls": {
+                "OpenBanking Ltd": "https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks",
+                "test-publisher": "https://&{fqdn}/jwkms/apiclient/jwks"
+              }
+            }
           }
         },
         {

@@ -44,6 +44,10 @@ spec:
           serviceName: ig
           servicePort: 8080
         path: /jwkms
+      - backend:
+          serviceName: ig
+          servicePort: 8080
+        path: /jwksproxy
   tls:
   - hosts:
     - $(FQDN)

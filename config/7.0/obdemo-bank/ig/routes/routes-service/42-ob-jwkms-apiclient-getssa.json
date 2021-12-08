@@ -55,10 +55,10 @@
           "type": "JwtBuilderFilter",
           "config": {
             "template": "${attributes.ssaPayload}",
-            "secretsProvider": "SystemAndEnvSecretStore-SSA",
+            "secretsProvider": "KeyStoreSecretStore-TA",
             "signature": {
-              "secretId": "ig.ssa.secret",
-              "algorithm": "HS256"
+              "secretId": "jwt.signer",
+              "algorithm": "PS256"
             }
           }
         }

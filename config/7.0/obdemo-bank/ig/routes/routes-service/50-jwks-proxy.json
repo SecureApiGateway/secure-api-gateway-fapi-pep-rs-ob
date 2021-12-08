@@ -1,0 +1,42 @@
+{
+  "name" : "OB JWKS Proxy",
+  "auditService": "AuditService-OB-Route",
+  "condition" : "${matches(request.uri.path, '^/jwkms/jwksproxy')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "JWKSProxyProcessRequest",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "JWKSProxyProcessRequest.groovy",
+            "args": {
+              "_comment": "TODO: use env variable",
+              "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]"
+            }
+          }
+        },
+        {
+          "type": "ForwardedRequestFilter",
+          "config": {
+            "host": "${split(request.uri.path, '/')[1]}"
+          }
+        },
+        {
+          "name": "ReplaceEncodingFilter",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "RESPONSE",
+            "remove": [ "Content-Type" ],
+            "add": {
+              "Content-Type": [ "application/json" ]
+            }
+          }
+        }
+      ],
+      "handler": "OBReverseProxyHandler"
+    }
+  }
+} 

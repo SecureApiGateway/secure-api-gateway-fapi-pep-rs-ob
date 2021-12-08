@@ -11,13 +11,24 @@ import org.forgerock.json.jose.jws.SignedJwt
 
 // TODO: check if SSA and apiClientOrg exist before attempting create
 // TODO: handle IDM error response - pass back to caller?
+// TODO: handle AM bad response - reformat to OB
 
-
+def errorResponse(httpCode, message) {
+  logger.error("Returning error " + httpCode + ": " + message);
+  def response = new Response(httpCode);
+  response.headers['Content-Type'] = "application/json";
+  response.entity = "{ \"error\":\"" + message + "\"}";
+  return response;
+}
 
 next.handle(context, request).thenOnResult(response -> {
   def error = false
 
   def clientData = response.entity.getJson();
+
+  if (!clientData) {
+    return(errorResponse(Status.BAD_REQUEST,"No registration data in response"));
+  }
 
   // Pull the apiClientOrg managed object info from the OIDC client data
 
@@ -26,8 +37,13 @@ next.handle(context, request).thenOnResult(response -> {
 
   // Unpack the SSA within the client data
 
-  def ssaJws = new JwtReconstruction().reconstructJwt(ssa,SignedJwt.class)
-  def ssaClaims = ssaJws.getClaimsSet();
+  def ssaJwt = attributes.registrationJWTs.ssaJwt;
+
+  if (!ssaJwt) {
+    return(errorResponse(Status.UNAUTHORIZED,"No SSA JWT"));
+  }
+
+  def ssaClaims = ssaJwt.getClaimsSet();
   def organizationName = ssaClaims.getClaim("org_name", String.class);
   def organizationIdentifier = ssaClaims.getClaim("org_id", String.class);
 
@@ -36,8 +52,8 @@ next.handle(context, request).thenOnResult(response -> {
   def ssaSoftwareDescription = ssaClaims.getClaim("software_client_description")
 
 
-  def clientJwksUri = ssaClaims.getClaim("software_jwks_endpoint", String.class)
-  def clientJwks = ssaClaims.getClaim("software_jwks")
+  def clientJwksUri = attributes.registrationJWTs.registrationJwksUri;
+  def clientJwks = attributes.registrationJWTs.registrationJwks;
   def ssaLogoUri = ssaClaims.getClaim("software_logo_uri", String.class)
 
   // Create the apiClient object
@@ -55,11 +71,17 @@ next.handle(context, request).thenOnResult(response -> {
           "name" : ssaSoftwareName,
           "description": ssaSoftwareDescription,
           "ssa" : ssa,
-          "jwksUri" : clientJwksUri,
-          "jwks": JsonOutput.toJson(clientJwks),
           "logoUri" : ssaLogoUri,
           "oauth2ClientId": oauth2ClientId
   ]
+
+  if (clientJwksUri) {
+    apiClientConfig.jwksUri = clientJwksUri;
+  }
+
+  if (clientJwks) {
+    apiClientConfig.jwks = JsonOutput.toJson(clientJwks);
+  }
 
   Request apiClientRequest = new Request();
 

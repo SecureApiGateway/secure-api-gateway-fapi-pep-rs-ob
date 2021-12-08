@@ -43,10 +43,10 @@
           "type": "JwtBuilderFilter",
           "config": {
             "template": "${attributes.processedPayload}",
-            "secretsProvider": "SystemAndEnvSecretStore-RCS",
+            "secretsProvider": "KeyStoreSecretStore-TA",
             "signature": {
-              "secretId": "ig.rcs.secret",
-              "algorithm": "HS256"
+              "secretId": "jwt.signer",
+              "algorithm": "PS256"
             }
           }
         }

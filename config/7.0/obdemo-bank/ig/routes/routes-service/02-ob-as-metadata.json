@@ -1,5 +1,6 @@
 {
-  "name" : "OB AS Metadata",
+  "comment": "OIDC well known config",
+  "name" : "02 - Open Banking AS Metadata",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/.well-known/openid-configuration')}",
@@ -8,6 +9,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Set downstream Host header",
           "name" : "HeaderFilter-ChangeHostToIAM",
           "type" : "HeaderFilter",
           "config" : {
@@ -19,6 +21,7 @@
           }
         },
         {
+          "comment": "Update well-known config to go via IG",
           "name": "WellKnownFilter",
           "type": "ScriptableFilter",
           "config": {

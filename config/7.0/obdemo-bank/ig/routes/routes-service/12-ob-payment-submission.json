@@ -1,10 +1,12 @@
 {
-  "name" : "OB Payment Submission",
+  "comment": "Handle Open Banking Domestic Payment request",
+  "name" : "12 - Open Banking Domestic Payment Submission",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1.*/pisp/domestic-payments$')}",
   "heap": [
     {
+      "comment": "Use composite JWKS endpoint for checking TPP detached signatures (IDM endpoint which aggregates all JWK sets",
       "name": "JwkSetSecretStore-ApiClientJwks",
       "type": "JwkSetSecretStore",
       "config": {
@@ -19,6 +21,7 @@
     "config" : {
       "filters" : [
         {
+          "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
           "type": "ScriptableFilter",
           "config": {
@@ -34,6 +37,7 @@
           }
         },
         {
+          "comment": "Ensure the response is Open Banking compliant",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -42,6 +46,7 @@
           }
         },
         {
+          "comment": "Extract client certificate details",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -53,6 +58,7 @@
           }
         },
         {
+          "comment": "Ensure client certificate includes PISP role",
           "name" : "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -64,6 +70,7 @@
           }
         },
         {
+          "comment": "Check incoming access token",
           "name" : "OAuth2ResourceServerFilter-OBIE",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
@@ -82,6 +89,7 @@
           }
         },
         {
+          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
           "name": "ProcessDetachedSig",
           "type": "ScriptableFilter",
           "config": {
@@ -95,6 +103,7 @@
           }
         },
         {
+          "comment": "If we have an encoded payload for the detached signature, use standard JWT validation filter for detached signature check",
           "type": "ConditionalFilter",
           "config": {
             "condition": "${attributes.encodedPayload == true}",
@@ -119,6 +128,7 @@
           }
         },
         {
+          "comment": "Adjust URL for downstream resource server",
           "type": "UriPathRewriteFilter",
           "config": {
             "mappings": {
@@ -139,6 +149,7 @@
           }
         },
         {
+          "comment": "Encode the payment request for safe transmission to the policy engine",
           "name": "EncodeInitiation",
           "type": "ScriptableFilter",
           "config": {
@@ -155,6 +166,7 @@
           }
         },
         {
+          "comment": "Check payment request against authorised consent, via AM policy engineß",
           "name" : "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
           "type" : "PolicyEnforcementFilter",
           "config" : {
@@ -175,6 +187,7 @@
           }
         },
         {
+          "comment": "Adjust URL for downstream resource server",
           "name": "TranslatePaymentResource",
           "type": "ScriptableFilter",
           "config": {
@@ -186,6 +199,7 @@
           }
         },
         {
+          "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -200,6 +214,7 @@
           }
         },
         {
+          "comment": "Add host header for downstream resource server",
           "name" : "HeaderFilter-ChangeHostToRS",
           "type" : "HeaderFilter",
           "config" : {

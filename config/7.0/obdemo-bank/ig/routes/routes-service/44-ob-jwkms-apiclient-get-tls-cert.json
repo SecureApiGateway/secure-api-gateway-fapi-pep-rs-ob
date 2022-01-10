@@ -1,5 +1,6 @@
 {
-  "name" : "API Client Onboarding - Extract TLS Cert",
+  "comment": "Convert incoming JWK set to PEM encoded TLS client cert and key",
+  "name" : "44 - API Client Onboarding - Extract TLS Cert",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/gettlscert')}",
   "handler":     {

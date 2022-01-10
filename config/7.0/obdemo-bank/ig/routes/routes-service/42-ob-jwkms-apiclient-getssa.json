@@ -1,5 +1,6 @@
 {
-  "name" : "OB Generate Test SSA",
+  "comment": "Create SSA for test TPP clients to use in OIDC dynamic registration",
+  "name" : "42 - API client onboarding - generate test SSA",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/getssa')}",
   "heap": [
@@ -27,6 +28,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Extract certificate details for organizational claims in SSA",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -38,6 +40,7 @@
           }
         },
         {
+          "comment": "Create the SSA payload",
           "name": "JwkmsBuildSSA",
           "type": "ScriptableFilter",
           "config": {
@@ -49,8 +52,8 @@
             }
           }
         },
-
         {
+          "comment": "Sign the SSA",
           "name": "JwtBuilderFilter-SSA",
           "type": "JwtBuilderFilter",
           "config": {
@@ -64,6 +67,7 @@
         }
       ],
       "handler": {
+        "comment": "Return the SSA",
         "type": "ScriptableHandler",
         "config": {
           "type": "application/x-groovy",

@@ -1,4 +1,5 @@
 {
+  "comment": "40 - Signing service for Remote Consent service, used to sign responses with RCS registered key",
   "name" : "OB JWKMS",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
@@ -27,6 +28,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Prepare JWT payload",
           "name": "JwkmsProcessRequest",
           "type": "ScriptableFilter",
           "config": {
@@ -39,6 +41,7 @@
           }
         },
         {
+          "comment": "Sign JWT with Remote Consent Service key",
           "name": "JwtBuilderFilter-JWKMS",
           "type": "JwtBuilderFilter",
           "config": {
@@ -52,6 +55,7 @@
         }
       ],
       "handler": {
+        "comment": "Set content type to text/plan for JWT",
         "type": "ScriptableHandler",
         "config": {
           "type": "application/x-groovy",

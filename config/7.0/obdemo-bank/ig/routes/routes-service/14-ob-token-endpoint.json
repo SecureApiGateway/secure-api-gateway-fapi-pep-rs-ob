@@ -1,5 +1,6 @@
 {
-  "name" : "OB AS token endpoint",
+  "comment": "Authorise access to token endpoint",
+  "name" : "14 - Open Banking OAuth2 token endpoint",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",
@@ -8,6 +9,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Ensure Open Banking compliant response",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -16,6 +18,7 @@
           }
         },
         {
+          "comment": "Add host to downstream request",
           "name": "HeaderFilter-ChangeHostToIAM",
           "type": "HeaderFilter",
           "config": {
@@ -32,6 +35,7 @@
           }
         },
         {
+          "comment": "Extract certificate thumbprint for use in cert bound access token check",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
           "config": {
@@ -50,6 +54,7 @@
           }
         },
         {
+          "comment": "Add the extracted cert thumbprint to the token request",
           "name" : "AddCnf",
           "type": "ScriptableFilter",
           "config": {
@@ -58,6 +63,7 @@
           }
         },
         {
+          "comment": "Add gateway access token to request (custom AT modification script checks access token to enforce route via IG)",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
             "clientId": "&{ig.client.id}",
@@ -71,6 +77,7 @@
           }
         },
         {
+          "comment": "Add gateway access token to downstream request",
           "name" : "AddGatewayAuthorization",
           "type": "ScriptableFilter",
           "config": {

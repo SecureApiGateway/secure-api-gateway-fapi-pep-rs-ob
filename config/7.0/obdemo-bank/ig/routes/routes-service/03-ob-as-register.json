@@ -1,5 +1,6 @@
 {
-  "name": "OB Register TPP",
+  "comment": "TPP dynamic registration",
+  "name": "03 - Open Banking Register TPP",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{iam.fqdn}",
   "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
@@ -8,6 +9,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Enforce response content type as application/json",
           "name": "HeaderFilter-AddResponseHeaders",
           "type": "HeaderFilter",
           "config": {
@@ -23,6 +25,7 @@
           }
         },
         {
+          "comment": "Extract MTLS client certificate details",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -34,19 +37,21 @@
           }
         },
         {
+          "comment": "Pre process registration request",
           "name": "ProcessRegistration",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "ProcessRegistration.groovy",
             "args": {
-              "_comment": "TODO: use env variable",
+              "comment": "TODO: use env variable",
               "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
               "routeArgProxyBaseUrl": "https://&{fqdn}/jwkms/jwksproxy"
             }
           }
         },
         {
+          "comment": "Verify SSA signature (AM can't process non-conformant OB SSAs)",
           "name": "SSAVerifier",
           "type": "ScriptableFilter",
           "config": {
@@ -62,6 +67,7 @@
           }
         },
         {
+          "comment": "Register TPP org and OAuth2 client in IDM",
           "name": "CreateApiClient",
           "type": "ScriptableFilter",
           "config": {
@@ -76,6 +82,7 @@
           }
         },
         {
+          "comment": "Set Host header for downstream",
           "name" : "HeaderFilter-ChangeHostToIAM",
           "type" : "HeaderFilter",
           "config" : {
@@ -87,6 +94,7 @@
           }
         },
         {
+          "comment": "Fetch access token for dynamic client registration",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
             "clientId": "&{ig.client.id}",

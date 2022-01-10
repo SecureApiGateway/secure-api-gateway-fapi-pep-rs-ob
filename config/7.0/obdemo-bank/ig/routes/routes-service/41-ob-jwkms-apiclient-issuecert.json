@@ -1,8 +1,10 @@
 {
-  "name" : "API Client Onboarding - Create Certs",
+  "comment": "Test CA - generate TPP WAC and SEAL certificates and private keys",
+  "name" : "41 - API Client Onboarding - Create Certs",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/issuecert')}",
   "handler":     {
+    "comment": "Generate certificates and keys, and return as JWK set",
     "name": "JwkmsIssueCert",
     "type": "ScriptableHandler",
     "config": {

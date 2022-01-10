@@ -1,5 +1,5 @@
 {
-  "name" : "Internal Repo Route - for RCS",
+  "name" : "30 - Internal Repo Route for Remote Consent Service",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/repo/')}",
@@ -13,6 +13,7 @@
           "config": {
             "onRequest": [
               {
+                "comment": "Fetch OAuth2 client details from IDM",
                 "condition": "${matches(request.uri.path, '^/repo/apiclients')}",
                 "handler": {
                   "type": "ScriptableHandler",
@@ -28,6 +29,7 @@
                 }
               },
               {
+                "comment": "Fetch Open Banking consent from IDM",
                 "condition": "${matches(request.uri.path, '^/repo/consents')}",
                 "handler": {
                   "type": "ScriptableHandler",
@@ -47,6 +49,7 @@
                 }
               },
               {
+                "comment": "Fetch user information from IDM",
                 "condition": "${matches(request.uri.path, '^/repo/users')}",
                 "handler": {
                   "type": "ScriptableHandler",

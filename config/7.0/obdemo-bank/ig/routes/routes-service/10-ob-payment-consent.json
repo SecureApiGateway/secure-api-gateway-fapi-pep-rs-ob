@@ -1,5 +1,5 @@
 {
-  "name" : "OB RS Payment Consent",
+  "name" : "10 - Open Banking RS Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
@@ -56,6 +56,7 @@
           }
         },
         {
+          "comment": "Check certificate bound access token",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
@@ -93,6 +94,7 @@
           }
         },
         {
+          "comment": "Prepare request for IDM",
           "name": "ProcessPaymentConsent",
           "type": "ScriptableFilter",
           "config": {
@@ -106,6 +108,7 @@
           }
         },
         {
+          "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -120,6 +123,7 @@
           }
         },
         {
+          "comment": "Add host header for downstream services",
           "name" : "HeaderFilter-ChangeHostToIDM",
           "type" : "HeaderFilter",
           "config" : {
@@ -128,6 +132,7 @@
           }
         },
         {
+          "comment": "Add access token to IDM request",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
             "clientId": "&{ig.client.id}",

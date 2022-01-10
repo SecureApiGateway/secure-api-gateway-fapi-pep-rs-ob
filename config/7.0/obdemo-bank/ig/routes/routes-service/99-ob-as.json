@@ -1,5 +1,6 @@
 {
-  "name" : "OBIE AS General",
+  "comment": "Passthrough for any unprotected AM endpoints",
+  "name" : "99 - OBIE AS General",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am')}",
@@ -8,6 +9,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Add host header to downstream request",
           "name" : "HeaderFilter-ChangeHostToIAM",
           "type" : "HeaderFilter",
           "config" : {

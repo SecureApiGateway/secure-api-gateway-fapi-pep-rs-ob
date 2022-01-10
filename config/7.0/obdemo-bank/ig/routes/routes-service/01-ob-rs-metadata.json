@@ -1,5 +1,6 @@
 {
-  "name" : "OB RS Metadata",
+  "comment": "Return Open Banking endpoints supported by Resource Server",
+  "name" : "01 - Open Banking RS Metadata",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
@@ -8,6 +9,8 @@
     "config": {
       "filters": [
         {
+          "comment": "Adjust inbound URL to resource server base URL",
+          "name": "UriPathRewriteFilter-RS",
           "type": "UriPathRewriteFilter",
           "config": {
             "mappings": {
@@ -28,7 +31,8 @@
           }
         },
         {
-          "name": "HeaderFilter-",
+          "comment": "Add host to downstream request",
+          "name": "HeaderFilter-Forwarded-Host",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
@@ -44,6 +48,8 @@
           }
         },
         {
+          "comment": "Adjust RS endpoints to IG protected URLs",
+          "name": "FilterRSUrls",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",

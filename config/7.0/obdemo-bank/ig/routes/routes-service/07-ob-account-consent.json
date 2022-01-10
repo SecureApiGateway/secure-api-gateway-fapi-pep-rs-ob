@@ -1,5 +1,6 @@
 {
-  "name" : "OB RS Account Consent",
+  "comment": "Open Banking Account Access Consents",
+  "name" : "07 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/account-access-consents')}",
@@ -8,6 +9,7 @@
     "config": {
       "filters": [
         {
+          "comment": "Check Open Banking compliant response",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -16,6 +18,7 @@
           }
         },
         {
+          "comment": "Extract client certificate details",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -27,6 +30,7 @@
           }
         },
         {
+          "comment": "Make sure client certificate includes AISP role",
           "name" : "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -38,6 +42,7 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
           "config": {
@@ -56,6 +61,7 @@
           }
         },
         {
+          "comment": "Check access token with AM",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
@@ -93,6 +99,7 @@
           }
         },
         {
+          "commment": "Prepare account consent for IDM",
           "name": "ProcessAccountConsent",
           "type": "ScriptableFilter",
           "config": {
@@ -106,6 +113,7 @@
           }
         },
         {
+          "commment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -120,6 +128,7 @@
           }
         },
         {
+          "comment": "Add Host header for downstream IDM",
           "name" : "HeaderFilter-ChangeHostToIDM",
           "type" : "HeaderFilter",
           "config" : {
@@ -128,6 +137,7 @@
           }
         },
         {
+          "comment": "Add access token to IDM request",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
             "clientId": "&{ig.client.id}",

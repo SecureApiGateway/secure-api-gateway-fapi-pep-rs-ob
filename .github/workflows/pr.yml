@@ -30,7 +30,7 @@ jobs:
         run: |
           make build-docker-ig tag=$PR_NUMBER
       
-      - name: 'run functional tests'
+      - name: 'build environment and run functional tests'
         uses: codefresh-io/codefresh-pipeline-runner@master
         with:
           args: '-v TAG=${{ env.PR_NUMBER }} -v SERVICE_NAME=${{ env.SERVICE_NAME }} -v ENVIRONMENT=${{ github.actor }} -v BRANCH=${{ github.head_ref }}'

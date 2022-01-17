@@ -1,0 +1,13 @@
+namespace: andra-racovita
+commonLabels:
+  app.kubernetes.io/name: "forgerock"
+resources:
+- ../../../../base/obdemo-bank
+
+patchesStrategicMerge:
+  - configmap.yaml
+
+images:
+- name: ig
+  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/ig
+  newTag: latest

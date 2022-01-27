@@ -2,7 +2,7 @@
   "name" : "08 - Open Banking Account Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/accounts$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/accounts')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

@@ -42,6 +42,9 @@
             ],
             "add": {
               "X-Forwarded-Host": [
+                "&{fqdn}"
+              ],
+              "X-Host": [
                 "&{rs.fqdn}"
               ]
             }
@@ -53,12 +56,7 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "source": [
-              "next.handle(context, request).thenOnResult(response -> {",
-              "  response.entity = response.entity.getString().replace('http://rs','https://' + request.getHeaders().getFirst('Host') + '/rs');",
-              "  return response;",
-              "})"
-            ]
+            "file" : "ProcessRs.groovy"
           }
         }
       ],

@@ -26,7 +26,11 @@ This repository contains a demonstration deployment of the ForgeRock platform al
 | type | folder |
 | --- | --- |
 | overlay | `kustomize/overlay/7.0/obdemo-bank` |
-| environment | `${overlay}/${environment}` |
+| defaults | `kustomize/overlay/7.0/obdemo-bank/defaults` |
+| environment | `${overlay}/${environment}` except `defaults`|
+> Defaults contains the map values configuration parameters shared through all environments
+
+> Each environment on `kustomize/overlay/7.0/obdemo-bank` can override the defaults map values
 
 ## Quick Start
 To make more easy the deployment for developers there is a config script to initialise the IG docker with the below arguments.
@@ -129,15 +133,11 @@ See [Principal Folder structure section](#principal-folder-structure)
 This deployment is based on the ForgeOps Cloud Developer Kit, with the following modifications and additions:
 
 - The config initialisation script have new arguments `--env ${environment}` and `--igmode ${igmode}`
-- There is a new kustomize overlay at `kustomize/overlay/7.0/obdemo-bank/${environment}`. The default `skaffold.yaml` file uses this overlay by default
-  - New environment `dev`
-  - New environment `prod`
-- There is an additional deployment for the AM remote consent service front end (`docker/obdemo-rcs-ui`).
-- There is an additional deployment for the AM remote consent service back end (`docker/obdemo-rcs-api`).
-- There is an additional deployment for a demo resource server providing a mock bank API (`docker/obdemo-rs`).
+    - New environment `dev`
+    - New environment `prod`
+- There is a kustomize overlay for each environment at `kustomize/overlay/7.0/obdemo-bank/${environment}` with the except of `defautls` folder that contains the defaults map values shared through `{environment}`. The default `skaffold.yaml` file uses this overlay by default
 - The IG deployment (`docker/7.0/ig`) has been modified to include a jar file with custom filters.
 - The IG configuration has been updated to increase the vertx max client header size to 16k.
-- New feature to add new custom environments, see [Create a new environment](#create-a-new-environment).
 
 ## Postman Collection
 

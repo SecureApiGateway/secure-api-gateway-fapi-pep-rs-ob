@@ -2,7 +2,7 @@ namespace: dev
 commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
-- ../../../../base/obdemo-bank
+- ../defaults
 
 patchesJson6902:
   - path: secrets-prometheus-patch.yaml
@@ -10,11 +10,3 @@ patchesJson6902:
       kind: Secret
       name: openig-secrets-env
       version: v1
-
-patchesStrategicMerge:
-  - configmap.yaml
-
-images:
-- name: ig
-  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/ig
-  newTag: latest

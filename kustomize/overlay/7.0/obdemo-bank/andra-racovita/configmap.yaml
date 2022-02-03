@@ -6,23 +6,3 @@ data:
   FQDN: obdemo.andra-racovita.forgerock.financial
   IAM_FQDN: iam.dev.forgerock.financial
   RS_FQDN: rs.andra-racovita.forgerock.financial
-  AM_REALM: alpha
-  IG_CLIENT_ID: ig-client
-  IG_CLIENT_SECRET: password
-  IG_IDM_USER: service_account.ig
-  IG_IDM_PASSWORD: 0penBanking!
-  IG_AGENT_ID: ig-agent
-  IG_AGENT_PASSWORD: password
-  IG_RCS_SECRET: password
-  IG_SSA_SECRET: password
-  CERT_ISSUER: null-issuer
-  ASPSP_KEYSTORE_PATH: /secrets/aspsp.test.p12
-  ASPSP_KEYSTORE_PASSWORD: password
-  ASPSP_JWTSIGNER_ALIAS: jwtsigner
-  ASPSP_JWTSIGNER_KID: R3MviZ4QUPEDJm7RS3Mw
-  CA_KEYSTORE_PATH: /secrets/ca.p12
-  CA_KEYSTORE_TYPE: PKCS12
-  CA_KEYSTORE_STOREPASS: Passw0rd
-  CA_KEYSTORE_KEYPASS: Passw0rd
-  CA_KEYSTORE_ALIAS: ca
-  CA_KEK: Syz1K5XQCZtq7FkE+GNvgZPeFyvUXJdemIW7CQjM18U=

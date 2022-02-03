@@ -2,7 +2,7 @@ namespace: ig
 commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
-- ../../../../base/obdemo-bank
+- ../defaults
 
 patchesJson6902:
   - path: ingress-patch.yaml

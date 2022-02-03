@@ -2,13 +2,7 @@ namespace: christian-brindley
 commonLabels:
   app.kubernetes.io/name: "forgerock"
 resources:
-- ../../../../base/obdemo-bank
+- ../defaults
 
 patchesStrategicMerge:
   - configmap.yaml
-
-images:
-- name: ig
-  newName: eu.gcr.io/sbat-gcr-develop/securebanking/gate/ig
-  newTag: latest
-  

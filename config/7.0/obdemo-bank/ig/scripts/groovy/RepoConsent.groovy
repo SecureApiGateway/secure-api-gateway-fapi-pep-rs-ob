@@ -13,7 +13,7 @@ def buildPatchRequest (incomingRequest) {
         ]);
 
         def tz = TimeZone.getTimeZone("UTC");
-        def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
+        def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         df.setTimeZone(tz);
         def nowAsISO = df.format(new Date());
 

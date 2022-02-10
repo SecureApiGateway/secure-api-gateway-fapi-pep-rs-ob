@@ -38,3 +38,4 @@ docker/7.0/ig/scripts/
 /docker/gatling/gradlew
 /docker/gatling/gradlew.bat
 /docker/gatling/gradle/
+*.jar

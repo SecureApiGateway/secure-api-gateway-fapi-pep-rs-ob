@@ -9,28 +9,48 @@ import java.util.UUID
 
 def oauth2ClientId = contexts.oauth2.accessToken.info.client_id
 
-accountIntentData = request.entity.getJson()
+def method = request.method
 
-def tz = TimeZone.getTimeZone("UTC");
-def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-df.setTimeZone(tz);
-def nowAsISO = df.format(new Date());
+switch(method.toUpperCase()) {
 
-def consentId = routeArgConsentIdPrefix + UUID.randomUUID().toString()
+    case "POST":
+        accountIntentData = request.entity.getJson()
+        def tz = TimeZone.getTimeZone("UTC");
+        def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        df.setTimeZone(tz);
+        def nowAsISO = df.format(new Date());
 
-accountIntentData._id = consentId
-accountIntentData.Data.ConsentId = consentId
-accountIntentData.Data.Status = "AwaitingAuthorisation";
-accountIntentData.Data.CreationDateTime = nowAsISO
-accountIntentData.Data.StatusUpdateDateTime = nowAsISO
-accountIntentData.apiClient = [ "_ref" : "managed/" + routeArgObjApiClient + "/" +  oauth2ClientId ]
+        def consentId = routeArgConsentIdPrefix + UUID.randomUUID().toString()
 
-logger.debug("final json [" + accountIntentData + "]")
-request.setEntity(accountIntentData)
+        accountIntentData._id = consentId
+        accountIntentData.Data.ConsentId = consentId
+        accountIntentData.Data.Status = "AwaitingAuthorisation";
+        accountIntentData.Data.CreationDateTime = nowAsISO
+        accountIntentData.Data.StatusUpdateDateTime = nowAsISO
+        accountIntentData.apiClient = [ "_ref" : "managed/" + routeArgObjApiClient + "/" +  oauth2ClientId ]
 
+        logger.debug("final json [" + accountIntentData + "]")
+        request.setEntity(accountIntentData)
 
-request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent
-request.uri.query = "action=create";
+        request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent
+        request.uri.query = "action=create";
+        break
+
+    case "DELETE":
+        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
+        request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
+        break
+
+    case "GET":
+        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
+        request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
+        break
+
+    default:
+        logger.debug("Method not supported")
+
+}
+
 
 next.handle(context, request)
 

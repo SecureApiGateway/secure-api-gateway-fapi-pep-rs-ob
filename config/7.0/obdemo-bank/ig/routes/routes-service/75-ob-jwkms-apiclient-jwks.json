@@ -1,6 +1,6 @@
 {
   "commemnt": "JWK set service for test JWT issuer",
-  "name" : "45 - JWK set service for test JWT issuer",
+  "name" : "75 - JWK set service for test JWT issuer",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/jwks')}",
   "handler":     {

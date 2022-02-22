@@ -1,6 +1,6 @@
 {
   "comment": "Signing service for TPPs with test JWK set",
-  "name" : "43 - Test TPP signing service",
+  "name" : "73 - Test TPP signing service",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/signclaims')}",
   "heap": [

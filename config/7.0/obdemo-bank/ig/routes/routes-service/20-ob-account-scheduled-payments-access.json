@@ -1,0 +1,147 @@
+{
+  "name" : "20 - Open Banking Account Scheduled Payments Access",
+  "auditService": "AuditService-OB-Route",
+  "baseURI" : "https://&{rs.fqdn}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/scheduled-payments')}",
+  "capture" : [ "response", "request" ],
+  "handler" : {
+    "type" : "Chain",
+    "config" : {
+      "filters" : [
+        {
+          "comment": "Ensure OB compliant response",
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
+          "comment": "Extract client certificate details",
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "comment": "Ensure client certificate includes AISP role",
+          "name" : "CertificateRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CertificateRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "AISP"
+            }
+          }
+        },
+        {
+          "comment": "Remove /rs base path for downstream RS",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check access token",
+          "name" : "OAuth2ResourceServerFilter-OBIE",
+          "type" : "OAuth2ResourceServerFilter",
+          "config" : {
+            "scopes" : [ "accounts", "openid" ],
+            "requireHttps" : false,
+            "realm" : "OpenIG",
+            "accessTokenResolver" : {
+              "type": "StatelessAccessTokenResolver",
+              "config": {
+                "secretsProvider": "SecretsProvider-AmJWK",
+                "issuer": "https://&{iam.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
+                "verificationSecretId": "any.value.in.regex.format"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check consent authorised via AM authz policy",
+          "name" : "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type" : "PolicyEnforcementFilter",
+          "config" : {
+            "pepRealm" : "/&{am.realm}",
+            "application" : "Open Banking",
+            "claimsSubject" : {
+              "sub": "${contexts.oauth2.accessToken.info.sub}",
+              "intent_type": "aisp"
+            },
+            "environment": {
+              "sub": [ "${contexts.oauth2.accessToken.info.sub}" ],
+              "tpp_client_id" : [ "${contexts.oauth2.accessToken.info.aud}" ],
+              "tpp_cert_id" : [ "${attributes.tppId}" ],
+              "intent_id": [ "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}" ]
+            },
+            "amService" : "AmService-OBIE"
+          }
+        },
+        {
+          "comment": "Check permissions and accounts in authz response from AM",
+          "name": "TranslateAccountsResource",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "TranslateAccountsResource.groovy",
+            "args": {
+              "routeArgAccountIdsHeader": "x-ob-account-ids",
+              "routeArgPermissionsHeader": "x-ob-permissions"
+            }
+          }
+        },
+        {
+          "comment": "Prepare consent audit trailß",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
+              "role": "AISP",
+              "event": "EXEC"
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name" : "HeaderFilter-ChangeHostToRS",
+          "type" : "HeaderFilter",
+          "config" : {
+            "messageType" : "REQUEST",
+            "remove" : [ "host", "X-Forwarded-Host" ],
+            "add" : {
+              "X-Forwarded-Host" : [ "rs.dev.forgerock.financial" ]
+            }
+          }
+        }
+      ],
+      "handler" : "ReverseProxyHandler"
+    }
+  }
+}

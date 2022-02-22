@@ -1,5 +1,5 @@
 {
-  "name" : "30 - Internal Repo Route for Remote Consent Service",
+  "name" : "60 - Internal Repo Route for Remote Consent Service",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
   "condition" : "${matches(request.uri.path, '^/repo/')}",

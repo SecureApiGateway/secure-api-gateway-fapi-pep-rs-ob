@@ -1,13 +1,15 @@
 {
-  "name" : "10 - Open Banking RS Payment Consent",
+  "comment": "Open Banking Account Access Consents",
+  "name" : "10 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/account-access-consents')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
         {
+          "comment": "Check Open Banking compliant response",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -16,6 +18,7 @@
           }
         },
         {
+          "comment": "Extract client certificate details",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -27,17 +30,19 @@
           }
         },
         {
+          "comment": "Make sure client certificate includes AISP role",
           "name" : "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "CertificateRoleCheck.groovy",
             "args": {
-              "routeArgRole": "PISP"
+              "routeArgRole": "AISP"
             }
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
           "config": {
@@ -56,11 +61,11 @@
           }
         },
         {
-          "comment": "Check certificate bound access token",
+          "comment": "Check access token with AM",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
-            "scopes" : [ "payments" ],
+            "scopes" : [ "accounts" ],
             "requireHttps" : false,
             "realm" : "OpenIG",
             "accessTokenResolver" : {
@@ -94,21 +99,21 @@
           }
         },
         {
-          "comment": "Prepare request for IDM",
-          "name": "ProcessPaymentConsent",
+          "commment": "Prepare account consent for IDM",
+          "name": "ProcessAccountConsent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessPaymentConsent.groovy",
+            "file": "ProcessAccountConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
+              "routeArgObjAccountAccessConsent": "accountAccessIntent",
               "routeArgObjApiClient": "apiClient",
-              "routeArgConsentIdPrefix": "PDC_"
+              "routeArgConsentIdPrefix": "AAC_"
             }
           }
         },
         {
-          "comment": "Prepare consent audit trail",
+          "commment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -117,13 +122,13 @@
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
-              "role": "PISP",
+              "role": "AISP",
               "event": "CREATE"
             }
           }
         },
         {
-          "comment": "Add host header for downstream services",
+          "comment": "Add Host header for downstream IDM",
           "name" : "HeaderFilter-ChangeHostToIDM",
           "type" : "HeaderFilter",
           "config" : {

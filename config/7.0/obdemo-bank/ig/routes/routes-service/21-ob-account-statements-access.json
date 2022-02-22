@@ -1,8 +1,8 @@
 {
-  "name" : "08 - Open Banking Account Access",
+  "name" : "21 - Open Banking Account Statements Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/accounts')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/statements')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",
@@ -76,7 +76,7 @@
                 "secretsProvider": "SecretsProvider-AmJWK",
                 "issuer": "https://&{iam.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
                 "verificationSecretId": "any.value.in.regex.format"
-               }
+              }
             }
           }
         },

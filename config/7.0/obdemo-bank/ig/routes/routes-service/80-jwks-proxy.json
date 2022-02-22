@@ -1,6 +1,6 @@
 {
   "comment": "JWK set proxy - provides publicly trusted route to Open Banking JWK publishing points protected with non-public SSL certs",
-  "name" : "50 - Open Banking JWKS Proxy",
+  "name" : "80 - Open Banking JWKS Proxy",
   "auditService": "AuditService-OB-Route",
   "condition" : "${matches(request.uri.path, '^/jwkms/jwksproxy')}",
   "handler": {

@@ -1,11 +1,11 @@
 {
-  "comment": "40 - Signing service for Remote Consent service, used to sign responses with RCS registered key",
-  "name" : "OB JWKMS",
+  "comment": "Create SSA for test TPP clients to use in OIDC dynamic registration",
+  "name" : "72 - API client onboarding - generate test SSA",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
+  "condition" : "${matches(request.uri.path, '^/jwkms/apiclient/getssa')}",
   "heap": [
     {
-      "name": "SecretKeyPropertyFormat-RCS",
+      "name": "SecretKeyPropertyFormat-SSA",
       "type": "SecretKeyPropertyFormat",
       "config": {
         "format": "PLAIN",
@@ -13,12 +13,12 @@
       }
     },
     {
-      "name": "SystemAndEnvSecretStore-RCS",
+      "name": "SystemAndEnvSecretStore-SSA",
       "type": "SystemAndEnvSecretStore",
       "config": {
         "mappings": [{
-          "secretId": "ig.rcs.secret",
-          "format": "SecretKeyPropertyFormat-RCS"
+          "secretId": "ig.ssa.secret",
+          "format": "SecretKeyPropertyFormat-SSA"
         }]
       }
     }
@@ -28,24 +28,36 @@
     "config": {
       "filters": [
         {
-          "comment": "Prepare JWT payload",
-          "name": "JwkmsProcessRequest",
+          "comment": "Extract certificate details for organizational claims in SSA",
+          "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "JwkmsProcessRCSClaims.groovy",
+            "file": "ParseCertificate.groovy",
             "args": {
-              "routeArgJwtIssuer": "forgerock-rcs",
-              "routeArgJwtValidity": 300
+              "routeArgCertificateHeader": "ssl-client-cert"
             }
           }
         },
         {
-          "comment": "Sign JWT with Remote Consent Service key",
-          "name": "JwtBuilderFilter-JWKMS",
+          "comment": "Create the SSA payload",
+          "name": "JwkmsBuildSSA",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "JwkmsBuildSSA.groovy",
+            "args": {
+                "routeArgJwtIssuer": "test-publisher",
+                "routeArgJwtValidity": 300
+            }
+          }
+        },
+        {
+          "comment": "Sign the SSA",
+          "name": "JwtBuilderFilter-SSA",
           "type": "JwtBuilderFilter",
           "config": {
-            "template": "${attributes.processedPayload}",
+            "template": "${attributes.ssaPayload}",
             "secretsProvider": "KeyStoreSecretStore-TA",
             "signature": {
               "secretId": "jwt.signer",
@@ -55,7 +67,7 @@
         }
       ],
       "handler": {
-        "comment": "Set content type to text/plan for JWT",
+        "comment": "Return the SSA",
         "type": "ScriptableHandler",
         "config": {
           "type": "application/x-groovy",

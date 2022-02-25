@@ -2,7 +2,7 @@
   "name" : "18 - Open Banking Account Offers Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/offers')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/offers')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

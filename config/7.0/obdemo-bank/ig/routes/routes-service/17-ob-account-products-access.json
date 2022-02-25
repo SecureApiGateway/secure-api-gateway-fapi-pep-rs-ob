@@ -2,7 +2,7 @@
   "name" : "17 - Open Banking Account Products Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/products')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/products')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

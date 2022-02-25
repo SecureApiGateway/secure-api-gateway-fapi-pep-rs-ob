@@ -2,7 +2,7 @@
   "name" : "16 - Open Banking Account Standing Orders Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/standing-orders')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/standing-orders')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

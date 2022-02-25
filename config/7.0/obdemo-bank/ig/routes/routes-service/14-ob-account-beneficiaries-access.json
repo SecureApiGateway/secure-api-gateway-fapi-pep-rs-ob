@@ -2,7 +2,7 @@
   "name" : "14 - Open Banking Account Beneficiaries Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/beneficiaries')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/beneficiaries')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

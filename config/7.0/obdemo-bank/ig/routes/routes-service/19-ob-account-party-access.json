@@ -2,7 +2,7 @@
   "name" : "19 - Open Banking Account Party Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/party')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/party')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

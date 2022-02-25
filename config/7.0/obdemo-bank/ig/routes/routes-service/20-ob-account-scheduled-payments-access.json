@@ -2,7 +2,7 @@
   "name" : "20 - Open Banking Account Scheduled Payments Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/aisp/scheduled-payments')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/scheduled-payments')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

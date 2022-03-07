@@ -21,146 +21,160 @@ def errorResponse(httpCode, message) {
   return response;
 }
 
-next.handle(context, request).thenOnResult(response -> {
-  def error = false
+def method = request.method
 
-  def clientData = response.entity.getJson();
+switch(method.toUpperCase()) {
 
-  if (!clientData) {
-    return(errorResponse(Status.BAD_REQUEST,"No registration data in response"));
-  }
+  case "POST":
+    next.handle(context, request).thenOnResult(response -> {
+      def error = false
 
-  // Pull the apiClientOrg managed object info from the OIDC client data
+      def clientData = response.entity.getJson();
 
-  def ssa = clientData.software_statement
-  def oauth2ClientId = clientData.client_id;
+      if (!clientData) {
+        return (errorResponse(Status.BAD_REQUEST, "No registration data in response"));
+      }
 
-  // Unpack the SSA within the client data
+      // Pull the apiClientOrg managed object info from the OIDC client data
 
-  def ssaJwt = attributes.registrationJWTs.ssaJwt;
+      def ssa = clientData.software_statement
+      def oauth2ClientId = clientData.client_id;
 
-  if (!ssaJwt) {
-    return(errorResponse(Status.UNAUTHORIZED,"No SSA JWT"));
-  }
+      // Unpack the SSA within the client data
 
-  def ssaClaims = ssaJwt.getClaimsSet();
-  def organizationName = ssaClaims.getClaim("org_name", String.class);
-  def organizationIdentifier = ssaClaims.getClaim("org_id", String.class);
+      def ssaJwt = attributes.registrationJWTs.ssaJwt;
 
-  def ssaSoftwareId = ssaClaims.getClaim("software_client_id")
-  def ssaSoftwareName = ssaClaims.getClaim("software_client_name")
-  def ssaSoftwareDescription = ssaClaims.getClaim("software_client_description")
+      if (!ssaJwt) {
+        return (errorResponse(Status.UNAUTHORIZED, "No SSA JWT"));
+      }
+
+      def ssaClaims = ssaJwt.getClaimsSet();
+      def organizationName = ssaClaims.getClaim("org_name", String.class);
+      def organizationIdentifier = ssaClaims.getClaim("org_id", String.class);
+
+      def ssaSoftwareId = ssaClaims.getClaim("software_client_id")
+      def ssaSoftwareName = ssaClaims.getClaim("software_client_name")
+      def ssaSoftwareDescription = ssaClaims.getClaim("software_client_description")
 
 
-  def clientJwksUri = attributes.registrationJWTs.registrationJwksUri;
-  def clientJwks = attributes.registrationJWTs.registrationJwks;
-  def ssaLogoUri = ssaClaims.getClaim("software_logo_uri", String.class)
+      def clientJwksUri = attributes.registrationJWTs.registrationJwksUri;
+      def clientJwks = attributes.registrationJWTs.registrationJwks;
+      def ssaLogoUri = ssaClaims.getClaim("software_logo_uri", String.class)
 
-  // Create the apiClient object
+      // Create the apiClient object
 
-  logger.debug("Sending apiClient create request to IDM endpoint");
+      logger.debug("Sending apiClient create request to IDM endpoint");
 
-  // response object
-  response = new Response(Status.OK)
-  response.headers['Content-Type'] = "application/json"
-  responseMessage = "OK"
+      // response object
+      response = new Response(Status.OK)
+      response.headers['Content-Type'] = "application/json"
+      responseMessage = "OK"
 
-  def apiClientConfig = [
-          "_id" : oauth2ClientId,
-          "id" : ssaSoftwareId,
-          "name" : ssaSoftwareName,
-          "description": ssaSoftwareDescription,
-          "ssa" : ssa,
-          "logoUri" : ssaLogoUri,
-          "oauth2ClientId": oauth2ClientId
-  ]
+      def apiClientConfig = [
+              "_id"           : oauth2ClientId,
+              "id"            : ssaSoftwareId,
+              "name"          : ssaSoftwareName,
+              "description"   : ssaSoftwareDescription,
+              "ssa"           : ssa,
+              "logoUri"       : ssaLogoUri,
+              "oauth2ClientId": oauth2ClientId
+      ]
 
-  if (clientJwksUri) {
-    apiClientConfig.jwksUri = clientJwksUri;
-  }
+      if (clientJwksUri) {
+        apiClientConfig.jwksUri = clientJwksUri;
+      }
 
-  if (clientJwks) {
-    apiClientConfig.jwks = JsonOutput.toJson(clientJwks);
-  }
+      if (clientJwks) {
+        apiClientConfig.jwks = JsonOutput.toJson(clientJwks);
+      }
 
-  Request apiClientRequest = new Request();
+      Request apiClientRequest = new Request();
 
-  apiClientRequest.setMethod('POST');
-  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create")
-  apiClientRequest.getHeaders().add("Content-Type","application/json");
-  apiClientRequest.setEntity(JsonOutput.toJson(apiClientConfig));
+      apiClientRequest.setMethod('POST');
+      apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create")
+      apiClientRequest.getHeaders().add("Content-Type", "application/json");
+      apiClientRequest.setEntity(JsonOutput.toJson(apiClientConfig));
 
-  http.send(apiClientRequest).then(apiClientResponse -> {
-    apiClientRequest.close()
-    logger.debug("Back from IDM")
+      http.send(apiClientRequest).then(apiClientResponse -> {
+        apiClientRequest.close()
+        logger.debug("Back from IDM")
 
-    def apiClientResponseContent = apiClientResponse.getEntity();
-    def apiClientResponseStatus = apiClientResponse.getStatus();
+        def apiClientResponseContent = apiClientResponse.getEntity();
+        def apiClientResponseStatus = apiClientResponse.getStatus();
 
-    logger.debug("status " + apiClientResponseStatus);
-    logger.debug("entity " + apiClientResponseContent);
+        logger.debug("status " + apiClientResponseStatus);
+        logger.debug("entity " + apiClientResponseContent);
 
-     if (apiClientResponseStatus != Status.CREATED) {
-       responseMessage = "Failed to register apiClient with IDM"
-       logger.error(responseMessage);
-       error = true;
-     }
-     else {
-       // TODO: Check if apiClientOrg already exists - if so, just add the apiClient to it
+        if (apiClientResponseStatus != Status.CREATED) {
+          responseMessage = "Failed to register apiClient with IDM"
+          logger.error(responseMessage);
+          error = true;
+        } else {
+          // TODO: Check if apiClientOrg already exists - if so, just add the apiClient to it
 
-       def apiClientObj = apiClientResponse.entity.getJson();
+          def apiClientObj = apiClientResponse.entity.getJson();
 
-       def apiClientId = apiClientObj._id
+          def apiClientId = apiClientObj._id
 
-       // Create Institution object, and bind apiClient to it
+          // Create Institution object, and bind apiClient to it
 
-       logger.debug("Sending apiClientOrg request to IDM endpoint");
+          logger.debug("Sending apiClientOrg request to IDM endpoint");
 
-       // We are going to include SSA data in the apiClientOrg object - working assumption
-       // that there is actually only one SSA per apiClientOrg ID
+          // We are going to include SSA data in the apiClientOrg object - working assumption
+          // that there is actually only one SSA per apiClientOrg ID
 
-       def apiClientOrgConfig = [
-               "_id": organizationIdentifier,
-               "id": organizationIdentifier,
-               "name": organizationName,
-               "apiClients" : [[ "_ref" : "managed/" + routeArgObjApiClient + "/" + apiClientId ]]
-       ]
+          def apiClientOrgConfig = [
+                  "_id"       : organizationIdentifier,
+                  "id"        : organizationIdentifier,
+                  "name"      : organizationName,
+                  "apiClients": [["_ref": "managed/" + routeArgObjApiClient + "/" + apiClientId]]
+          ]
 
-       Request apiClientOrgRequest = new Request();
+          Request apiClientOrgRequest = new Request();
 
-       apiClientOrgRequest.setMethod('POST');
-       apiClientOrgRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClientOrg + "?_action=create");
-       apiClientOrgRequest.getHeaders().add("Content-Type","application/json");
-       apiClientOrgRequest.setEntity(JsonOutput.toJson(apiClientOrgConfig));
+          apiClientOrgRequest.setMethod('POST');
+          apiClientOrgRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClientOrg + "?_action=create");
+          apiClientOrgRequest.getHeaders().add("Content-Type", "application/json");
+          apiClientOrgRequest.setEntity(JsonOutput.toJson(apiClientOrgConfig));
 
-       http.send(apiClientOrgRequest).then(apiClientOrgResponse -> {
-               apiClientOrgRequest.close() ;
-               logger.debug("Back from IDM") ;
-         def apiClientOrgResponseContent = apiClientOrgResponse.getEntity();
-         def apiClientOrgResponseStatus = apiClientOrgResponse.getStatus();
+          http.send(apiClientOrgRequest).then(apiClientOrgResponse -> {
+            apiClientOrgRequest.close();
+            logger.debug("Back from IDM");
+            def apiClientOrgResponseContent = apiClientOrgResponse.getEntity();
+            def apiClientOrgResponseStatus = apiClientOrgResponse.getStatus();
 
-         logger.debug("status " + apiClientOrgResponseStatus);
-         logger.debug("entity " + apiClientOrgResponseContent);
+            logger.debug("status " + apiClientOrgResponseStatus);
+            logger.debug("entity " + apiClientOrgResponseContent);
 
-         if (apiClientOrgResponseStatus != Status.CREATED) {
-           responseMessage = "Failed to register apiClientOrg with IDM"
-           logger.error(responseMessage);
-           error = true;
-         }
-       })
-     }
-  })
+            if (apiClientOrgResponseStatus != Status.CREATED) {
+              responseMessage = "Failed to register apiClientOrg with IDM"
+              logger.error(responseMessage);
+              error = true;
+            }
+          })
+        }
+      })
 
-  if (error) {
-    logger.error(responseMessage)
-    response.status = Status.INTERNAL_SERVER_ERROR
-    response.entity = "{ \"error\":\"" + responseMessage + "\"}"
-    return response
-  }
+      if (error) {
+        logger.error(responseMessage)
+        response.status = Status.INTERNAL_SERVER_ERROR
+        response.entity = "{ \"error\":\"" + responseMessage + "\"}"
+        return response
+      }
 
-  return response
+      return response
 
-});
+    });
+    break
+  case "DELETE":
+    def apiClientId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
+    request.uri.path = "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId
+    next.handle(context, request)
+    break
+  default:
+    logger.debug("Method not supported")
+    next.handle(context, request)
+}
 
 
 

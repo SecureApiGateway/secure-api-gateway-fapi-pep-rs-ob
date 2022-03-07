@@ -67,7 +67,7 @@
           }
         },
         {
-          "comment": "Register TPP org and OAuth2 client in IDM",
+          "comment": "Register TPP org and OAuth2 client in IDM or delete from IDM",
           "name": "CreateApiClient",
           "type": "ScriptableFilter",
           "config": {
@@ -102,7 +102,7 @@
             "secretsProvider": "SystemAndEnvSecretStore-IAM",
             "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
             "scopes": [
-              "dynamic_client_registration"
+              "dynamic_client_registration fr:idm:*"
             ],
             "handler": "TokenRequestHandler"
           }

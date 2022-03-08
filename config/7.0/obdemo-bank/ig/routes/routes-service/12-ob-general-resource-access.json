@@ -1,8 +1,8 @@
 {
-  "name" : "13 - Open Banking Account Transactions Access",
+  "name" : "12 - Open Banking General Resource Access",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/transactions')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/(aisp/balances|aisp/transactions|aisp/beneficiaries|aisp/direct-debits|aisp/standing-orders|aisp/products|aisp/offers|aisp/party|aisp/scheduled-payments|aisp/statements)')}",
   "capture" : [ "response", "request" ],
   "handler" : {
     "type" : "Chain",

@@ -2,12 +2,13 @@
   "name" : "30 - Open Banking RS Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI" : "https://&{iam.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v3.1/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
+  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
         {
+          "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -16,6 +17,7 @@
           }
         },
         {
+          "comment": "Extract client certificate details",
           "name": "ParseCertificate",
           "type": "ScriptableFilter",
           "config": {
@@ -27,6 +29,7 @@
           }
         },
         {
+          "comment": "Ensure client certificate includes PISP role",
           "name" : "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -38,6 +41,7 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
           "config": {
@@ -108,7 +112,7 @@
           }
         },
         {
-          "comment": "Prepare consent audit trail",
+          "comment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",

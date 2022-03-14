@@ -113,7 +113,7 @@
           }
         },
         {
-          "commment": "Prepare audit trail for consent",
+          "comment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",

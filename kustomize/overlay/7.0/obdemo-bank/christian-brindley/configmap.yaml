@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: platform-config
+  name: securebanking-platform-config
 data:
-  FQDN: obdemo.christian-brindley.forgerock.financial
-  IAM_FQDN: iam.dev.forgerock.financial
+  IG_FQDN: obdemo.christian-brindley.forgerock.financial
   RS_FQDN: rs.christian-brindley.forgerock.financial
+  RCS_FQDN: rcs.christian-brindley.forgerock.financial

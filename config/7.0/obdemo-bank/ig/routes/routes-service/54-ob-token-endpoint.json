@@ -2,7 +2,7 @@
   "comment": "Authorise access to token endpoint",
   "name" : "54 - Open Banking OAuth2 token endpoint",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{iam.fqdn}",
+  "baseURI" : "https://&{identity.platform.fqdn}",
   "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",
   "handler": {
     "type": "Chain",
@@ -69,7 +69,7 @@
             "clientId": "&{ig.client.id}",
             "clientSecretId": "ig.client.secret",
             "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
             "scopes": [
               "trusted_gateway"
             ],

@@ -7,13 +7,13 @@ configurations:
 
 
 configMapGenerator:
-- name: platform-config
+- name: securebanking-platform-config
   # The env vars below can be passed into a pod using the envFrom pod spec.
   # These global variables can be used to parameterize your deployments.
   # The FQDN and URLs here should match your ingress or istio gateway definitions
   literals:
-  - FQDN=default.bank.example.com # secure banking platform domain
-  - IAM_FQDN=default.iplatform.example.com # forgerock identity platform domain
+  - IG_FQDN=default.bank.example.com # IG secure banking platform domain
+  - IDENTITY_PLATFORM_FQDN=default.iplatform.example.com # forgerock identity platform domain
   - CERT_ISSUER="default-issuer" # cert manager issuer. Patch with letsencrypt-prod for LE SSL certs.
   - INGRESS_IP=127.0.0.1 # For local (minikube) use only
 
@@ -22,39 +22,39 @@ generatorOptions:
 
 # The variables defined below can be referenced in resources using the syntax $(VARIABLE)
 vars:
-- name: FQDN
+- name: IG_FQDN
   fieldref:
-    fieldpath: data.FQDN
+    fieldpath: data.IG_FQDN
   objref:
     apiVersion: v1
     kind: ConfigMap
-    name: platform-config
-- name: IAM_FQDN
+    name: securebanking-platform-config
+- name: IDENTITY_PLATFORM_FQDN
   fieldref:
-    fieldpath: data.IAM_FQDN
+    fieldpath: data.IDENTITY_PLATFORM_FQDN
   objref:
     apiVersion: v1
     kind: ConfigMap
-    name: platform-config
+    name: securebanking-platform-config
 - name: INGRESS_IP
   fieldref:
     fieldpath: data.INGRESS_IP
   objref:
     apiVersion: v1
     kind: ConfigMap
-    name: platform-config
+    name: securebanking-platform-config
 - name: CERT_ISSUER
   fieldref:
     fieldpath: data.CERT_ISSUER
   objref:
     apiVersion: v1
     kind: ConfigMap
-    name: platform-config
+    name: securebanking-platform-config
 # TODO: Deprecate the use of $(NAMESPACE) in kustomize configurations
 - name: NAMESPACE
   objref:
     apiVersion: v1
     kind: ConfigMap
-    name: platform-config
+    name: securebanking-platform-config
   fieldref:
     fieldpath: metadata.namespace

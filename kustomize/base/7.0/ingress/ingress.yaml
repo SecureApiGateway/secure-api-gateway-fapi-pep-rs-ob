@@ -19,7 +19,7 @@ metadata:
   name: forgerock
 spec:
   rules:
-  - host: $(FQDN)
+  - host: $(IG_FQDN)
     http:
       paths:
       - backend:
@@ -50,7 +50,7 @@ spec:
         path: /jwksproxy
   tls:
   - hosts:
-    - $(FQDN)
+    - $(IG_FQDN)
     secretName: sslcert
 ---
 apiVersion: extensions/v1beta1
@@ -65,10 +65,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - $(FQDN)
+    - $(IG_FQDN)
     secretName: sslcert
   rules:
-  - host: $(FQDN)
+  - host: $(IG_FQDN)
     http:
       paths:
       - backend:

@@ -2,7 +2,7 @@
   "comment": "Open Banking Account Access Consents",
   "name" : "10 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{iam.fqdn}",
+  "baseURI" : "https://&{identity.platform.fqdn}",
   "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
   "handler": {
     "type": "Chain",
@@ -75,7 +75,7 @@
                   "name": "token-resolver-1",
                   "type": "TokenIntrospectionAccessTokenResolver",
                   "config": {
-                    "endpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
+                    "endpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
                     "providerHandler": {
                       "type": "Chain",
                       "config": {
@@ -143,7 +143,7 @@
             "clientId": "&{ig.client.id}",
             "clientSecretId": "ig.client.secret",
             "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
             "scopes": [
               "fr:idm:*"
             ],

@@ -326,7 +326,7 @@ save_config()
 			#****** FIX CONFIG RULES ******#
 
 			# Fix FQDN and amsterVersion fields with placeholders. Remove encrypted password field.
-			fqdn=$(kubectl get configmap platform-config -o yaml |grep AM_SERVER_FQDN | head -1 | awk '{print $2}')
+			fqdn=$(kubectl get configmap securebanking-platform-config -o yaml |grep IDENTITY_PLATFORM_FQDN | head -1 | awk '{print $2}')
 
 			printf "\n*** APPLYING FIXES ***\n"
 
@@ -334,7 +334,7 @@ save_config()
 			echo "Adding back FQDN placeholder ..."
 			echo "Removing 'userpassword-encrypted' fields ..."
 			find "$DOCKER_ROOT/amster/config" -name "*.json" \
-					\( -exec sed -i '' "s/${fqdn}/\&{fqdn}/g" {} \; -o -exec true \; \) \
+					\( -exec sed -i '' "s/${fqdn}/\&{ig.fqdn}/g" {} \; -o -exec true \; \) \
 					\( -exec sed -i '' 's/"amsterVersion" : ".*"/"amsterVersion" : "\&{version}"/g' {} \; -o -exec true \; \) \
 					-exec sed -i '' '/userpassword-encrypted/d' {} \; \
 

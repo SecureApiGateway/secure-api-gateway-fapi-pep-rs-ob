@@ -1,7 +1,7 @@
 {
   "name": "60 - Internal Repo Route for Remote Consent Service",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{iam.fqdn}",
+  "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${matches(request.uri.path, '^/repo/')}",
   "handler": {
     "type": "Chain",
@@ -23,7 +23,7 @@
                     "file": "RepoApiClient.groovy",
                     "args": {
                       "routeArgObjApiClient": "apiClient",
-                      "routeArgIdmBaseUri": "https://&{iam.fqdn}"
+                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}"
                     }
                   }
                 }
@@ -38,7 +38,7 @@
                     "clientHandler": "IDMClientHandler",
                     "file": "RepoConsent.groovy",
                     "args": {
-                      "routeArgIdmBaseUri": "https://&{iam.fqdn}",
+                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
                       "routeArgObjUser": "&{user.object}"
                     }
                   }
@@ -54,7 +54,7 @@
                     "clientHandler": "IDMClientHandler",
                     "file": "RepoUser.groovy",
                     "args": {
-                      "routeArgIdmBaseUri": "https://&{iam.fqdn}",
+                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
                       "routeArgObjUser": "&{user.object}"
                     }
                   }

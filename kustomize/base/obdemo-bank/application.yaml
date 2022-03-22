@@ -33,8 +33,8 @@ spec:
     - description: About ForgeRock
       url: "https://forgerock.com/"
     - description: Documentation
-      url: https://backstage.forgerock.com/docs/forgeops/6.5
-    version: "7.0-nightly"
+      url: https://backstage.forgerock.com/docs/forgeops/7.1
+    version: "7.1-nightly"
     description: "ForgeRock Identity and Access Management"
     icons:
     - src: "https://avatars3.githubusercontent.com/u/2592818?s=200&v=4"

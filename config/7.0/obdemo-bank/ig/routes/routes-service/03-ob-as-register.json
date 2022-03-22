@@ -2,7 +2,7 @@
   "comment": "TPP dynamic registration",
   "name": "03 - Open Banking Register TPP",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{iam.fqdn}",
+  "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
   "handler": {
     "type": "Chain",
@@ -46,7 +46,7 @@
             "args": {
               "comment": "TODO: use env variable",
               "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
-              "routeArgProxyBaseUrl": "https://&{fqdn}/jwkms/jwksproxy"
+              "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy"
             }
           }
         },
@@ -61,7 +61,7 @@
             "args": {
               "routeArgSSAIssuerJwksUrls": {
                 "OpenBanking Ltd": "https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks",
-                "test-publisher": "https://&{fqdn}/jwkms/apiclient/jwks"
+                "test-publisher": "https://&{ig.fqdn}/jwkms/apiclient/jwks"
               }
             }
           }
@@ -74,7 +74,7 @@
             "type": "application/x-groovy",
             "file": "CreateApiClient.groovy",
             "args": {
-              "routeArgIdmBaseUri": "https://&{iam.fqdn}",
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
               "routeArgObjApiClientOrg": "apiClientOrg",
               "routeArgObjApiClient": "apiClient"
             },
@@ -89,7 +89,7 @@
             "messageType" : "REQUEST",
             "remove" : [ "host", "X-Forwarded-Host" ],
             "add" : {
-              "X-Forwarded-Host" : [ "&{iam.fqdn}" ]
+              "X-Forwarded-Host" : [ "&{identity.platform.fqdn}" ]
             }
           }
         },
@@ -100,7 +100,7 @@
             "clientId": "&{ig.client.id}",
             "clientSecretId": "ig.client.secret",
             "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
             "scopes": [
               "dynamic_client_registration fr:idm:*"
             ],

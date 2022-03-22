@@ -73,7 +73,7 @@
       "name" : "AmService-OBIE",
       "type" : "AmService",
       "config" : {
-        "url" : "https://&{iam.fqdn}/am",
+        "url" : "https://&{identity.platform.fqdn}/am",
         "realm" : "/&{am.realm}",
         "version" : "6.5.1",
         "agent" : {
@@ -122,7 +122,7 @@
           {
             "type": "JwkSetSecretStore",
             "config": {
-              "jwkUrl": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/connect/jwk_uri"
+              "jwkUrl": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/connect/jwk_uri"
             }
           }
         ]
@@ -164,7 +164,7 @@
               "clientId": "&{ig.client.id}",
               "clientSecretId": "ig.client.secret",
               "secretsProvider": "SystemAndEnvSecretStore-IAM",
-              "tokenEndpoint": "https://&{iam.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+              "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
               "scopes": [
                 "fr:idm:*"
               ],

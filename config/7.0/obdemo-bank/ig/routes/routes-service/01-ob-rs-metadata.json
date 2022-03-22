@@ -42,7 +42,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "&{fqdn}"
+                "&{ig.fqdn}"
               ],
               "X-Host": [
                 "&{rs.fqdn}"

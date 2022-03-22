@@ -10,7 +10,7 @@
       "name": "JwkSetSecretStore-ApiClientJwks",
       "type": "JwkSetSecretStore",
       "config": {
-        "jwkUrl": "https://&{iam.fqdn}/openidm/endpoint/apiclientjwks",
+        "jwkUrl": "https://&{identity.platform.fqdn}/openidm/endpoint/apiclientjwks",
         "handler": "IDMClientHandler"
       }
     }
@@ -81,7 +81,7 @@
               "type": "StatelessAccessTokenResolver",
               "config": {
                 "secretsProvider": "SecretsProvider-AmJWK",
-                "issuer": "https://&{iam.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
+                "issuer": "https://&{identity.platform.fqdn}:443/am/oauth2/realms/root/realms/&{am.realm}",
                 "verificationSecretId": "any.value.in.regex.format"
               }
 
@@ -98,7 +98,7 @@
             "clientHandler": "IDMClientHandler",
             "args": {
               "routeArgHeaderName": "x-jws-signature",
-              "routeArgJwkUrl": "https://&{iam.fqdn}/openidm/endpoint/apiclientjwks"
+              "routeArgJwkUrl": "https://&{identity.platform.fqdn}/openidm/endpoint/apiclientjwks"
             }
           }
         },

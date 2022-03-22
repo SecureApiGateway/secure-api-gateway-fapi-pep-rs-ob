@@ -33,7 +33,7 @@ spec:
         - secretRef:
             name: openig-secrets-env
         - configMapRef:
-            name: platform-config
+            name: securebanking-platform-config
         #image: gcr.io/forgerock-io/ig/docker-build:7.0.0-af5592b
         image: ig
         imagePullPolicy: Always

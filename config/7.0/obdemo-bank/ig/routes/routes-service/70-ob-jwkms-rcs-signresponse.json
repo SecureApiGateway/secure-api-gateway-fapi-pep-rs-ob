@@ -35,7 +35,7 @@
             "type": "application/x-groovy",
             "file": "JwkmsProcessRCSClaims.groovy",
             "args": {
-              "routeArgJwtIssuer": "forgerock-rcs",
+              "routeArgJwtIssuer": "secure-open-banking-rcs",
               "routeArgJwtValidity": 300
             }
           }

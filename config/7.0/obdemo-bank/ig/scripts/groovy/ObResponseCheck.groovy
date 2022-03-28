@@ -56,17 +56,21 @@ Map<String, String> getGenericError(Status status, String responseBody) {
       message = "Internal error"
   }
 
-
-
   if (responseBody) {
     def slurper = new JsonSlurper()
     Map responseObj = slurper.parseText(responseBody)
+    logger.debug("Response error from backend: " + responseObj)
+    if(responseObj.Code){
+      errorCode = responseObj.Errors[0].ErrorCode
+      message = responseObj.Errors[0].Message
+    }
     if (responseObj.error) {
       message += " [" + responseObj.error + "]"
     }
     if (responseObj.error_description) {
       message += " [" + responseObj.error_description + "]"
     }
+    logger.debug("Response values errorCode= " + errorCode + ", message= " + message)
   }
 
   return [
@@ -136,7 +140,7 @@ next.handle(context, request).thenOnResult({response ->
     }
 
     newBody.put("Errors",errorList)
-
+    logger.debug("Final Error Response: " + newBody)
     response.setEntity(newBody)
   }
 })

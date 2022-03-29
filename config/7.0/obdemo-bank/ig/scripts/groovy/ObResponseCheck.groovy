@@ -23,7 +23,8 @@ Map<String, String> getGenericError(Status status, String responseBody) {
 
   String errorCode
   String message
-
+  logger.debug("STATUS-*-: " + status)
+  logger.debug("ERROR-*- body: " + responseBody)
   switch (status) {
 
     case Status.NOT_FOUND:

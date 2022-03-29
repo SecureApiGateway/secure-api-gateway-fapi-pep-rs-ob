@@ -8,7 +8,7 @@ import org.forgerock.json.jose.jws.SignedJwt
  * Script to read OIDC dynamic registration response and create apiClientOrg managed object in IDM
  * with accompanying SSA managed object
  */
-
+// TODO: review to create first the apiClientOrg and then create the apiClient, or patch the apiClientOrg when exist
 // TODO: check if SSA and apiClientOrg exist before attempting create
 // TODO: handle IDM error response - pass back to caller?
 // TODO: handle AM bad response - reformat to OB
@@ -77,7 +77,8 @@ switch(method.toUpperCase()) {
               "description"   : ssaSoftwareDescription,
               "ssa"           : ssa,
               "logoUri"       : ssaLogoUri,
-              "oauth2ClientId": oauth2ClientId
+              "oauth2ClientId": oauth2ClientId,
+              "apiClientOrg"  : [ "_ref" : "managed/" + routeArgObjApiClientOrg + "/" +  organizationIdentifier ]
       ]
 
       if (clientJwksUri) {
@@ -175,9 +176,6 @@ switch(method.toUpperCase()) {
     logger.debug("Method not supported")
     next.handle(context, request)
 }
-
-
-
 
 
 

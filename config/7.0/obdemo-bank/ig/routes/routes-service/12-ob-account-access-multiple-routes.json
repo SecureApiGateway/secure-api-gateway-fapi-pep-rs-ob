@@ -108,6 +108,7 @@
             "type": "application/x-groovy",
             "file": "TranslateAccountsResource.groovy",
             "args": {
+              "routeArgUserResourceOwnerHeader": "x-ob-user-id",
               "routeArgAccountIdsHeader": "x-ob-account-ids",
               "routeArgPermissionsHeader": "x-ob-permissions"
             }

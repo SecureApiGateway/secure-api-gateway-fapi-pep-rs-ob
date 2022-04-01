@@ -14,7 +14,7 @@ if (grantedAccounts == null) {
 }
 
 String[] grantedPermissions = contexts.policyDecision.attributes.grantedPermissions
-
+String[] userResourceOwner = contexts.policyDecision.attributes.userResourceOwner
 if (grantedPermissions == null) {
     message = "No granted permissions in policy response"
     logger.error(message)
@@ -29,5 +29,10 @@ String accounts = String.join(",", grantedAccounts);
 
 request.headers.add(routeArgAccountIdsHeader, accounts)
 request.headers.add(routeArgPermissionsHeader, permissions)
+
+if(userResourceOwner[0] != null) {
+    request.headers.add(routeArgUserResourceOwnerHeader, userResourceOwner[0])
+}
+
 
 next.handle(context, request)

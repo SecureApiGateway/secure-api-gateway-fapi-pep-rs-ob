@@ -46,16 +46,46 @@ def buildPatchRequest(incomingRequest) {
     }
 
     // Domestic Payment Intent only
+    /*
+    schemeName: "UK.OBIE.SortCodeAccountNumber",
+            identification: "79126738233670",
+            name: "7b78b560-6057-41c5-bf1f-1ed590b1c30b",
+            secondaryIdentification:
+     */
+    if (incomingRequest.data && incomingRequest.data.debtorAccount) {
+        if(incomingRequest.data.debtorAccount.schemeName) {
+            body.push([
 
-    if (incomingRequest.data && incomingRequest.data.DebtorAccount) {
-        body.push([
+                    "operation": "add",
+                    "field"    : "/Data/Initiation/DebtorAccount/SchemeName",
+                    "value"    : incomingRequest.data.debtorAccount.schemeName
+            ])
+        }
+        if(incomingRequest.data.debtorAccount.identification) {
+            body.push([
 
-                "operation": "add",
-                "field"    : "/Data/DebtorAccount",
-                "value"    : incomingRequest.data.DebtorAccount
-        ]);
+                    "operation": "add",
+                    "field"    : "/Data/Initiation/DebtorAccount/Identification",
+                    "value"    : incomingRequest.data.debtorAccount.identification
+            ])
+        }
+        if(incomingRequest.data.debtorAccount.name) {
+            body.push([
+
+                    "operation": "add",
+                    "field"    : "/Data/Initiation/DebtorAccount/Name",
+                    "value"    : incomingRequest.data.debtorAccount.name
+            ])
+        }
+        if(incomingRequest.data.debtorAccount.secondaryIdentification) {
+            body.push([
+
+                    "operation": "add",
+                    "field"    : "/Data/Initiation/DebtorAccount/SecondaryIdentification",
+                    "value"    : incomingRequest.data.debtorAccount.secondaryIdentification
+            ])
+        }
     }
-
     return body
 }
 
@@ -183,6 +213,14 @@ if (request.getMethod() == "GET") {
         def intentResponseContent = intentResponse.getEntity();
         def intentResponseObject = intentResponseContent.getJson();
 
+        if(intentResponseObject.apiClient == null){
+            message = "Orfan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
+            logger.error(message)
+            response.status = Status.BAD_REQUEST
+            response.entity = "{ \"error\":\"" + message + "\"}"
+            return response
+        }
+
         def responseObj = convertIDMResponse(intentResponseObject, intentType);
 
         def responseJson = JsonOutput.toJson(responseObj);
@@ -217,6 +255,15 @@ if (request.getMethod() == "GET") {
         }
 
         def patchResponseObject = patchResponseContent.getJson();
+
+        if(patchResponseObject.apiClient == null){
+            message = "Orfan consent, The consent requested to patch with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
+            logger.error(message)
+            response.status = Status.BAD_REQUEST
+            response.entity = "{ \"error\":\"" + message + "\"}"
+            return response
+        }
+
         def responseObj = convertIDMResponse(patchResponseObject, intentType);
         Response response = new Response(Status.OK)
         response.setEntity(JsonOutput.toJson(responseObj));

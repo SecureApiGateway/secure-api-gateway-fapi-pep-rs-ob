@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: securebanking-platform-config
+data:
+  IG_FQDN: obdemo.joycegilding-forgerock.forgerock.financial
+  RS_FQDN: rs.joycegilding-forgerock.forgerock.financial
+  RCS_FQDN: rcs.joycegilding-forgerock.forgerock.financial

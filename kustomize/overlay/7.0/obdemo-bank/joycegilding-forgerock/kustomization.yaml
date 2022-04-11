@@ -1,0 +1,8 @@
+namespace: joycegilding-forgerock
+commonLabels:
+  app.kubernetes.io/name: "forgerock"
+resources:
+- ../defaults
+
+patchesStrategicMerge:
+  - configmap.yaml

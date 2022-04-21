@@ -5,7 +5,7 @@ next.handle(context, request).thenOnResult(response -> {
 
   rspJson.registration_endpoint = rspJson.registration_endpoint.replace(routeArgInternalUri,routeArgExternalUri)
   rspJson.token_endpoint = rspJson.token_endpoint.replace(routeArgInternalUri,routeArgExternalUri)
-
+  rspJson.issuer = rspJson.issuer.replace(routeArgInternalUri,routeArgExternalUri)
 
   response.setEntity(rspJson)
 

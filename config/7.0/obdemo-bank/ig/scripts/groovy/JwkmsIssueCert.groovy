@@ -1,6 +1,7 @@
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.jwk.KeyUse;
 
 import org.bouncycastle.asn1.x500.X500Name;
@@ -58,10 +59,12 @@ QC_STATEMENTS_QWAC  = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAzAJBgcEAIvsS
 QC_STATEMENTS_QSEAL = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAjAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE="
 BC_PROVIDER = "BC";
 KEY_ALGORITHM = "RSA";
-
+SCRIPT_NAME = "JwkmsIssueCert.groovy: "
 enum EidasCertType{
     SEAL, WAC
 }
+
+
 
 // Issue new transport certificate for API Client testing
 //
@@ -69,7 +72,7 @@ enum EidasCertType{
 //
 // Not for live clients!
 
-
+logger.info(SCRIPT_NAME + "called")
 
 def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,caKey,providerName,keyAlg,sigAlg) {
 
@@ -96,7 +99,7 @@ def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,ca
         issuedCertSerialNum = issuedCertSerialNum.negate();
     }
 
-    logger.debug("Issuing with serial number " + issuedCertSerialNum);
+    logger.debug(SCRIPT_NAME + "Issuing with serial number " + issuedCertSerialNum);
     KeyPair issuedCertKeyPair = keyPairGenerator.generateKeyPair();
 
     PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(issuedCertSubject, issuedCertKeyPair.getPublic());
@@ -147,14 +150,15 @@ def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,ca
                 .privateKey((RSAPrivateKey) issuedCertKeyPair.getPrivate());
 
         List<com.nimbusds.jose.util.Base64> x5c = new ArrayList<>(rsaJWK.getX509CertChain());
-
+        def algo = rsaJWK.getAlgorithm()?null:new Algorithm("PS256")
+        logger.debug(SCRIPT_NAME + "Algorithm of rskJWK is '" + algo + "'")
         JWKJsonResponse = builder
                 .keyID(rsaJWK.getKeyID())
                 .keyUse(KeyUse.parse(keyUse))
                 .x509CertChain(x5c)
                 .x509CertSHA256Thumbprint(rsaJWK.getX509CertSHA256Thumbprint())
                 .x509CertURL(rsaJWK.getX509CertURL())
-                .algorithm(rsaJWK.getAlgorithm())
+                .algorithm(algo)
                 .build()
                 .toJSONString();
 
@@ -189,7 +193,7 @@ def requestObj = request.entity.getJson();
 String subjectCN = requestObj.org_name;
 String subjectOI = requestObj.org_id;
 
-logger.debug("Issuing certificate for CN {} OI {}",subjectCN,subjectOI)
+logger.debug(SCRIPT_NAME + "Issuing certificate for CN {} OI {}",subjectCN,subjectOI)
 
 if (!(subjectCN && subjectOI)) {
     // response object
@@ -224,7 +228,7 @@ response.getHeaders().add("Content-Type","application/jwk+json");
 
 def keySet = "{ \"keys\": [" + wacJWK + "," + sealJWK + "]}";
 
-logger.debug("Final JSON " + keySet)
+logger.debug(SCRIPT_NAME + "Final JSON " + keySet)
 response.setEntity(keySet)
 
 return response

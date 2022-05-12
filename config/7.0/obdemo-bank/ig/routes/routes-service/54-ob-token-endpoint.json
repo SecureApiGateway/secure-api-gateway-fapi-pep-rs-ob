@@ -29,7 +29,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "obdemo-iam.idhub.cc"
+                "&{ig.fqdn}"
               ]
             }
           }

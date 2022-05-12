@@ -16,7 +16,7 @@
             "messageType" : "REQUEST",
             "remove" : [ "host", "X-Forwarded-Host" ],
             "add" : {
-              "X-Forwarded-Host" : [ "&{identity.platform.fqdn}" ]
+              "X-Forwarded-Host" : [ "&{ig.fqdn}" ]
             }
           }
         }

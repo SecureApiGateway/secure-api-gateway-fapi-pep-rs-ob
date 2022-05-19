@@ -7,7 +7,7 @@ import org.forgerock.json.jose.jws.JwsAlgorithm
 import org.forgerock.http.protocol.Status
 import org.forgerock.http.protocol.Response
 
-/*
+/**
  * Add detached signature to HTTP response
  *
  * Detached signature is signed JWT with response entity as payload
@@ -17,61 +17,77 @@ import org.forgerock.http.protocol.Response
  *
  */
 
+SCRIPT_NAME = "[AddDetachedSig] - "
+IAT_CRIT_CLAIM = "http://openbanking.org.uk/iat"
+ISS_CRIT_CLAIM = "http://openbanking.org.uk/iss"
+TAN_CRIT_CLAIM = "http://openbanking.org.uk/tan"
 
 next.handle(context, request).thenOnResult({ response ->
 
-  // response object
-  response = new Response(Status.OK)
-  response.headers['Content-Type'] = "application/json"
+    logger.debug(SCRIPT_NAME + "routeArgSecretId: " + routeArgSecretId)
+    logger.debug(SCRIPT_NAME + "routeArgKid: " + routeArgKid)
 
-  JwsAlgorithm signAlgorithm = JwsAlgorithm.parseAlgorithm(routeArgAlgorithm)
+    JwsAlgorithm signAlgorithm = JwsAlgorithm.parseAlgorithm(routeArgAlgorithm)
+    logger.debug(SCRIPT_NAME + "Algorithm initialised: " + signAlgorithm)
 
-  Purpose<SigningKey> purpose = new JsonValue(routeArgSecretId).as(purposeOf(SigningKey.class))
+    Purpose<SigningKey> purpose = new JsonValue(routeArgSecretId).as(purposeOf(SigningKey.class))
 
-  SigningManager signingManager = new SigningManager(routeArgSecretsProvider)
-  signingManager.newSigningHandler(purpose).then({ signingHandler ->
+    SigningManager signingManager = new SigningManager(routeArgSecretsProvider)
 
-    JwtClaimsSet jwtClaimsSet = new JwtClaimsSet(response.getEntity().getJson())
+    signingManager.newSigningHandler(purpose).then({ signingHandler ->
+        logger.debug(SCRIPT_NAME + "Building of the JWT started")
 
+        JwtClaimsSet jwtClaimsSet = new JwtClaimsSet(response.getEntity().getJson())
+        logger.debug(SCRIPT_NAME + "jwtClaimsSet: " + jwtClaimsSet)
 
-    String jwt = new JwtBuilderFactory()
-            .jws(signingHandler)
-            .headers()
-            .alg(signAlgorithm)
-            .kid(routeArgKid)
-            .done()
-            .claims(jwtClaimsSet)
-            .build()
+        List<String> critClaims = new ArrayList<String>();
+        critClaims.add(IAT_CRIT_CLAIM);
+        critClaims.add(ISS_CRIT_CLAIM);
+        critClaims.add(TAN_CRIT_CLAIM);
 
-    logger.debug("Signed JWT [" + jwt + "]")
+        //TODO - http://openbanking.org.uk/iss must be extracted from the OB signing certificate of the ASPSP. Currently we don't have open banking certificates on ASPSP side
+        String jwt
+        try {
+            jwt = new JwtBuilderFactory()
+                    .jws(signingHandler)
+                    .headers()
+                    .alg(signAlgorithm)
+                    .kid(routeArgKid)
+                    .header(IAT_CRIT_CLAIM, System.currentTimeMillis() / 1000)
+                    .header(ISS_CRIT_CLAIM, "CN=0015800001041REAAY,organizationIdentifier=PSDGB-OB-Unknown0015800001041REAAY,O=FORGEROCK LIMITED,C=GB")
+                    .header(TAN_CRIT_CLAIM, routeArgTrustedAnchor)
+                    .crit(critClaims)
+                    .done()
+                    .claims(jwtClaimsSet)
+                    .build()
+        } catch (java.lang.Exception e) {
+            logger.debug(SCRIPT_NAME + "Error building JWT: " + e)
+        }
 
-    if (jwt == null || jwt.length() == 0) {
-      message = "Error creating signature JWT"
-      logger.error(message)
-      response.status = Status.INTERNAL_SERVER_ERROR
-      response.entity = "{ \"error\":\"" + message + "\"}"
-      return response
-    }
+        logger.debug(SCRIPT_NAME + "Signed JWT [" + jwt + "]")
 
-    String[] jwtElements = jwt.split("\\.")
+        if (jwt == null || jwt.length() == 0) {
+            message = "Error creating signature JWT"
+            logger.error(SCRIPT_NAME + message)
+            response.status = Status.INTERNAL_SERVER_ERROR
+            response.entity = "{ \"error\":\"" + message + "\"}"
+            return response
+        }
 
-    if (jwtElements.length != 3) {
-      message = "Wrong number of dots on outbound detached signature"
-      logger.error(message)
-      response.status = Status.INTERNAL_SERVER_ERROR
-      response.entity = "{ \"error\":\"" + message + "\"}"
-      return response
-    }
+        String[] jwtElements = jwt.split("\\.")
 
-    String detachedSig = jwtElements[0] + ".." + jwtElements[2]
+        if (jwtElements.length != 3) {
+            message = "Wrong number of dots on outbound detached signature"
+            logger.error(SCRIPT_NAME + message)
+            response.status = Status.INTERNAL_SERVER_ERROR
+            response.entity = "{ \"error\":\"" + message + "\"}"
+            return response
+        }
 
-    logger.debug("Adding detached signature [" + detachedSig + "]")
+        String detachedSig = jwtElements[0] + ".." + jwtElements[2]
+        logger.debug(SCRIPT_NAME + "Adding detached signature [" + detachedSig + "]")
 
-    response.getHeaders().add(routeArgHeaderName,detachedSig);
-
-
-    return response
-
-  })
-
+        response.getHeaders().add(routeArgHeaderName, detachedSig);
+        return response
+    })
 })

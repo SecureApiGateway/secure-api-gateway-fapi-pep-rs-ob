@@ -1,12 +1,29 @@
 {
-  "name" : "30 - Open Banking RS Payment Consent",
+  "name": "30 - Open Banking RS Payment Consent",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{identity.platform.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "comment": "Add a detached signature to the response",
+          "name": "AddDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AddDetachedSig.groovy",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgAlgorithm": "PS256",
+              "routeArgSecretId": "&{aspsp.jwtsigner.alias}",
+              "routeArgKid": "&{aspsp.jwtsigner.kid}",
+              "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
+              "routeArgTrustedAnchor": "openbanking.org.uk"
+            }
+          }
+        },
         {
           "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",
@@ -30,7 +47,7 @@
         },
         {
           "comment": "Ensure client certificate includes PISP role",
-          "name" : "CertificateRoleCheck",
+          "name": "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -61,13 +78,15 @@
         },
         {
           "comment": "Check certificate bound access token",
-          "name" : "OAuth2ResourceServerFilter-OB",
-          "type" : "OAuth2ResourceServerFilter",
-          "config" : {
-            "scopes" : [ "payments" ],
-            "requireHttps" : false,
-            "realm" : "OpenIG",
-            "accessTokenResolver" : {
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "payments"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
                 "delegate": {
@@ -94,6 +113,23 @@
                   }
                 }
               }
+            }
+          }
+        },
+        {
+          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
+          "name": "ProcessDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ProcessDetachedSig.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgObjApiClient": "apiClient",
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "routeArgTrustedAnchor": "openbanking.org.uk",
+              "routeArgClientIdFieldName": "client_id"
             }
           }
         },
@@ -128,11 +164,13 @@
         },
         {
           "comment": "Add host header for downstream services",
-          "name" : "HeaderFilter-ChangeHostToIDM",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "REQUEST",
-            "remove" : [ "host" ]
+          "name": "HeaderFilter-ChangeHostToIDM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host"
+            ]
           }
         },
         {

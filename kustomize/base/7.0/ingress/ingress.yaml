@@ -1,6 +1,6 @@
 # When K8S is upgraded to >= 1.14 - change the apiVersion to:
 #apiVersion: networking.k8s.io/v1beta1
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -23,37 +23,55 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /am
+        pathType: Exact
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /rcs-api
+        pathType: Exact        
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /rs
+        pathType: Exact        
 # Temporary - this will be internal
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /repo
+        pathType: Exact        
 # Temporary - this will be internal
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /jwkms
+        pathType: Exact        
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /jwksproxy
+        pathType: Exact        
   tls:
   - hosts:
     - $(IG_FQDN)
     secretName: sslcert
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ig-web
@@ -72,6 +90,9 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: ig
-          servicePort: 8080
+          service:
+            name: ig
+            port:
+              number: 8080
         path: /ig(/|$)(.*)
+        pathType: Exact

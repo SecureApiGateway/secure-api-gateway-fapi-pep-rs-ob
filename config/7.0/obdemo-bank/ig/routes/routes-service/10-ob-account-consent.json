@@ -61,7 +61,7 @@
           }
         },
         {
-          "comment": "Check access token with AM",
+          "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
           "config" : {
@@ -69,9 +69,11 @@
             "requireHttps" : false,
             "realm" : "OpenIG",
             "accessTokenResolver" : {
+              "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
                 "delegate": {
+                  "comment":"resolve access tokens and retrieve metadata about the token. The endpoint typically returns the time until the token expires, the OAuth 2.0 scopes associated with the token, and potentially other information",
                   "name": "token-resolver-1",
                   "type": "TokenIntrospectionAccessTokenResolver",
                   "config": {
@@ -99,7 +101,7 @@
           }
         },
         {
-          "commment": "Prepare account consent for IDM",
+          "commment": "Prepare account consent for IDM - change request URL and add CREST action",
           "name": "ProcessAccountConsent",
           "type": "ScriptableFilter",
           "config": {
@@ -137,7 +139,7 @@
           }
         },
         {
-          "comment": "Add access token to IDM request",
+          "comment": "Obtain access token from authz server and add request's Authorization header",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {
             "clientId": "&{ig.client.id}",

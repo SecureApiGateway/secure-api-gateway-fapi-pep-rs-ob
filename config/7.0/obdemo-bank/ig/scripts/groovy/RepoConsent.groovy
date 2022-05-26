@@ -111,6 +111,15 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
             ]
             break
+        case IntentType.PAYMENT_DOMESTIC_SCHEDULED_CONSENT:
+            responseObj = [
+                    "id"                   : intentResponseObject._id,
+                    "data"                 : intentResponseObject.Data,
+                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
+                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
+                    "oauth2ClientName"     : intentResponseObject.apiClient.name
+            ]
+            break
     }
 
     return responseObj;
@@ -120,7 +129,7 @@ def convertIDMResponse(intentResponseObject, intentType) {
 enum IntentType {
     ACCOUNT_ACCESS_CONSENT("AAC_", "accountAccessIntent"),
     PAYMENT_DOMESTIC_CONSENT("PDC_","domesticPaymentIntent"),
-    PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheculedPaymentIntent"),
+    PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheduledPaymentIntent"),
     PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrdersPaymentIntent"),
     PAYMENT_INTERNATIONAL_CONSENT("PIC_", "internationalPaymentIntent"),
     PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT("PISC_", "internationalScheduledPaymentIntent"),

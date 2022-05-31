@@ -85,6 +85,14 @@ def buildPatchRequest(incomingRequest) {
                     "value"    : incomingRequest.data.debtorAccount.secondaryIdentification
             ])
         }
+        if(incomingRequest.data.debtorAccount.accountId) {
+            body.push([
+
+                    "operation": "add",
+                    "field"    : "/Data/Initiation/DebtorAccount/AccountId",
+                    "value"    : incomingRequest.data.debtorAccount.accountId
+            ])
+        }
     }
     return body
 }

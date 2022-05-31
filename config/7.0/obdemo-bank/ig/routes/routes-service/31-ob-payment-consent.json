@@ -1,5 +1,5 @@
 {
-  "name": "30 - Open Banking RS Payment Consent",
+  "name": "31 - Open Banking RS Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents((?!funds-confirmation).)*$')}",
@@ -7,6 +7,15 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "comment": "Modify Payment Intent Response",
+          "name": "ModifyPaymentIntentResponse",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ModifyPaymentIntentResponse.groovy"
+          }
+        },
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",

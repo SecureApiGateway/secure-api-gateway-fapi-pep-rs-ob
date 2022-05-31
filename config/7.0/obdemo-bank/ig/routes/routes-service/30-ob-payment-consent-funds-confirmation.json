@@ -1,9 +1,8 @@
 {
-  "comment": "Handle Open Banking Domestic Payment request",
-  "name": "32 - Open Banking Domestic Payment Access",
+  "name": "30 - Open Banking RS Payment Consent Funds Confirmation",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payments')}",
+  "baseURI" : "https://&{rs.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents/.*/funds-confirmation$')}",
   "capture": [
     "response",
     "request"
@@ -151,13 +150,14 @@
         },
         {
           "comment": "Adjust URL for downstream resource server",
-          "name": "TranslatePaymentResource",
+          "name": "TranslateDomesticPaymentFundsConfirmationResource",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "TranslatePaymentResource.groovy",
+            "file": "TranslatePaymentFundsConfirmationResource.groovy",
             "args": {
-              "accounts": "${contexts.jwtBuilder.value}"
+              "routeArgAmountQueryParameter": "amount",
+              "routeArgVersionQueryParameter": "version"
             }
           }
         },

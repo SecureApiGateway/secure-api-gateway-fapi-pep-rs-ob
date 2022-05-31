@@ -112,6 +112,25 @@ if (request.getMethod() == "GET") {
 
         attributes.put("resourceOwnerUsername", intentResponseObject.user ? intentResponseObject.user._id : null)
         logger.debug(SCRIPT_NAME + "Resource owner username: " + intentResponseObject.user._id)
+
+        if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation")
+        {
+            try{
+                logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation)
+                attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
+                logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
+
+                attributes.put("amount", intentResponseObject.Data.Initiation.InstructedAmount.Amount)
+                logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.Data.Initiation.InstructedAmount.Amount)
+
+                attributes.put("version", splitUri[2])
+                logger.debug(SCRIPT_NAME + "version: " + splitUri[2])
+
+            } catch (java.lang.Exception e) {
+                logger.debug(SCRIPT_NAME + "The debtor account identification wasn't retrieve: " + e)
+            }
+        }
+
         return next.handle(context, request)
     })
 } else {

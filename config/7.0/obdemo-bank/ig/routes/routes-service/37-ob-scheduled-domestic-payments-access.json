@@ -1,9 +1,9 @@
 {
   "comment": "Handle Open Banking Domestic Payment request",
-  "name": "36 - Open Banking Domestic Scheduled Payment Submission",
+  "name": "37 - Open Banking Domestic Scheduled Payment Access",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{rs.fqdn}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-scheduled-payments$')}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-scheduled-payments')}",
   "capture": [
     "response",
     "request"
@@ -84,23 +84,6 @@
           }
         },
         {
-          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
-          "name": "ProcessDetachedSig",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessDetachedSig.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgHeaderName": "x-jws-signature",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgTrustedAnchor": "openbanking.org.uk",
-              "routeArgClientIdFieldName": "aud"
-            }
-          }
-        },
-        {
           "comment": "Adjust URL for downstream resource server",
           "type": "UriPathRewriteFilter",
           "config": {
@@ -122,56 +105,6 @@
           }
         },
         {
-          "comment": "Encode the payment request for safe transmission to the policy engine",
-          "name": "EncodeInitiation",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "source": [
-              "import groovy.json.JsonOutput",
-              "import java.util.Base64",
-              "def initiationRequest = Base64.getEncoder().encodeToString(JsonOutput.toJson(request.entity.getJson().Data.Initiation).bytes)",
-              "logger.debug('request ' + initiationRequest)",
-              "attributes.put('initiationRequest',initiationRequest)",
-              "next.handle(context, request)"
-            ]
-          }
-        },
-        {
-          "comment": "Check payment request against authorised consent, via AM policy engineß",
-          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type": "PolicyEnforcementFilter",
-          "config": {
-            "pepRealm": "/&{am.realm}",
-            "application": "Open Banking",
-            "claimsSubject": {
-              "sub": "${contexts.oauth2.accessToken.info.sub}",
-              "intent_type": "pisp"
-            },
-            "environment": {
-              "sub": [
-                "${contexts.oauth2.accessToken.info.sub}"
-              ],
-              "tpp_client_id": [
-                "${contexts.oauth2.accessToken.info.aud}"
-              ],
-              "tpp_cert_id": [
-                "${attributes.tppId}"
-              ],
-              "intent_id": [
-                "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}"
-              ],
-              "initiation": [
-                "${attributes.initiationRequest}"
-              ],
-              "request_method": [
-                "${request.method}"
-              ]
-            },
-            "amService": "AmService-OBIE"
-          }
-        },
-        {
           "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
           "name": "GetResourceOwnerIdFromConsent",
           "type": "ScriptableFilter",
@@ -186,15 +119,34 @@
           }
         },
         {
-          "comment": "Adjust URL for downstream resource server",
-          "name": "TranslatePaymentResource",
-          "type": "ScriptableFilter",
+          "comment": "Check payment request against authorised consent, via AM policy engine",
+          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type": "PolicyEnforcementFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "TranslatePaymentResource.groovy",
-            "args": {
-              "routeArgAccountIdHeader": "x-ob-account-id"
-            }
+            "pepRealm": "/&{am.realm}",
+            "application": "Open Banking",
+            "claimsSubject": {
+              "sub": "${attributes.resourceOwnerUsername}",
+              "intent_type": "pisp"
+            },
+            "environment": {
+              "sub": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "tpp_client_id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "tpp_cert_id": [
+                "${attributes.tppId}"
+              ],
+              "intent_id": [
+                "${split(request.uri.path, '/')[5]}"
+              ],
+              "request_method": [
+                "${request.method}"
+              ]
+            },
+            "amService": "AmService-OBIE"
           }
         },
         {

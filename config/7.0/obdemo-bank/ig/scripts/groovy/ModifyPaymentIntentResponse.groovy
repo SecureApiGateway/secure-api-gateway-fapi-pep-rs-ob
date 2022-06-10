@@ -11,11 +11,10 @@ next.handle(context, request).thenOnResult({ response ->
         }
         catch(Exception e)
         {
-            logger.debug("Debtor Account's accountId is not set: " + responseBody)
+            logger.debug(SCRIPT_NAME + "Debtor Account's accountId is not set: " + responseBody)
         }
 
-        logger.debug("The payment intent without Debtor Account's accountId: " + responseBody)
+        logger.debug(SCRIPT_NAME + "The payment intent without Debtor Account's accountId: " + responseBody)
         response.setEntity(responseBody)
     }
-
 })

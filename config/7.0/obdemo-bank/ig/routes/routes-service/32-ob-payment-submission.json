@@ -172,18 +172,6 @@
           }
         },
         {
-          "comment": "Adjust URL for downstream resource server",
-          "name": "TranslatePaymentResource",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "TranslatePaymentResource.groovy",
-            "args": {
-              "accounts": "${contexts.jwtBuilder.value}"
-            }
-          }
-        },
-        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {

@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 SCRIPT_NAME = "[GetResourceOwnerIdFromConsent] - "
 logger.debug(SCRIPT_NAME + " Running...")
 /**
@@ -5,8 +7,8 @@ logger.debug(SCRIPT_NAME + " Running...")
  */
 enum IntentType {
     ACCOUNT_ACCESS_CONSENT("AAC_", "accountAccessIntent"),
-    PAYMENT_DOMESTIC_CONSENT("PDC_","domesticPaymentIntent"),
-    PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheculedPaymentIntent"),
+    PAYMENT_DOMESTIC_CONSENT("PDC_", "domesticPaymentIntent"),
+    PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheduledPaymentIntent"),
     PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrdersPaymentIntent"),
     PAYMENT_INTERNATIONAL_CONSENT("PIC_", "internationalPaymentIntent"),
     PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT("PISC_", "internationalScheduledPaymentIntent"),
@@ -35,7 +37,8 @@ enum IntentType {
     String getIntentIdPrefix() {
         return intentIdPrefix
     }
-    String getConsentObject(){
+
+    String getConsentObject() {
         return consentObject
     }
 }
@@ -47,14 +50,31 @@ enum IntentType {
 /**
  * start script
  */
+def intentId
+try {
+    def slurper = new JsonSlurper()
+    intentId = slurper.parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value
 
-def splitUri = request.uri.path.split("/")
+} catch (Exception e) {
+    logger.debug(SCRIPT_NAME + "Couldn't get the intent id from the access token.")
+    def splitUri = request.uri.path.split("/")
 
-// response object
-response = new Response(Status.OK)
-response.headers['Content-Type'] = "application/json"
+    // response object
+    response = new Response(Status.OK)
+    response.headers['Content-Type'] = "application/json"
 
-if (splitUri.length < 2) {
+    if (splitUri.length < 2) {
+        message = SCRIPT_NAME + "Can't parse consent id from inbound request"
+        logger.error(message)
+        response.status = Status.BAD_REQUEST
+        response.entity = "{ \"error\":\"" + message + "\"}"
+        return response
+    }
+
+    intentId = splitUri[5]
+}
+
+if (intentId == null) {
     message = SCRIPT_NAME + "Can't parse consent id from inbound request"
     logger.error(message)
     response.status = Status.BAD_REQUEST
@@ -62,13 +82,13 @@ if (splitUri.length < 2) {
     return response
 }
 
-def intentId = splitUri[5]
+logger.debug(SCRIPT_NAME + "The intent id is: " + intentId)
 
 def intentObject = ""
 
 def intentType = IntentType.identify(intentId)
 
-if(intentType){
+if (intentType) {
     intentObject = intentType.getConsentObject();
 } else {
     message = "Can't parse consent type from inbound request, unknown consent type [" + intentType + "]."
@@ -80,7 +100,7 @@ if(intentType){
 
 def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
 
-if (request.getMethod() == "GET") {
+if (request.getMethod() == "GET" || request.getMethod() == "POST") {
     Request intentRequest = new Request();
     intentRequest.setUri(requestUri);
     intentRequest.setMethod('GET');
@@ -102,7 +122,7 @@ if (request.getMethod() == "GET") {
         def intentResponseContent = intentResponse.getEntity();
         def intentResponseObject = intentResponseContent.getJson();
 
-        if(intentResponseObject.apiClient == null){
+        if (intentResponseObject.apiClient == null) {
             message = "Orfan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
             logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
@@ -113,24 +133,25 @@ if (request.getMethod() == "GET") {
         attributes.put("resourceOwnerUsername", intentResponseObject.user ? intentResponseObject.user._id : null)
         logger.debug(SCRIPT_NAME + "Resource owner username: " + intentResponseObject.user._id)
 
-        if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation")
-        {
-            try{
-                logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation)
-                attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
-                logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
+        try {
+            logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation)
+            attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
+            logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
 
+            if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation") {
                 attributes.put("amount", intentResponseObject.Data.Initiation.InstructedAmount.Amount)
                 logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.Data.Initiation.InstructedAmount.Amount)
 
                 attributes.put("version", splitUri[2])
                 logger.debug(SCRIPT_NAME + "version: " + splitUri[2])
-
-            } catch (java.lang.Exception e) {
-                logger.debug(SCRIPT_NAME + "The debtor account identification wasn't retrieve: " + e)
             }
-        }
 
+        } catch (java.lang.Exception e) {
+            message = "Missing required parameters or headers"
+            logger.error(SCRIPT_NAME + message + e)
+            response = new Response(Status.BAD_REQUEST)
+            response.entity = "{ \"error\":\"" + message + "\"}"
+        }
         return next.handle(context, request)
     })
 } else {

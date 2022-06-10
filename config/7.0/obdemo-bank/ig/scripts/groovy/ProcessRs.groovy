@@ -33,6 +33,12 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-payment-consents/{ConsentId}");
             value.Links.links.add("GetDomesticPaymentConsentsConsentIdFundsConfirmation", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-payment-consents/{ConsentId}/funds-confirmation");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-payment-consents/{ConsentId}/funds-confirmation");
+
+            //Domestic Scheduled Payments Consents
+            value.Links.links.add("CreateDomesticScheduledPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents");
+            value.Links.links.add("GetDomesticScheduledPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents/{ConsentId}");
         }
         newEntity.get("Data").remove("paymentInitiationAPI");
         newEntity.get("Data").add("paymentInitiationAPI", paymentInitiationAPI);

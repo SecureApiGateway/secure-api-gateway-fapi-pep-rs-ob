@@ -13,6 +13,15 @@
     "config": {
       "filters": [
         {
+          "comment": "Modify Payment Intent Response",
+          "name": "ModifyPaymentIntentResponse",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ModifyPaymentIntentResponse.groovy"
+          }
+        },
+        {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
           "type": "ScriptableFilter",
@@ -172,6 +181,20 @@
           }
         },
         {
+          "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
+          "name": "GetResourceOwnerIdFromConsent",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GetResourceOwnerIdFromConsent.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "routeArgObjUser": "&{user.object}"
+            }
+          }
+        },
+        {
           "comment": "Adjust URL for downstream resource server",
           "name": "TranslatePaymentResource",
           "type": "ScriptableFilter",
@@ -179,7 +202,7 @@
             "type": "application/x-groovy",
             "file": "TranslatePaymentResource.groovy",
             "args": {
-              "accounts": "${contexts.jwtBuilder.value}"
+              "routeArgAccountIdHeader": "x-ob-account-id"
             }
           }
         },

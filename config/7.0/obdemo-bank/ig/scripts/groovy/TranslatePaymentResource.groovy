@@ -1,3 +1,6 @@
+SCRIPT_NAME = "[TranslatePaymentResource] - "
+logger.debug(SCRIPT_NAME + " Running...")
 
-request.uri.path = request.uri.path.replaceFirst("/openbanking/.*?/","/")
+request.headers.add(routeArgAccountIdHeader, attributes.get("accountId"))
+
 next.handle(context, request)

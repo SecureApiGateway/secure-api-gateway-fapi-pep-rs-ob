@@ -3,8 +3,10 @@ import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import org.forgerock.json.JsonValueFunctions.*
 
+SCRIPT_NAME = "[JwkmsProcessRCSClaims] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
-logger.debug("Signing claims as RCS")
+logger.debug(SCRIPT_NAME + "Signing claims as RCS")
 
 // response object
 response = new Response(Status.OK)
@@ -14,7 +16,7 @@ def payload = request.entity.getJson();
 
 if (!payload) {
     message = "Couldn't parse request JSON"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response

@@ -5,7 +5,6 @@ import org.forgerock.json.jose.builders.JwtBuilderFactory
 import org.forgerock.secrets.Purpose
 import org.forgerock.json.jose.jws.JwsAlgorithm
 import org.forgerock.http.protocol.Status
-import org.forgerock.http.protocol.Response
 
 /**
  * Add detached signature to HTTP response
@@ -23,7 +22,7 @@ ISS_CRIT_CLAIM = "http://openbanking.org.uk/iss"
 TAN_CRIT_CLAIM = "http://openbanking.org.uk/tan"
 
 next.handle(context, request).thenOnResult({ response ->
-
+    logger.debug(SCRIPT_NAME + "Running...")
     logger.debug(SCRIPT_NAME + "routeArgSecretId: " + routeArgSecretId)
     logger.debug(SCRIPT_NAME + "routeArgKid: " + routeArgKid)
 

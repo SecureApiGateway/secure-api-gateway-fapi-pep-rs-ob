@@ -7,9 +7,7 @@ import org.forgerock.http.protocol.*
 import org.forgerock.json.JsonValueFunctions.*
 import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
-
 import java.text.ParseException
-
 import static org.forgerock.util.promise.Promises.newResultPromise
 
 /**
@@ -24,6 +22,7 @@ import static org.forgerock.util.promise.Promises.newResultPromise
  */
 
 SCRIPT_NAME = "[ProcessDetachedSig] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
 def method = request.method
 if (method != "POST") {

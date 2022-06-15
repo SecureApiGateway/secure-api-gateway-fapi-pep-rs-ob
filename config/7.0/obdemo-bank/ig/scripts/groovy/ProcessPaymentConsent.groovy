@@ -6,8 +6,10 @@ import java.text.SimpleDateFormat
  * Output: IDM create object
  */
 
-def apiClientId = contexts.oauth2.accessToken.info.client_id
+SCRIPT_NAME = "[ProcessPaymentConsent] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
+def apiClientId = contexts.oauth2.accessToken.info.client_id
 def method = request.method
 
 switch(method.toUpperCase()) {
@@ -28,7 +30,7 @@ switch(method.toUpperCase()) {
         paymentIntentData.Data.StatusUpdateDateTime = nowAsISO
         paymentIntentData.apiClient = [ "_ref" : "managed/" + routeArgObjApiClient + "/" + apiClientId ]
 
-        logger.debug("final json [" + paymentIntentData + "]")
+        logger.debug(SCRIPT_NAME + "final json [" + paymentIntentData + "]")
         request.setEntity(paymentIntentData)
 
 
@@ -42,7 +44,7 @@ switch(method.toUpperCase()) {
         break
 
     default:
-        logger.debug("Method not supported")
+        logger.debug(SCRIPT_NAME + "Method not supported")
 
 }
 

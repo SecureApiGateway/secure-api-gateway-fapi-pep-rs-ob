@@ -1,5 +1,4 @@
 import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.jwk.KeyUse;
@@ -18,12 +17,6 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.asn1.ASN1Object
-import org.bouncycastle.asn1.x509.qualified.QCStatement
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 
@@ -41,13 +34,6 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey;
 import java.util.Calendar;
 import java.util.Date;
-import groovy.json.JsonOutput
-import javax.crypto.Cipher;
-import java.io.ByteArrayOutputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.SecretKey;
-import java.io.StringWriter;
 import java.util.Random;
 
 
@@ -59,7 +45,7 @@ QC_STATEMENTS_QWAC  = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAzAJBgcEAIvsS
 QC_STATEMENTS_QSEAL = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAjAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE="
 BC_PROVIDER = "BC";
 KEY_ALGORITHM = "RSA";
-SCRIPT_NAME = "JwkmsIssueCert.groovy: "
+SCRIPT_NAME = "[JwkmsIssueCert] - "
 enum EidasCertType{
     SEAL, WAC
 }
@@ -72,7 +58,7 @@ enum EidasCertType{
 //
 // Not for live clients!
 
-logger.info(SCRIPT_NAME + "called")
+logger.info(SCRIPT_NAME + "Running...")
 
 def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,caKey,providerName,keyAlg,sigAlg) {
 
@@ -95,7 +81,7 @@ def issueCert(certType,keySize,validityDays,subjectCN,subjectOI,caCertificate,ca
     //  issuedCertSerialNum = new BigInteger(1, issuedCertSerialNum.toByteArray())
     BigInteger issuedCertSerialNum = new BigInteger(128,new Random());
     if (issuedCertSerialNum.signum() == -1) {
-        logger.debug("Negating serial")
+        logger.debug(SCRIPT_NAME + "Negating serial")
         issuedCertSerialNum = issuedCertSerialNum.negate();
     }
 
@@ -200,7 +186,7 @@ if (!(subjectCN && subjectOI)) {
     response = new Response(Status.BAD_REQUEST)
     response.headers['Content-Type'] = "application/json"
     message = "Didn't get all input data"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }

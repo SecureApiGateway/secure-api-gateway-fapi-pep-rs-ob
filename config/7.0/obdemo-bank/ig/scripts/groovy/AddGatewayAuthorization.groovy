@@ -7,11 +7,14 @@
  *
  */
 
+SCRIPT_NAME = "[AddGatewayAuthorization] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 def authHeader = request.getHeaders().getFirst("Authorization");
 
 if (authHeader == null) {
     def message = "Token request authorization not available";
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     Response response = new Response(Status.INTERNAL_SERVER_ERROR);
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -21,7 +24,7 @@ def splitHeader = authHeader.split(" ");
 
 if (splitHeader.length != 2) {
     def message = "Token request authorization not available";
-    logger.error(message + " Header: " + authHeader);
+    logger.error(SCRIPT_NAME + message + " Header: " + authHeader);
     Response response = new Response(Status.INTERNAL_SERVER_ERROR);
     response.entity = "{ \"error\":\"" + message + "\"}";
     return response;

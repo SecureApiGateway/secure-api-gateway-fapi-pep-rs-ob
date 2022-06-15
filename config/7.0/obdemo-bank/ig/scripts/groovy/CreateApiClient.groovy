@@ -1,8 +1,6 @@
 import org.forgerock.http.protocol.*
 import groovy.json.JsonOutput
 import org.forgerock.json.jose.*
-import org.forgerock.json.jose.common.JwtReconstruction
-import org.forgerock.json.jose.jws.SignedJwt
 
 /*
  * Script to read OIDC dynamic registration response and create apiClientOrg managed object in IDM
@@ -13,8 +11,11 @@ import org.forgerock.json.jose.jws.SignedJwt
 // TODO: handle IDM error response - pass back to caller?
 // TODO: handle AM bad response - reformat to OB
 
+SCRIPT_NAME = "[CreateApiClient] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 def errorResponse(httpCode, message) {
-  logger.error("Returning error " + httpCode + ": " + message);
+  logger.error(SCRIPT_NAME + "Returning error " + httpCode + ": " + message);
   def response = new Response(httpCode);
   response.headers['Content-Type'] = "application/json";
   response.entity = "{ \"error\":\"" + message + "\"}";
@@ -63,7 +64,7 @@ switch(method.toUpperCase()) {
 
       // Create the apiClient object
 
-      logger.debug("Sending apiClient create request to IDM endpoint");
+      logger.debug(SCRIPT_NAME + "Sending apiClient create request to IDM endpoint");
 
       // response object
       response = new Response(Status.OK)
@@ -98,17 +99,17 @@ switch(method.toUpperCase()) {
 
       http.send(apiClientRequest).then(apiClientResponse -> {
         apiClientRequest.close()
-        logger.debug("Back from IDM")
+        logger.debug(SCRIPT_NAME + "Back from IDM")
 
         def apiClientResponseContent = apiClientResponse.getEntity();
         def apiClientResponseStatus = apiClientResponse.getStatus();
 
-        logger.debug("status " + apiClientResponseStatus);
-        logger.debug("entity " + apiClientResponseContent);
+        logger.debug(SCRIPT_NAME + "status " + apiClientResponseStatus);
+        logger.debug(SCRIPT_NAME + "entity " + apiClientResponseContent);
 
         if (apiClientResponseStatus != Status.CREATED) {
           responseMessage = "Failed to register apiClient with IDM"
-          logger.error(responseMessage);
+          logger.error(SCRIPT_NAME + responseMessage);
           error = true;
         } else {
           // TODO: Check if apiClientOrg already exists - if so, just add the apiClient to it
@@ -119,7 +120,7 @@ switch(method.toUpperCase()) {
 
           // Create Institution object, and bind apiClient to it
 
-          logger.debug("Sending apiClientOrg request to IDM endpoint");
+          logger.debug(SCRIPT_NAME + "Sending apiClientOrg request to IDM endpoint");
 
           // We are going to include SSA data in the apiClientOrg object - working assumption
           // that there is actually only one SSA per apiClientOrg ID
@@ -140,16 +141,16 @@ switch(method.toUpperCase()) {
 
           http.send(apiClientOrgRequest).then(apiClientOrgResponse -> {
             apiClientOrgRequest.close();
-            logger.debug("Back from IDM");
+            logger.debug(SCRIPT_NAME + "Back from IDM");
             def apiClientOrgResponseContent = apiClientOrgResponse.getEntity();
             def apiClientOrgResponseStatus = apiClientOrgResponse.getStatus();
 
-            logger.debug("status " + apiClientOrgResponseStatus);
-            logger.debug("entity " + apiClientOrgResponseContent);
+            logger.debug(SCRIPT_NAME + "status " + apiClientOrgResponseStatus);
+            logger.debug(SCRIPT_NAME + "entity " + apiClientOrgResponseContent);
 
             if (apiClientOrgResponseStatus != Status.CREATED) {
               responseMessage = "Failed to register apiClientOrg with IDM"
-              logger.error(responseMessage);
+              logger.error(SCRIPT_NAME + responseMessage);
               error = true;
             }
           })
@@ -157,7 +158,7 @@ switch(method.toUpperCase()) {
       })
 
       if (error) {
-        logger.error(responseMessage)
+        logger.error(SCRIPT_NAME + responseMessage)
         response.status = Status.INTERNAL_SERVER_ERROR
         response.entity = "{ \"error\":\"" + responseMessage + "\"}"
         return response
@@ -173,7 +174,7 @@ switch(method.toUpperCase()) {
     next.handle(context, request)
     break
   default:
-    logger.debug("Method not supported")
+    logger.debug(SCRIPT_NAME + "Method not supported")
     next.handle(context, request)
 }
 

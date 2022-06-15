@@ -11,8 +11,11 @@ import groovy.json.JsonSlurper;
  * Output: Verified OIDC registration JSON
  */
 
+SCRIPT_NAME = "[ProcessRegistration] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 def errorResponse(httpCode, message) {
-    logger.error("Returning error " + httpCode + ": " + message);
+    logger.error(SCRIPT_NAME + "Returning error " + httpCode + ": " + message);
     def response = new Response(httpCode);
     response.headers['Content-Type'] = "application/json";
     response.entity = "{ \"error\":\"" + message + "\"}";
@@ -47,7 +50,7 @@ switch(method.toUpperCase()) {
 
         // Parse incoming registration JWT
 
-        logger.debug("Parsing registration request");
+        logger.debug(SCRIPT_NAME + "Parsing registration request");
 
         def regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(),SignedJwt.class)
 
@@ -65,7 +68,7 @@ switch(method.toUpperCase()) {
 
         oidcRegistration.setClaim("software_statement",null);
 
-        logger.debug("Got ssa [" + ssa + "]")
+        logger.debug(SCRIPT_NAME + "Got ssa [" + ssa + "]")
 
         def ssaJwt = new JwtReconstruction().reconstructJwt(ssa,SignedJwt.class)
 
@@ -77,7 +80,7 @@ switch(method.toUpperCase()) {
         def apiClientOrgJwks = ssaClaims.getClaim("software_jwks");
 
 
-        logger.debug("Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {} apiClientOrgJwks: {}",
+        logger.debug(SCRIPT_NAME + "Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {} apiClientOrgJwks: {}",
                 apiClientOrgName,
                 apiClientOrgCertId,
                 apiClientOrgJwksUri,
@@ -87,7 +90,7 @@ switch(method.toUpperCase()) {
         // Update OIDC registration request
 
         if (apiClientOrgJwksUri) {
-            logger.debug("Using jwks uri")
+            logger.debug(SCRIPT_NAME + "Using jwks uri")
             if (routeArgObJwksHosts) {
 
                 // If the JWKS URI host is in our list of private JWKS hosts, then proxy back through IG
@@ -108,7 +111,7 @@ switch(method.toUpperCase()) {
 
                 if (proxiedHosts.asList().contains(jwksUri.getHost())) {
                     def newUri = routeArgProxyBaseUrl + "/" + jwksUri.getHost() + jwksUri.getPath();
-                    logger.debug("Updating private JWKS URI from {} to {}",apiClientOrgJwksUri,newUri);
+                    logger.debug(SCRIPT_NAME + "Updating private JWKS URI from {} to {}",apiClientOrgJwksUri,newUri);
                     apiClientOrgJwksUri = newUri;
 
                 }
@@ -116,7 +119,7 @@ switch(method.toUpperCase()) {
             oidcRegistration.setClaim("jwks_uri", apiClientOrgJwksUri)
         }
         else if (apiClientOrgJwks) {
-            logger.debug("Using jwks")
+            logger.debug(SCRIPT_NAME + "Using jwks")
             oidcRegistration.setClaim("jwks",  apiClientOrgJwks )
         }
         else {
@@ -179,7 +182,7 @@ switch(method.toUpperCase()) {
 
         def regJson = oidcRegistration.build();
 
-        logger.debug("final json [" + regJson + "]")
+        logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
         request.setEntity(regJson)
         break
 
@@ -187,7 +190,7 @@ switch(method.toUpperCase()) {
        break
 
     default:
-        logger.debug("Method not supported")
+        logger.debug(SCRIPT_NAME + "Method not supported")
 
 }
 

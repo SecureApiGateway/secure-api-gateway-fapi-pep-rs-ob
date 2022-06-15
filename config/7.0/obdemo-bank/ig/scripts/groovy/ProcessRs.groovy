@@ -1,5 +1,8 @@
 import org.forgerock.http.protocol.*
 
+SCRIPT_NAME = "[ProcessRs] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 next.handle(context, request).thenOnResult(response -> {
     response.entity = response.entity.getString().replace('http://rs', 'https://' + request.getHeaders().getFirst('Host') + '/rs');
 
@@ -46,7 +49,7 @@ next.handle(context, request).thenOnResult(response -> {
         response.entity = newEntity;
     }
     catch (Exception e) {
-        logger.error("The response entity doesn't have the expected format")
+        logger.error(SCRIPT_NAME + "The response entity doesn't have the expected format")
     }
 
     return response;

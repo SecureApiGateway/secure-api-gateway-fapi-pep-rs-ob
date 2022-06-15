@@ -1,5 +1,6 @@
 SCRIPT_NAME = "[TranslatePaymentFundsConfirmationResource] - "
-logger.debug(SCRIPT_NAME + " Running...")
+logger.debug(SCRIPT_NAME + "Running...")
+
 request.uri.path = request.uri.path.replaceFirst("/open-banking/.*","/backoffice/payment-funds-confirmation")
 
 // Add query parameters

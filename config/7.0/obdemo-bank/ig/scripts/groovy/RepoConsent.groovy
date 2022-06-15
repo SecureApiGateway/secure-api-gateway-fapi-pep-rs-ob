@@ -1,6 +1,8 @@
 import groovy.json.JsonOutput
-
 import java.text.SimpleDateFormat
+
+SCRIPT_NAME = "[RepoConsent] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
 /**
  *  definitions
@@ -186,7 +188,7 @@ response.headers['Content-Type'] = "application/json"
 
 if (splitUri.length < 2) {
     message = "Can't parse consent id from inbound request"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -201,7 +203,7 @@ if(intentType){
     intentObject = intentType.getConsentObject();
 } else {
     message = "Can't parse consent type from inbound request, unknown consent type [" + intentType + "]."
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -215,13 +217,13 @@ if (request.getMethod() == "GET") {
     intentRequest.setMethod('GET');
     http.send(intentRequest).then(intentResponse -> {
         intentRequest.close()
-        logger.debug("Back from IDM")
+        logger.debug(SCRIPT_NAME + "Back from IDM")
 
         def intentResponseStatus = intentResponse.getStatus();
 
         if (intentResponseStatus != Status.OK) {
             message = "Failed to get consent details"
-            logger.error(message)
+            logger.error(SCRIPT_NAME + message)
             response.status = intentResponseStatus
             response.entity = "{ \"error\":\"" + message + "\"}"
             return response
@@ -232,7 +234,7 @@ if (request.getMethod() == "GET") {
 
         if(intentResponseObject.apiClient == null){
             message = "Orfan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
-            logger.error(message)
+            logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"
             return response
@@ -241,7 +243,7 @@ if (request.getMethod() == "GET") {
         def responseObj = convertIDMResponse(intentResponseObject, intentType);
 
         def responseJson = JsonOutput.toJson(responseObj);
-        logger.debug("Final JSON " + responseJson)
+        logger.debug(SCRIPT_NAME + "Final JSON " + responseJson)
 
         response.entity = responseJson
         return response
@@ -256,16 +258,16 @@ if (request.getMethod() == "GET") {
 
     http.send(patchRequest).then(patchResponse -> {
         patchRequest.close()
-        logger.debug("Back from IDM")
+        logger.debug(SCRIPT_NAME + "Back from IDM")
         def patchResponseContent = patchResponse.getEntity();
         def patchResponseStatus = patchResponse.getStatus();
 
-        logger.debug("status " + patchResponseStatus);
-        logger.debug("entity " + patchResponseContent);
+        logger.debug(SCRIPT_NAME + "status " + patchResponseStatus);
+        logger.debug(SCRIPT_NAME + "entity " + patchResponseContent);
 
         if (patchResponseStatus != Status.OK) {
             message = "Failed to patch consent"
-            logger.error(message)
+            logger.error(SCRIPT_NAME + message)
             response.status = patchResponseStatus
             response.entity = "{ \"error\":\"" + message + "\"}"
             return response
@@ -275,7 +277,7 @@ if (request.getMethod() == "GET") {
 
         if(patchResponseObject.apiClient == null){
             message = "Orfan consent, The consent requested to patch with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
-            logger.error(message)
+            logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"
             return response
@@ -290,7 +292,7 @@ if (request.getMethod() == "GET") {
 
 } else {
     message = "Method " + request.getMethod() + " not supported";
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response

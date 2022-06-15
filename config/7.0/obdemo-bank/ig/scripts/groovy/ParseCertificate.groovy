@@ -22,6 +22,9 @@ import java.security.interfaces.RSAPublicKey;
  * Utility funcs for parsing certificate contents
  */
 
+SCRIPT_NAME = "[ParseCertificate] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 class CertificateParserHelper {
     private static final EXTENDED_KEY_USAGE_OID_STRINGS = [
             "2.5.29.37.0",
@@ -251,14 +254,14 @@ if (header == null) {
     response = new Response(Status.BAD_REQUEST)
     response.headers['Content-Type'] = "application/json"
     message = "No certificate header on inbound request " + routeArgCertificateHeader
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
 
 String certPem = URLDecoder.decode(header.firstValue.toString())
 
-logger.debug("Client certificate PEM: \n" + certPem)
+logger.debug(SCRIPT_NAME + "Client certificate PEM: \n" + certPem)
 
 InputStream certStream = new ByteArrayInputStream(certPem.getBytes());
 
@@ -267,7 +270,7 @@ Certificate cert = cf.generateCertificate(certStream);
 
 def certObject = certToObject(cert)
 
-logger.debug("Parsed certificate " + certObject.toString())
+logger.debug(SCRIPT_NAME + "Parsed certificate " + certObject.toString())
 
 // Store certificate details for other filters
 

@@ -3,8 +3,11 @@
 
 import groovy.json.JsonSlurper;
 
+SCRIPT_NAME = "[JWKSProxyProcessRequest] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 def errorResponse(httpCode, message) {
-  logger.error("Returning error " + httpCode + ": " + message);
+  logger.error(SCRIPT_NAME + "Returning error " + httpCode + ": " + message);
   def response = new Response(httpCode);
   response.headers['Content-Type'] = "application/json";
   response.entity = "{ \"error\":\"" + message + "\"}";
@@ -36,7 +39,7 @@ if (!authorisedHosts.asList().contains(targetHost)) {
 
 def newPath = "https://" + Arrays.copyOfRange(splitPath, 3, splitPath.length).join("/");
 
-logger.debug("Setting path to {}", newPath);
+logger.debug(SCRIPT_NAME + "Setting path to {}", newPath);
 
 request.setUri(newPath);
 

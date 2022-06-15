@@ -7,8 +7,10 @@ import java.util.UUID
  * Output: IDM create object
  */
 
-def oauth2ClientId = contexts.oauth2.accessToken.info.client_id
+SCRIPT_NAME = "[ProcessAccountConsent] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
+def oauth2ClientId = contexts.oauth2.accessToken.info.client_id
 def method = request.method
 
 switch(method.toUpperCase()) {
@@ -29,7 +31,7 @@ switch(method.toUpperCase()) {
         accountIntentData.Data.StatusUpdateDateTime = nowAsISO
         accountIntentData.apiClient = [ "_ref" : "managed/" + routeArgObjApiClient + "/" +  oauth2ClientId ]
 
-        logger.debug("final json [" + accountIntentData + "]")
+        logger.debug(SCRIPT_NAME + "final json [" + accountIntentData + "]")
         request.setEntity(accountIntentData)
 
         request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent
@@ -47,7 +49,7 @@ switch(method.toUpperCase()) {
         break
 
     default:
-        logger.debug("Method not supported")
+        logger.debug(SCRIPT_NAME + "Method not supported")
 
 }
 

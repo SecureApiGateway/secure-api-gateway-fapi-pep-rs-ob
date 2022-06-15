@@ -1,3 +1,6 @@
+SCRIPT_NAME = "[WellKnownFilter] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 next.handle(context, request).thenOnResult(response -> {
 
   def rspJson = response.entity.getJson();

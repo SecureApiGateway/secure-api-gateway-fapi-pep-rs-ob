@@ -16,15 +16,16 @@ import groovy.json.JsonSlurper
  * If HTTP error response with no OB error in shared state, set response body to generic OB error
  */
 
+SCRIPT_NAME = "[ObResponseCheck] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 String HEADER_INTERACTION_ID = "x-fapi-interaction-id"
-
-
 Map<String, String> getGenericError(Status status, String responseBody) {
 
   String errorCode
   String message
-  logger.debug("STATUS-*-: " + status)
-  logger.debug("ERROR-*- body: " + responseBody)
+  logger.debug(SCRIPT_NAME + "STATUS-*-: " + status)
+  logger.debug(SCRIPT_NAME + "ERROR-*- body: " + responseBody)
   switch (status) {
 
     case Status.NOT_FOUND:
@@ -60,7 +61,7 @@ Map<String, String> getGenericError(Status status, String responseBody) {
   if (responseBody) {
     def slurper = new JsonSlurper()
     Map responseObj = slurper.parseText(responseBody)
-    logger.debug("Response error from backend: " + responseObj)
+    logger.debug(SCRIPT_NAME + "Response error from backend: " + responseObj)
     if(responseObj.Code){
       errorCode = responseObj.Errors[0].ErrorCode
       message = responseObj.Errors[0].Message
@@ -71,7 +72,7 @@ Map<String, String> getGenericError(Status status, String responseBody) {
     if (responseObj.error_description) {
       message += " [" + responseObj.error_description + "]"
     }
-    logger.debug("Response values errorCode= " + errorCode + ", message= " + message)
+    logger.debug(SCRIPT_NAME + "Response values errorCode= " + errorCode + ", message= " + message)
   }
 
   return [
@@ -92,7 +93,7 @@ void bounceBackHeader(Request req, Response rsp, String headerName, boolean crea
   String val = null
   inboundValues = req.headers.get(headerName)
   if (inboundValues == null && createIfAbsent) {
-    logger.debug("No inbound header value - creating one")
+    logger.debug(SCRIPT_NAME + "No inbound header value - creating one")
     val = UUID.randomUUID().toString();
   }
   else {
@@ -141,7 +142,7 @@ next.handle(context, request).thenOnResult({response ->
     }
 
     newBody.put("Errors",errorList)
-    logger.debug("Final Error Response: " + newBody)
+    logger.debug(SCRIPT_NAME + "Final Error Response: " + newBody)
     response.setEntity(newBody)
   }
 })

@@ -1,8 +1,9 @@
 import groovy.json.JsonOutput
 
+SCRIPT_NAME = "[RepoApiClient] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
 // Fetch the API Client from IDM
-
 Request apiClientRequest = new Request();
 apiClientRequest.setMethod('GET');
 
@@ -14,7 +15,7 @@ def splitUri =  request.uri.path.split("/")
 
 if (splitUri.length == 0) {
     message = "Can't parse api client ID from inbound request"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -22,13 +23,13 @@ if (splitUri.length == 0) {
 
 def apiClientId = splitUri[splitUri.length - 1];
 
-logger.debug("Looking up API Client {}",apiClientId)
+logger.debug(SCRIPT_NAME + "Looking up API Client {}",apiClientId)
 
 apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
 
 http.send(apiClientRequest).then(apiClientResponse -> {
     apiClientRequest.close()
-    logger.debug("Back from IDM")
+    logger.debug(SCRIPT_NAME + "Back from IDM")
 
     def apiClientResponseStatus = apiClientResponse.getStatus();
 
@@ -52,7 +53,7 @@ http.send(apiClientRequest).then(apiClientResponse -> {
     ]
 
     def responseJson = JsonOutput.toJson(responseObj);
-    logger.debug("Final JSON " + responseJson)
+    logger.debug(SCRIPT_NAME + "Final JSON " + responseJson)
 
     response.entity = responseJson;
     return response

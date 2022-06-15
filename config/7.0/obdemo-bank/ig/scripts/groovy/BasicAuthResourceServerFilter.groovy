@@ -8,10 +8,13 @@
  *  - password: the expected password
  */
 
-import static org.forgerock.util.promise.Promises.newResultPromise;
+import static org.forgerock.util.promise.Promises.newResultPromise
 
 import java.nio.charset.Charset;
 import org.forgerock.util.encode.Base64;
+
+SCRIPT_NAME = "[BasicAuthResourceServerFilter] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
 String authorizationHeader = request.getHeaders().getFirst("Authorization");
 if (authorizationHeader == null) {

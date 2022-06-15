@@ -2,12 +2,11 @@ import org.forgerock.http.protocol.*
 import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import org.forgerock.json.JsonValueFunctions.*
-import org.forgerock.json.jose.jwk.RsaJWK
-import java.security.PublicKey
-import org.forgerock.json.jose.jws.JwsAlgorithm
-import org.forgerock.json.jose.jwk.KeyUseConstants
 
-logger.debug("Creating SSA")
+SCRIPT_NAME = "[JwkmsBuildSSA] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
+logger.debug(SCRIPT_NAME + "Creating SSA")
 
 // response object
 response = new Response(Status.OK)
@@ -24,7 +23,7 @@ def exp = iat + routeArgJwtValidity;
 
 if (!attributes.clientCertificate) {
     message = "No client certificate for registration"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -33,7 +32,7 @@ if (!attributes.clientCertificate) {
 
 if (!attributes.clientCertificate.subjectDNComponents.CN) {
     message = "No CN in cert"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -44,7 +43,7 @@ def  organizationalIdentifier = attributes.clientCertificate.subjectDNComponents
 
 if (!organizationalIdentifier) {
     message = "No org identifier in cert"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -54,7 +53,7 @@ def oiComponents = organizationalIdentifier.split("-")
 
 if (oiComponents.length != 3) {
     message = "Wrong number of dashes in OI " + organizationalIdentifier + " - expected 2"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.FORBIDDEN
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -85,7 +84,7 @@ def payload = [
 ]
 
 
-logger.debug("Built SSA payload " + payload)
+logger.debug(SCRIPT_NAME + "Built SSA payload " + payload)
 attributes.ssaPayload = payload
 
 next.handle(context,request)

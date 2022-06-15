@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 SCRIPT_NAME = "[GetResourceOwnerIdFromConsent] - "
-logger.debug(SCRIPT_NAME + " Running...")
+logger.debug(SCRIPT_NAME + "Running...")
 /**
  *  definitions
  */
@@ -51,13 +51,14 @@ enum IntentType {
  * start script
  */
 def intentId
+def splitUri
 try {
     def slurper = new JsonSlurper()
     intentId = slurper.parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value
 
 } catch (Exception e) {
     logger.debug(SCRIPT_NAME + "Couldn't get the intent id from the access token.")
-    def splitUri = request.uri.path.split("/")
+    splitUri = request.uri.path.split("/")
 
     // response object
     response = new Response(Status.OK)
@@ -65,7 +66,7 @@ try {
 
     if (splitUri.length < 2) {
         message = SCRIPT_NAME + "Can't parse consent id from inbound request"
-        logger.error(message)
+        logger.error(SCRIPT_NAME + message)
         response.status = Status.BAD_REQUEST
         response.entity = "{ \"error\":\"" + message + "\"}"
         return response
@@ -76,7 +77,7 @@ try {
 
 if (intentId == null) {
     message = SCRIPT_NAME + "Can't parse consent id from inbound request"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -138,6 +139,7 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
             attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
             logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
 
+            splitUri = request.uri.path.split("/")
             if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation") {
                 attributes.put("amount", intentResponseObject.Data.Initiation.InstructedAmount.Amount)
                 logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.Data.Initiation.InstructedAmount.Amount)
@@ -147,7 +149,7 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
             }
 
         } catch (java.lang.Exception e) {
-            message = "Missing required parameters or headers"
+            message = "Missing required parameters or headers: "
             logger.error(SCRIPT_NAME + message + e)
             response = new Response(Status.BAD_REQUEST)
             response.entity = "{ \"error\":\"" + message + "\"}"

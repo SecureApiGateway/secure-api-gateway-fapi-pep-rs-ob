@@ -1,12 +1,12 @@
 import org.forgerock.http.protocol.*
 import org.forgerock.json.jose.*
-import org.forgerock.json.jose.common.JwtReconstruction
-import org.forgerock.json.jose.jws.SignedJwt
 
 // Check transport certificate for roles appropriate to request
 
+SCRIPT_NAME = "[CertificateRoleCheck] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
-logger.debug("Checking certificate roles for {} request",routeArgRole)
+logger.debug(SCRIPT_NAME + "Checking certificate roles for {} request",routeArgRole)
 
 // response object
 response = new Response(Status.OK)
@@ -21,7 +21,7 @@ def ROLE_CARD_BASED_PAYMENT_INSTRUMENTS = "0.4.0.19495.1.4"
 
 if (!attributes.clientCertificate) {
   message = "No client certificate for TPP role check"
-  logger.error(message)
+  logger.error(SCRIPT_NAME + message)
   response.status = Status.BAD_REQUEST
   response.entity = "{ \"error\":\"" + message + "\"}"
   return response
@@ -31,7 +31,7 @@ if (!attributes.clientCertificate) {
 def roles = attributes.clientCertificate.roles
 if (!roles) {
   message = "No roles in client certificate for TPP role check"
-  logger.error(message)
+  logger.error(SCRIPT_NAME + message)
   response.status = Status.BAD_REQUEST
   response.entity = "{ \"error\":\"" + message + "\"}"
   return response
@@ -43,14 +43,14 @@ if (!roles) {
 
 if (routeArgRole == "AISP" && !(roles.contains(ROLE_ACCOUNT_INFORMATION))) {
   message = "Role AISP requires certificate role " + ROLE_ACCOUNT_INFORMATION
-  logger.error(message)
+  logger.error(SCRIPT_NAME + message)
   response.status = Status.FORBIDDEN
   response.entity = "{ \"error\":\"" + message + "\"}"
   return response
 }
 else if (routeArgRole == "PISP" && !(roles.contains(ROLE_PAYMENT_INITIATION))) {
   message = "Role PISP requires certificate role " + ROLE_PAYMENT_INITIATION
-  logger.error(message)
+  logger.error(SCRIPT_NAME + message)
   response.status = Status.FORBIDDEN
   response.entity = "{ \"error\":\"" + message + "\"}"
   return response

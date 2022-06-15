@@ -5,6 +5,9 @@ import java.security.*;
 import java.security.cert.X509Certificate
 import java.io.StringWriter;
 
+SCRIPT_NAME = "[JwkmsGetTlsCert] - "
+logger.debug(SCRIPT_NAME + "Running...")
+
 def getTlsKey(jwks) {
     List<RSAKey> jwkKeys = jwks.getKeys();
 
@@ -12,9 +15,9 @@ def getTlsKey(jwks) {
 
     jwkKeys.forEach(k -> {
         def use = k.getKeyUse().identifier();
-        logger.debug("Key use " + use);
+        logger.debug(SCRIPT_NAME + "Key use " + use);
         if (use == "tls") {
-            logger.debug("Found TLS key " + k);
+            logger.debug(SCRIPT_NAME + "Found TLS key " + k);
             key = k;
         }
     });
@@ -25,28 +28,28 @@ def getTlsKey(jwks) {
 JWKSet jwks = JWKSet.parse(request.entity.getString());
 
 if (!jwks) {
-    logger.error("Couuldn't parse request body as JWK set");
+    logger.error(SCRIPT_NAME + "Couldn't parse request body as JWK set");
     return new Response(Status.BAD_REQUEST);
 }
 
 RSAKey jwk = getTlsKey(jwks);
 
 if (!jwk) {
-    logger.error("Couuldn't find TLS key in JWK set");
+    logger.error(SCRIPT_NAME + "Couldn't find TLS key in JWK set");
     return new Response(Status.BAD_REQUEST);
 }
 
 PrivateKey privateKey = jwk.toPrivateKey();
 
 if (!privateKey) {
-    logger.error("Couuldn't find private key in tls jwk");
+    logger.error(SCRIPT_NAME + "Couldn't find private key in tls jwk");
     return new Response(Status.BAD_REQUEST);
 }
 
 List<X509Certificate> certChain = jwk.getParsedX509CertChain();
 
 if (!certChain) {
-    logger.error("Couuldn't find cert chain in tls jwk");
+    logger.error(SCRIPT_NAME + "Couldn't find cert chain in tls jwk");
     return new Response(Status.BAD_REQUEST);
 }
 

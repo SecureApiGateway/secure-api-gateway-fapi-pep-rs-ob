@@ -1,3 +1,5 @@
+SCRIPT_NAME = "[TranslateAccountsResource] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
 String[] grantedAccounts = contexts.policyDecision.attributes.grantedAccounts
 
@@ -7,7 +9,7 @@ response.headers['Content-Type'] = "application/json"
 
 if (grantedAccounts == null) {
     message = "No granted accounts in policy response"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.INTERNAL_SERVER_ERROR
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -17,7 +19,7 @@ String[] grantedPermissions = contexts.policyDecision.attributes.grantedPermissi
 String[] userResourceOwner = contexts.policyDecision.attributes.userResourceOwner
 if (grantedPermissions == null) {
     message = "No granted permissions in policy response"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.INTERNAL_SERVER_ERROR
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response

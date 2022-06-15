@@ -20,8 +20,10 @@ import com.nimbusds.jose.jwk.JWKSet
 
 import groovy.json.JsonOutput
 
+SCRIPT_NAME = "[JwkmsSignClientClaims] - "
+logger.debug(SCRIPT_NAME + "Running...")
 
-logger.debug("Signing claims as ApiClient")
+logger.debug(SCRIPT_NAME + "Signing claims as ApiClient")
 
 // response object
 response = new Response(Status.OK)
@@ -34,9 +36,9 @@ def getSigKey(jwks) {
 
     jwkKeys.forEach(k -> {
     def use = k.getKeyUse().identifier();
-    logger.debug("Key use " + use);
+    logger.debug(SCRIPT_NAME + "Key use " + use);
     if (use == "sig") {
-        logger.debug("Found signing key " + k);
+        logger.debug(SCRIPT_NAME + "Found signing key " + k);
         key = k;
     }
 });
@@ -48,7 +50,7 @@ def requestObject = request.entity.getJson();
 
 if (!requestObject) {
     message = "Couldn't parse request JSON"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -56,7 +58,7 @@ if (!requestObject) {
 
 if (!requestObject.claims) {
     message = "No claims payload in request"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -64,7 +66,7 @@ if (!requestObject.claims) {
 
 if (!requestObject.jwks) {
     message = "No jwks in request"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -74,7 +76,7 @@ JWKSet jwks = JWKSet.parse(JsonOutput.toJson(requestObject.jwks));
 
 if (!jwks) {
     message = "Couldn't parse request body as JWK set"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -84,7 +86,7 @@ RSAKey jwk = getSigKey(jwks);
 
 if (!jwk) {
     message = "Couldn't find signing key in JWK set"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -94,7 +96,7 @@ PrivateKey privateKey = jwk.toPrivateKey();
 
 if (!privateKey) {
     message = "Couldn't find private key in sig jwk"
-    logger.error(message)
+    logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
@@ -115,7 +117,7 @@ def jwt = new JwtBuilderFactory()
         .claims(claimSet)
         .build();
 
-logger.debug("Generated jwt {}", jwt)
+logger.debug(SCRIPT_NAME + "Generated jwt {}", jwt)
 
 Response response = new Response(Status.OK)
 response.getHeaders().add("Content-Type","text/plain");

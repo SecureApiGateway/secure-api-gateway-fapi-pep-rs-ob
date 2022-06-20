@@ -10,9 +10,7 @@
       "type": "ScriptableFilter",
       "config": {
         "type": "application/x-groovy",
-        "source": [
-          "return next.handle(context, request)"
-        ]
+        "file": "ApiProtection.groovy"
       }
     },
     {

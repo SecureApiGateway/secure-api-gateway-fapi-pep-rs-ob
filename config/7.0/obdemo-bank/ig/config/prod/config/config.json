@@ -101,11 +101,7 @@
           "userId": "&{ig.idm.user}",
           "password": "&{ig.idm.password}"
         },
-        "source": [
-          "def newEntity = request.getEntity().toString().replace('grant_type=client_credentials','grant_type=password&username=' + userId + '&password=' + java.net.URLEncoder.encode(password, 'UTF-8'))",
-          "request.setEntity(newEntity)",
-          "return http.send(context, request)"
-        ],
+        "file": "SettingNewEntity.groovy",
         "clientHandler": "ForgeRockClientHandler"
       }
     },

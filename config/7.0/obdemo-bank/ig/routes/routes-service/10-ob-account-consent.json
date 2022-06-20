@@ -51,11 +51,7 @@
               "type": "ScriptableHandler",
               "config": {
                 "type": "application/x-groovy",
-                "source": [
-                  "def response = new Response(Status.TEAPOT);",
-                  "response.entity = 'Failure in CertificateThumbprintFilter'",
-                  "return response"
-                ]
+                "file": "ReturnTeapotError.groovy"
               }
             }
           }

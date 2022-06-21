@@ -130,6 +130,15 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
             ]
             break
+        case IntentType.PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT:
+            responseObj = [
+                    "id"                   : intentResponseObject._id,
+                    "data"                 : intentResponseObject.Data,
+                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
+                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
+                    "oauth2ClientName"     : intentResponseObject.apiClient.name
+            ]
+            break
     }
 
     return responseObj;
@@ -140,10 +149,10 @@ enum IntentType {
     ACCOUNT_ACCESS_CONSENT("AAC_", "accountAccessIntent"),
     PAYMENT_DOMESTIC_CONSENT("PDC_","domesticPaymentIntent"),
     PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheduledPaymentIntent"),
-    PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrdersPaymentIntent"),
+    PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrderPaymentIntent"),
     PAYMENT_INTERNATIONAL_CONSENT("PIC_", "internationalPaymentIntent"),
     PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT("PISC_", "internationalScheduledPaymentIntent"),
-    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrdersPaymentIntent"),
+    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrderPaymentIntent"),
     PAYMENT_FILE_CONSENT("PFC_", "filePaymentIntent"),
     FUNDS_CONFIRMATION_CONSENT("FCC_", "fundsConfirmationIntent"),
     DOMESTIC_VRP_PAYMENT_CONSENT("DVRP_", "domesticVrpPaymentIntent")

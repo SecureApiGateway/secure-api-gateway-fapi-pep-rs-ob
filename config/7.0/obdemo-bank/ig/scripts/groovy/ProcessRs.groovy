@@ -42,6 +42,12 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents");
             value.Links.links.add("GetDomesticScheduledPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents/{ConsentId}");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-scheduled-payment-consents/{ConsentId}");
+
+            //Domestic Standing Order Consents
+            value.Links.links.add("CreateDomesticStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents");
+            value.Links.links.add("GetDomesticStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents/{ConsentId}");
         }
         newEntity.get("Data").remove("paymentInitiationAPI");
         newEntity.get("Data").add("paymentInitiationAPI", paymentInitiationAPI);

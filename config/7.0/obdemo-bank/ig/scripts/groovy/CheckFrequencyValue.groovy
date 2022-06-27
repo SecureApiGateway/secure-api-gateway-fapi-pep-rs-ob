@@ -7,6 +7,13 @@ SCRIPT_NAME = "[CheckFrequencyValue] - "
 FREQUENCY_REGEX = "^(EvryDay)\$|^(EvryWorkgDay)\$|^(IntrvlWkDay:0[1-9]:0[1-7])\$|^(WkInMnthDay:0[1-5]:0[1-7])\$|^(IntrvlMnthDay:(0[1-6]|12|24):(-0[1-5]|0[1-9]|[12][0-9]|3[01]))\$|^(QtrDay:(ENGLISH|SCOTTISH|RECEIVED))\$"
 logger.debug(SCRIPT_NAME + "Running...")
 
+def method = request.method
+if (method != "POST") {
+    //This script should be executed only if it is a POST request
+    logger.debug(SCRIPT_NAME + "Skipping the filter because the method is not POST, the method is " + method)
+    return next.handle(context, request)
+}
+
 def requestObj = request.entity.getJson()
 
 def frequency = ""

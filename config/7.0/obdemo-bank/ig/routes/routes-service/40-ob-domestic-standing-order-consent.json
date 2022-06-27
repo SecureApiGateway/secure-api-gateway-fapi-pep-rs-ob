@@ -8,6 +8,15 @@
     "config": {
       "filters": [
         {
+          "comment": "Modify Payment Intent Response",
+          "name": "ModifyPaymentIntentResponse",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ModifyPaymentIntentResponse.groovy"
+          }
+        },
+        {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
           "type": "ScriptableFilter",

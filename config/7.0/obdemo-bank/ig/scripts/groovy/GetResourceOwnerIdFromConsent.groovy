@@ -9,10 +9,10 @@ enum IntentType {
     ACCOUNT_ACCESS_CONSENT("AAC_", "accountAccessIntent"),
     PAYMENT_DOMESTIC_CONSENT("PDC_", "domesticPaymentIntent"),
     PAYMENT_DOMESTIC_SCHEDULED_CONSENT("PDSC_", "domesticScheduledPaymentIntent"),
-    PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrderPaymentIntent"),
+    PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrderIntent"),
     PAYMENT_INTERNATIONAL_CONSENT("PIC_", "internationalPaymentIntent"),
     PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT("PISC_", "internationalScheduledPaymentIntent"),
-    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrdersPaymentIntent"),
+    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrdersIntent"),
     PAYMENT_FILE_CONSENT("PFC_", "filePaymentIntent"),
     FUNDS_CONFIRMATION_CONSENT("FCC_", "fundsConfirmationIntent"),
     DOMESTIC_VRP_PAYMENT_CONSENT("DVRP_", "domesticVrpPaymentIntent")

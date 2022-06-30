@@ -155,7 +155,7 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "domesticStandingOrderPaymentIntent",
+              "routeArgObjDomesticPaymentConsent": "domesticStandingOrderIntent",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "PDSOC_"
             }

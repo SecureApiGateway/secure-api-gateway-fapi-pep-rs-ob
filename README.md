@@ -4,7 +4,7 @@ This repository contains a demonstration deployment of the ForgeRock platform al
 based on the [Secure Banking access toolkit assets](https://github.com/SecureBankingAccessToolkit/SecureBankingAccessToolkit).
 
 ## Read first (Environment Setup)
-- [DevOps Developer's Guide](https://backstage.forgerock.com/docs/forgeops/7/index-forgeops.html)
+- [DevOps Developer's Guide](https://backstage.forgerock.com/docs/forgeops/7.1/index.html)
 
 ## Principal Folder structure
 

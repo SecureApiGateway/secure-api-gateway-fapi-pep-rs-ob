@@ -23,8 +23,6 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.links.add("DeleteAccountAccessConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/aisp/account-access-consents/{ConsentId}");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/aisp/account-access-consents/{ConsentId}");
         }
-        newEntity.get("Data").remove("AccountAndTransactionAPI");
-        newEntity.get("Data").add("AccountAndTransactionAPI", accountAndTransactionApi);
 
         //Payment Initiation
         JsonValue paymentInitiationAPI = response.entity.getJson().get("Data").get("PaymentInitiationAPI");
@@ -48,9 +46,15 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents");
             value.Links.links.add("GetDomesticStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents/{ConsentId}");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-standing-order-consents/{ConsentId}");
+
+            //International Payments Consents
+            value.Links.links.add("CreateInternationalPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents");
+            value.Links.links.add("GetInternationalPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents/{ConsentId}");
+            value.Links.links.add("GetInternationalPaymentConsentsConsentIdFundsConfirmation", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents/{ConsentId}/funds-confirmation");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-payment-consents/{ConsentId}/funds-confirmation");
         }
-        newEntity.get("Data").remove("paymentInitiationAPI");
-        newEntity.get("Data").add("paymentInitiationAPI", paymentInitiationAPI);
 
         response.entity = newEntity;
     }

@@ -139,6 +139,15 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
             ]
             break
+        case IntentType.PAYMENT_INTERNATIONAL_CONSENT:
+            responseObj = [
+                    "id"                   : intentResponseObject._id,
+                    "data"                 : intentResponseObject.Data,
+                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
+                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
+                    "oauth2ClientName"     : intentResponseObject.apiClient.name
+            ]
+            break
     }
 
     return responseObj;

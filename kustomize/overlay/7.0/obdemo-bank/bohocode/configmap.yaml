@@ -6,3 +6,4 @@ data:
   IG_FQDN: obdemo.bohocode.forgerock.financial
   RS_FQDN: rs.bohocode.forgerock.financial
   RCS_FQDN: rcs.bohocode.forgerock.financial
+  IDENTITY_PLATFORM_FQDN: iam.bohocode.forgerock.financial

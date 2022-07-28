@@ -139,6 +139,15 @@
           }
         },
         {
+          "comment": "Check requestedExecutionDateTime parameter in domestic standing order payload",
+          "name": "ScheduledPaymentExecutionTimeVerification",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ScheduledPaymentExecutionTimeVerification.groovy"
+          }
+        },
+        {
           "comment": "Prepare request for IDM",
           "name": "ProcessPaymentConsent",
           "type": "ScriptableFilter",

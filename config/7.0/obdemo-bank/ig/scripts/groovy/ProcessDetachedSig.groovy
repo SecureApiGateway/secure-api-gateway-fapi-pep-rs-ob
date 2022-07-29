@@ -260,7 +260,9 @@ def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayl
 def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
     JWKSet jwkSet
     try {
-        jwkSet = JWKSet.load(new URL(routeArgJwkUrl));
+        //adding connectTimeout = 5000 ms, readTimeout = 5000 ms, sizeLimit = 1000000 bytes (1Mb) to avoid blocked threads.
+        //There's an issue which leaves connections hanging and leads to threads getting blocked
+        jwkSet = JWKSet.load(new URL(routeArgJwkUrl), 10000, 10000, 1000000);
     }
     catch (java.lang.Exception e) {
         logger.error(SCRIPT_NAME + "Exception getting JWK set: " + e);

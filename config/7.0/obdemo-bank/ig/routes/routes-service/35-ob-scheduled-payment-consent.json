@@ -148,6 +148,21 @@
           }
         },
         {
+          "comment": "Calculate response elements in RS",
+          "name": "CalculateResponseElementsInRS",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CalculateResponseElementsInRS.groovy",
+            "args": {
+              "routeArgRsBaseURI": "https://&{rs.fqdn}",
+              "routeArgIntentIdQueryParameter": "intent",
+              "routeArgVersionQueryParameter": "version",
+              "routeArgIntentType": "PDSC_"
+            }
+          }
+        },
+        {
           "comment": "Prepare request for IDM",
           "name": "ProcessPaymentConsent",
           "type": "ScriptableFilter",

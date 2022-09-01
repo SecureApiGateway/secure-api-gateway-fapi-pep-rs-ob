@@ -137,9 +137,14 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
 
             try {
                 logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
-                if (!validateUnencodedPayload(detachedSig, jwks_uri, jwtPayload)) {
-                    return newResultPromise(getSignatureValidationErrorResponse())
-                }
+
+                Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSig, jwks_uri, jwtPayload);
+                return validJwsPromise.thenAsync(validJws -> {
+                    if (Boolean.FALSE.equals(validJws)) {
+                        return newResultPromise(getSignatureValidationErrorResponse())
+                    }
+                    return next.handle(context, request)
+                })
             }
             catch (java.lang.Exception e) {
                 logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
@@ -174,9 +179,13 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
 
         try {
             logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
-            if (!validateEncodedPayload(detachedSig, jwks_uri, jwtPayload)) {
-                return newResultPromise(getSignatureValidationErrorResponse())
-            }
+            Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSig, jwks_uri, jwtPayload);
+            return validJwsPromise.thenAsync(validJws -> {
+                if (Boolean.FALSE.equals(validJws)) {
+                    return newResultPromise(getSignatureValidationErrorResponse())
+                }
+                return next.handle(context, request)
+            })
         }
         catch (java.lang.Exception e) {
             logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
@@ -216,14 +225,18 @@ def validateUnencodedPayload(String jws, String routeArgJwkUrl, String payload) 
         return false
     }
 
-    RSAKey rsaPublicJWK = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader)
-
-    if (rsaPublicJWK == null) {
-        return false;
-    }
-
-    RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicJWK.toRSAPublicKey(), getCriticalHeaderParameters());
-    return parsedJWSObject.verify(verifier)
+    Promise<RSAKey, NeverThrowsException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    keyPromise.thenAsync(rsaPublicJWK -> {
+        logger.debug(SCRIPT_NAME + "Processing RSAKey promise");
+        if (rsaPublicJWK != null) {
+            logger.debug(SCRIPT_NAME + "rsaPublicJWK: " + rsaPublicJWK)
+            RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicJWK.toRSAPublicKey(), getCriticalHeaderParameters());
+            return newResultPromise(parsedJWSObject.verify(verifier));
+        } else {
+            logger.debug(SCRIPT_NAME + "RSAKey from promise is null");
+            return newResultPromise(false);
+        }
+    })
 }
 
 /**
@@ -242,11 +255,17 @@ def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayl
     JWSObject parsedJWSObject = JWSObject.parse(payload);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
 
-    RSAKey rsaPublicJWK = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader)
-    if (rsaPublicJWK == null) {
-        return false;
-    }
-    return isJwsValid(payload, rsaPublicJWK, jwtPayload, jwsHeader);
+    Promise<RSAKey, NeverThrowsException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    keyPromise.thenAsync(rsaPublicJWK -> {
+        logger.debug(SCRIPT_NAME + "Processing RSAKey promise");
+        if (rsaPublicJWK != null) {
+            logger.debug(SCRIPT_NAME + "rsaPublicJWK: " + rsaPublicJWK)
+            return isJwsValid(payload, rsaPublicJWK, jwtPayload, jwsHeader);
+        } else {
+            logger.debug(SCRIPT_NAME + "RSAKey from promise is null");
+            return newResultPromise(false);
+        }
+    })
 }
 
 /**
@@ -259,28 +278,32 @@ def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayl
  */
 def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
     JWKSet jwkSet
-    try {
-        //adding connectTimeout = 5000 ms, readTimeout = 5000 ms, sizeLimit = 1000000 bytes (1Mb) to avoid blocked threads.
-        //There's an issue which leaves connections hanging and leads to threads getting blocked
-        jwkSet = JWKSet.load(new URL(routeArgJwkUrl), 10000, 10000, 1000000);
-    }
-    catch (java.lang.Exception e) {
-        logger.error(SCRIPT_NAME + "Exception getting JWK set: " + e);
-        return null;
-    }
 
-    logger.debug(SCRIPT_NAME + "jwkSet: " + jwkSet.toString())
+    Request jwksRequest = new Request();
+    jwksRequest.setMethod('GET');
+    jwksRequest.setUri(routeArgJwkUrl);
 
-    List<JWK> matches = new JWKSelector(JWKMatcher.forJWSHeader(jwsHeader))
-            .select(jwkSet);
+    // Get RSA Key from jwks URL
+    return http.send(jwksRequest).thenAsync(jwksResponse -> {
+        def responseBody = jwksResponse.getEntity().getJson();
 
-    if (matches.size() != 1) {
-        logger.error(SCRIPT_NAME + "Unexpected number of matching JWKs: " + matches.size());
-        return null
-    }
+        jwkSet = JWKSet.parse(responseBody);
+        logger.debug(SCRIPT_NAME + "Parsed keys: " + jwkSet)
+        logger.debug(SCRIPT_NAME + "jwkSet: " + jwkSet.toString())
 
-    RSAKey rsaPublicJWK = (RSAKey) matches.get(0).toPublicJWK();
-    return rsaPublicJWK;
+        List<JWK> matches = new JWKSelector(JWKMatcher.forJWSHeader(jwsHeader))
+                .select(jwkSet);
+
+        if (matches.size() != 1) {
+            logger.error(SCRIPT_NAME + "Unexpected number of matching JWKs: " + matches.size());
+            return newResultPromise(null)
+        }
+
+        logger.debug(SCRIPT_NAME + "Matched correct key: " + matches.get(0))
+        RSAKey rsaPublicJWK = (RSAKey) matches.get(0).toPublicJWK();
+        return newResultPromise(rsaPublicJWK);
+    })
+
 }
 
 /**
@@ -298,7 +321,7 @@ def isJwsValid(String jwt, JWK jwk, String jwtPayload, JWSHeader jwsHeader) thro
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader);
     if (!criticalParamsValid) {
         logger.error(SCRIPT_NAME + "Critical params validations failed. Stopping further validations.")
-        return false
+        return newResultPromise(false)
     }
 
     //Validate Signature
@@ -317,7 +340,7 @@ def isJwsValid(String jwt, JWK jwk, String jwtPayload, JWSHeader jwsHeader) thro
     boolean isValidJws = jwsObject.verify(jwsVerifier);
     logger.debug(SCRIPT_NAME + "Signature validation result: " + isValidJws)
 
-    return isValidJws;
+    return newResultPromise(isValidJws);
 }
 
 /**

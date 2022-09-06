@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2020-2022 ForgeRock AS (obst@forgerock.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.forgerock.securebanking.uk.gateway</groupId>
+    <artifactId>securebanking-openbanking-uk-gateway</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>securebanking-openbanking-uk-gateway</name>
+    <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for SBAT
+    </description>
+    <url>
+        https://github.com/SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+    </url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>securebanking-openbanking-uk-gateway-jwks</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html -->
+        <release.java.version>11</release.java.version>
+        <copyright-current-year>2022</copyright-current-year>
+        <uk.bom.version>1.1.5-SNAPSHOT</uk.bom.version>
+        <inject.resources.version>0.1.0</inject.resources.version>
+        <openig.version>7.1.0</openig.version>
+        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
+        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
+        <mycila-license-maven-plugin.version>4.1</mycila-license-maven-plugin.version>
+        <legal.path.header>legal/LICENSE-HEADER.txt</legal.path.header>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- IG BOM -->
+            <dependency>
+                <groupId>org.forgerock.openig</groupId>
+                <artifactId>openig-bom</artifactId>
+                <!-- This version should be consistent
+                 with versions at other places -->
+                <version>${openig.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <!-- SBAT BOM -->
+            <dependency>
+                <groupId>com.forgerock.securebanking.uk</groupId>
+                <artifactId>securebanking-openbanking-uk-bom</artifactId>
+                <version>${uk.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- 4 test -->
+            <dependency>
+                <groupId>com.adelean</groupId>
+                <artifactId>inject-resources-core</artifactId>
+                <version>${inject.resources.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://hosuaby.github.io/inject-resources/0.1.0/asciidoc/#inject-resources-junit-jupiter -->
+            <dependency>
+                <groupId>com.adelean</groupId>
+                <artifactId>inject-resources-junit-jupiter</artifactId>
+                <version>${inject.resources.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <scm>
+        <connection>scm:git:git@github.com:SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+        </connection>
+        <developerConnection>scm:git:git@github.com:SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+        </developerConnection>
+        <url>https://github.com/SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>maven.forgerock.org-community</id>
+            <name>maven.forgerock.org-releases</name>
+            <url>https://maven.forgerock.org/artifactory/community</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven.forgerock.org-community-snapshots</id>
+            <name>maven.forgerock.org-snapshots</name>
+            <url>https://maven.forgerock.org/artifactory/community</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>maven.forgerock.org-community</id>
+            <name>maven.forgerock.org-releases</name>
+            <url>https://maven.forgerock.org/artifactory/community</url>
+        </repository>
+        <repository>
+            <id>maven.forgerock.org-community-snapshots</id>
+            <name>maven.forgerock.org-snapshots</name>
+            <url>https://maven.forgerock.org/artifactory/community</url>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>forgerock-private-releases</id>
+            <name>ForgeRock Private Releases Repository</name>
+            <url>https://maven.forgerock.org/repo/private-releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>forgerock-private-releases-repo</id>
+            <name>repo</name>
+            <url>https://maven.forgerock.org/artifactory/repo</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <release>${release.java.version}</release>
+                        <verbose>false</verbose>
+                        <fork>true</fork>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                    <configuration>
+                        <outputDirectory>${project.build.directory}</outputDirectory>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven-assembly-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${mycila-license-maven-plugin.version}</version>
+                <configuration>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>${legal.path.header}</header>
+                            <excludes>
+                                <exclude>**/*.md</exclude>
+                                <exclude>**/*.yaml</exclude>
+                                <exclude>Makefile</exclude>
+                                <exclude>LICENSE</exclude>
+                                <exclude>bin/**</exclude>
+                                <exclude>config/**</exclude>
+                                <exclude>docker/**</exclude>
+                                <exclude>legal/**</exclude>
+                                <exclude>postman/**</exclude>
+                                <exclude>kustomize/**</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

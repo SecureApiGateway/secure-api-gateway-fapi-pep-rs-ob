@@ -189,6 +189,14 @@
           }
         ]
       }
+    },
+    {
+      "name": "OBJwkSetService",
+      "type": "com.forgerock.securebanking.uk.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService",
+      "config": {
+        "maxCacheEntries": 500,
+        "expireAfterWriteDuration": "1 hour"
+      }
     }
   ],
   "monitor": true

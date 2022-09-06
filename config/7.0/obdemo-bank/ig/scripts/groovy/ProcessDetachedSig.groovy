@@ -6,7 +6,12 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.forgerock.http.protocol.*
 import org.forgerock.json.JsonValueFunctions.*
 import org.forgerock.json.jose.*
+import org.forgerock.json.jose.jwk.RsaJWK
 import org.forgerock.json.jose.jwk.store.JwksStore.*
+import com.forgerock.securebanking.uk.gateway.jwks.*
+import java.security.interfaces.RSAPublicKey
+import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
+
 import java.text.ParseException
 import static org.forgerock.util.promise.Promises.newResultPromise
 
@@ -225,17 +230,14 @@ def validateUnencodedPayload(String jws, String routeArgJwkUrl, String payload) 
         return false
     }
 
-    Promise<RSAKey, NeverThrowsException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
-    keyPromise.thenAsync(rsaPublicJWK -> {
-        logger.debug(SCRIPT_NAME + "Processing RSAKey promise");
-        if (rsaPublicJWK != null) {
-            logger.debug(SCRIPT_NAME + "rsaPublicJWK: " + rsaPublicJWK)
-            RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicJWK.toRSAPublicKey(), getCriticalHeaderParameters());
-            return newResultPromise(parsedJWSObject.verify(verifier));
-        } else {
-            logger.debug(SCRIPT_NAME + "RSAKey from promise is null");
-            return newResultPromise(false);
-        }
+    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    return keyPromise.thenAsync(rsaPublicKey -> {
+        logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
+        RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
+        return newResultPromise(parsedJWSObject.verify(verifier));
+    }).thenCatchAsync(failedToLoadJwkEx -> {
+        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + routeArgJwkUrl, failedToLoadJwkEx);
+        return newResultPromise(false)
     })
 }
 
@@ -255,16 +257,13 @@ def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayl
     JWSObject parsedJWSObject = JWSObject.parse(payload);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
 
-    Promise<RSAKey, NeverThrowsException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
-    keyPromise.thenAsync(rsaPublicJWK -> {
-        logger.debug(SCRIPT_NAME + "Processing RSAKey promise");
-        if (rsaPublicJWK != null) {
-            logger.debug(SCRIPT_NAME + "rsaPublicJWK: " + rsaPublicJWK)
-            return isJwsValid(payload, rsaPublicJWK, jwtPayload, jwsHeader);
-        } else {
-            logger.debug(SCRIPT_NAME + "RSAKey from promise is null");
-            return newResultPromise(false);
-        }
+    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    keyPromise.thenAsync(rsaPublicKey -> {
+        logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
+        return isJwsValid(payload, rsaPublicKey, jwtPayload, jwsHeader);
+    }).thenCatchAsync(failedToLoadJwkEx -> {
+        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + routeArgJwkUrl, failedToLoadJwkEx);
+        return newResultPromise(false)
     })
 }
 
@@ -277,33 +276,13 @@ def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayl
  * @return the RSAKey that matches the kid from the JWS header given
  */
 def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
-    JWKSet jwkSet
+    var keyId = jwsHeader.getKeyID()
+    logger.debug(SCRIPT_NAME + "Fetching key for keyId: " + keyId)
 
-    Request jwksRequest = new Request();
-    jwksRequest.setMethod('GET');
-    jwksRequest.setUri(routeArgJwkUrl);
-
-    // Get RSA Key from jwks URL
-    return http.send(jwksRequest).thenAsync(jwksResponse -> {
-        def responseBody = jwksResponse.getEntity().getJson();
-
-        jwkSet = JWKSet.parse(responseBody);
-        logger.debug(SCRIPT_NAME + "Parsed keys: " + jwkSet)
-        logger.debug(SCRIPT_NAME + "jwkSet: " + jwkSet.toString())
-
-        List<JWK> matches = new JWKSelector(JWKMatcher.forJWSHeader(jwsHeader))
-                .select(jwkSet);
-
-        if (matches.size() != 1) {
-            logger.error(SCRIPT_NAME + "Unexpected number of matching JWKs: " + matches.size());
-            return newResultPromise(null)
-        }
-
-        logger.debug(SCRIPT_NAME + "Matched correct key: " + matches.get(0))
-        RSAKey rsaPublicJWK = (RSAKey) matches.get(0).toPublicJWK();
-        return newResultPromise(rsaPublicJWK);
+    Promise<RSAPublicKey, FailedToLoadJWKException> jwkPromise = jwkSetService.getJwk(new URL(routeArgJwkUrl), keyId).then(jwk -> {
+        return ((RsaJWK) jwk).toRSAPublicKey()
     })
-
+    return jwkPromise
 }
 
 /**
@@ -311,12 +290,12 @@ def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
  * critical claims during the process of the signature validation.
  *
  * @param jwt The detached signature header value - x-jws-signature
- * @param jwk The JWK used to validate the signature
+ * @param rsaPublicKey The JWK used to validate the signature
  * @param jwtPayload The request payload or request body. Will be encoded before rebuilding the JWT
  * @param jwsHeader The header of the detached signature
  * @return true if the signatures validation is successful, false otherwise
  */
-def isJwsValid(String jwt, JWK jwk, String jwtPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
+def isJwsValid(String jwt, RSAPublicKey rsaPublicKey, String jwtPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
     // Validate crit claims - If this fails stop the flow, no point in continuing with the signature validation.
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader);
     if (!criticalParamsValid) {
@@ -327,8 +306,7 @@ def isJwsValid(String jwt, JWK jwk, String jwtPayload, JWSHeader jwsHeader) thro
     //Validate Signature
     logger.debug(SCRIPT_NAME + "JWT from header signature: " + jwt)
 
-    RSASSAVerifier jwsVerifier = new RSASSAVerifier(jwk.toRSAKey().toRSAPublicKey(),
-            getCriticalHeaderParameters());
+    RSASSAVerifier jwsVerifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
 
     String[] jwtElements = jwt.split("\\.")
 

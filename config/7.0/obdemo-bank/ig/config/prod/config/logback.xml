@@ -16,7 +16,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %nopex[%thread] %highlight(%-5level) %boldWhite(%logger{35}) - %message%n%highlight(%rootException{short})</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %nopex[%thread] %-5level %logger{35} - %message%n%rootException{short}</pattern>
         </encoder>
     </appender>
      

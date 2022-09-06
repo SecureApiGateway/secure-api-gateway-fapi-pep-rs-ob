@@ -406,7 +406,7 @@ def getCriticalHeaderParameters() {
 }
 
 /**
- * Builds the signature validation failur error response
+ * Builds the signature validation failure error response
  * @return error response
  */
 def getSignatureValidationErrorResponse() {

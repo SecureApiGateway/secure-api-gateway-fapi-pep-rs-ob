@@ -42,6 +42,37 @@ enum IntentType {
         return consentObject
     }
 }
+
+/**
+ * Builds the error response
+ * @return error response
+ */
+def getErrorResponse() {
+    message = "Invalid Consent Status"
+    errorCode = "UK.OBIE.Resource.InvalidConsentStatus"
+    logger.error(SCRIPT_NAME + "Message: " + message + ". ErrorCode:" + errorCode)
+
+    response = new Response(Status.BAD_REQUEST)
+
+    Map<String,String> newBody = [
+            Code: Status.BAD_REQUEST.toString()
+    ]
+
+    requestIds = request.headers.get("x-request-id")
+    if (requestIds) {
+        newBody.put("Id", requestIds.firstValue)
+    }
+    newBody.put("Message",  Status.BAD_REQUEST.toString())
+
+    Map<String,String> errorList =[
+            ErrorCode: errorCode,
+            Message: message
+    ]
+
+    newBody.put("Errors", errorList)
+    response.setEntity(newBody)
+    return response;
+}
 /**
  * End definitions
  */
@@ -137,10 +168,15 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
         try {
             logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation)
             attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
-            logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
 
             splitUri = request.uri.path.split("/")
             if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation") {
+                if(intentResponseObject.Data.Status == "Consumed")
+                {
+                    logger.debug(SCRIPT_NAME + "The consent status is Consumed")
+                    return newResultPromise(getErrorResponse())
+                }
+
                 attributes.put("amount", intentResponseObject.Data.Initiation.InstructedAmount.Amount)
                 logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.Data.Initiation.InstructedAmount.Amount)
 

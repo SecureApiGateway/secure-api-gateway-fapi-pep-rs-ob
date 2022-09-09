@@ -76,7 +76,7 @@
               "type": "ScriptableHandler",
               "config": {
                 "type": "application/x-groovy",
-                "file": "ReturnTeapotError.groovy"
+                "file": "ReturnInvalidCnfKeyError.groovy"
               }
             }
           }

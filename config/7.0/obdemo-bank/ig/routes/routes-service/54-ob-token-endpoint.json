@@ -35,7 +35,7 @@
           }
         },
         {
-          "comment": "Extract certificate thumbprint for use in cert bound access token check",
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
           "config": {
@@ -44,7 +44,7 @@
               "type": "ScriptableHandler",
               "config": {
                 "type": "application/x-groovy",
-                "file": "ReturnTeapotError.groovy"
+                "file": "ReturnInvalidCnfKeyError.groovy"
               }
             }
           }

@@ -84,6 +84,21 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
           "comment": "Adjust URL for downstream resource server",
           "type": "UriPathRewriteFilter",
           "config": {

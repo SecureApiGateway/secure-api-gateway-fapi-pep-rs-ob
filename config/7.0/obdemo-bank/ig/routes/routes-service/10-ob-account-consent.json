@@ -42,21 +42,6 @@
           }
         },
         {
-          "comment": "Extract client certificate thumbprint for cert bound access tokens",
-          "name": "CertificateThumbprintFilter-1",
-          "type": "CertificateThumbprintFilter",
-          "config": {
-            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnTeapotError.groovy"
-              }
-            }
-          }
-        },
-        {
           "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
@@ -92,6 +77,21 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        },
+        {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
               }
             }
           }

@@ -95,29 +95,26 @@
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
                 "delegate": {
-                  "name": "token-resolver-1",
-                  "type": "TokenIntrospectionAccessTokenResolver",
+                  "type": "StatelessAccessTokenResolver",
                   "config": {
-                    "endpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
-                    "providerHandler": {
-                      "type": "Chain",
-                      "config": {
-                        "filters": [
-                          {
-                            "type": "HttpBasicAuthenticationClientFilter",
-                            "config": {
-                              "username": "&{ig.agent.id}",
-                              "passwordSecretId": "ig.agent.password",
-                              "secretsProvider": "SystemAndEnvSecretStore-IAM"
-                            }
-                          }
-                        ],
-                        "handler": "ForgeRockClientHandler"
-                      }
-                    }
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
                   }
                 }
               }
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "client_credentials"
             }
           }
         },
@@ -212,4 +209,4 @@
       "handler": "ReverseProxyHandler"
     }
   }
-} 
+}

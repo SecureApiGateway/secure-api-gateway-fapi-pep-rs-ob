@@ -122,6 +122,18 @@
           }
         },
         {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "client_credentials"
+            }
+          }
+        },
+        {
           "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
           "name": "ProcessDetachedSig",
           "type": "ScriptableFilter",

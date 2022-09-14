@@ -10,6 +10,11 @@ SCRIPT_NAME = "[ProcessPaymentConsent] - "
 logger.debug(SCRIPT_NAME + "Running...")
 
 def apiClientId = contexts.oauth2.accessToken.info.client_id
+if (apiClientId == null || apiClientId == "") {
+    // in case of client credentials grant
+    apiClientId = contexts.oauth2.accessToken.info.sub
+}
+
 def method = request.method
 
 switch(method.toUpperCase()) {

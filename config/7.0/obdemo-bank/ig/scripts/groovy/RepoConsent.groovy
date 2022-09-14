@@ -304,7 +304,7 @@ if (request.getMethod() == "GET") {
         def patchResponseObject = patchResponseContent.getJson();
 
         if(patchResponseObject.apiClient == null){
-            message = "Orfan consent, The consent requested to patch with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
+            message = "Orfan consent, The consent requested to patch doesn't have an apiClient related."
             logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"

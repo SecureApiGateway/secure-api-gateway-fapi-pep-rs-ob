@@ -11,6 +11,10 @@ SCRIPT_NAME = "[ProcessAccountConsent] - "
 logger.debug(SCRIPT_NAME + "Running...")
 
 def oauth2ClientId = contexts.oauth2.accessToken.info.client_id
+if (oauth2ClientId == null || oauth2ClientId == "") {
+    // in case of client credentials grant
+    oauth2ClientId = contexts.oauth2.accessToken.info.sub
+}
 def method = request.method
 
 switch(method.toUpperCase()) {

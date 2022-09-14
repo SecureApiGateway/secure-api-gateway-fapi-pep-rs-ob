@@ -105,6 +105,11 @@ if (routeArgClientIdFieldName == "client_id") {
 }
 
 if (tppClientId == null) {
+    // in case of client credentials grant
+    tppClientId = contexts.oauth2.accessToken.info.sub
+}
+
+if (tppClientId == null) {
     message = "Cannot obtain TPP client id from the access token"
     logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST

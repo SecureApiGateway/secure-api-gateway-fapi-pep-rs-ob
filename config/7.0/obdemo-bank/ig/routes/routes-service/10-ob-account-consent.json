@@ -42,6 +42,21 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
           "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
           "name" : "OAuth2ResourceServerFilter-OB",
           "type" : "OAuth2ResourceServerFilter",
@@ -54,27 +69,12 @@
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
                 "delegate": {
-                  "comment":"resolve access tokens and retrieve metadata about the token. The endpoint typically returns the time until the token expires, the OAuth 2.0 scopes associated with the token, and potentially other information",
                   "name": "token-resolver-1",
-                  "type": "TokenIntrospectionAccessTokenResolver",
+                  "type": "StatelessAccessTokenResolver",
                   "config": {
-                    "endpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/introspect",
-                    "providerHandler": {
-                      "type": "Chain",
-                      "config": {
-                        "filters": [
-                          {
-                            "type": "HttpBasicAuthenticationClientFilter",
-                            "config": {
-                              "username": "&{ig.agent.id}",
-                              "passwordSecretId": "ig.agent.password",
-                              "secretsProvider": "SystemAndEnvSecretStore-IAM"
-                            }
-                          }
-                        ],
-                        "handler": "ForgeRockClientHandler"
-                      }
-                    }
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
                   }
                 }
               }
@@ -90,21 +90,6 @@
             "file": "GrantTypeVerifier.groovy",
             "args": {
               "allowedGrantType": "client_credentials"
-            }
-          }
-        },
-        {
-          "comment": "Extract client certificate thumbprint for cert bound access tokens",
-          "name": "CertificateThumbprintFilter-1",
-          "type": "CertificateThumbprintFilter",
-          "config": {
-            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnInvalidCnfKeyError.groovy"
-              }
             }
           }
         },

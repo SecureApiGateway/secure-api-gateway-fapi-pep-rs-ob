@@ -7,7 +7,7 @@
 apiVersion: skaffold/v1
 kind: Config
 metadata:
-  name: obdemo-bank
+  name: securebanking
 ## Common YAML anchors
 ## The yaml anchors are used to make it easier to compose skaffold profiles.
 ## You should not need to edit this section
@@ -16,7 +16,7 @@ metadata:
   artifactDefinitions:
     - &IG
       image: ig
-      context: docker/7.0/ig
+      context: docker/7.1.0/ig
 
     - &OBDEMO-RCS-UI
       image: obdemo-rcs-ui
@@ -50,7 +50,7 @@ profiles:
   deploy:
     statusCheckDeadlineSeconds: 600
     kustomize:
-      path: ./kustomize/overlay/7.0/obdemo-bank/prod
+      path: ./kustomize/overlay/7.1.0/securebanking/prod
 
 # Default profile
 build: &default-build
@@ -60,5 +60,5 @@ build: &default-build
 deploy: &default-deploy
   statusCheckDeadlineSeconds: 600
   kustomize:
-    path: ./kustomize/overlay/7.0/obdemo-bank/dev
+    path: ./kustomize/overlay/7.1.0/securebanking/dev
 

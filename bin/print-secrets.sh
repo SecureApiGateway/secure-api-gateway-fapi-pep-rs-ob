@@ -16,11 +16,11 @@ openidm_admin_password () {
     echo "$(getsec idm-env-secrets OPENIDM_ADMIN_PASSWORD) (openidm-admin user)"
 }
 
-7.0_directory_manager_password () {
+7.1.0_directory_manager_password () {
     echo "$(getsec ds-passwords dirmanager\\.pw) (uid=admin user)"
 }
 
-7.0_setup_profile_service_account_passwords () {
+7.1.0_setup_profile_service_account_passwords () {
     [ $1 == "cfg" ] || [ $1 == "all" ] && echo "$(getsec ds-env-secrets AM_STORES_APPLICATION_PASSWORD
 ) (Application store service account (uid=am-config,ou=admins,ou=am-config))"
     [ $1 == "cts" ] || [ $1 == "all" ] && echo "$(getsec ds-env-secrets AM_STORES_CTS_PASSWORD) (CTS profile service account (uid=openam_cts,ou=admins,ou=famrecords,ou=openam-session,ou=tokens))"
@@ -42,7 +42,7 @@ backup_restore_info () {
 # Get major version by presence of a version specific secret.
 get_version () {
     if ( secret=$(kubectl get secret ds-env-secrets 2>/dev/null) ); then
-        version="7.0"
+        version="7.1.0"
     else
         echo "Can't find any secrets"
         exit 1
@@ -60,7 +60,7 @@ if [[ "$#" > 0 ]]; then
             ;;
 
             "idmadmin")
-                [[ "$version" == "7.0" ]] && echo "openidm-admin" && exit 0
+                [[ "$version" == "7.1.0" ]] && echo "openidm-admin" && exit 0
             ;;
 
             "dsadmin")

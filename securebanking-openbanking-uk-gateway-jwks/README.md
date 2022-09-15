@@ -1,7 +1,7 @@
 # securebanking-openbanking-uk-gateway-jwks
 This is an extension module for IG which provides support for fetching (and optionally caching) JSON Web Key Set (JWKS) data.
 
-To install this module the jar needs to be placed into [config/7.0/obdemo-bank/ig/lib](../config/7.0/obdemo-bank/ig/lib).
+To install this module the jar needs to be placed into [config/7.1.0/securebanking/ig/lib](../config/7.1.0/securebanking/ig/lib).
 
 # Key classes
 The JwkSetService interface is used to control the behaviour when fetching JWKS, the default implementation: [RestJwkSetService](src/main/java/com/forgerock/securebanking/uk/gateway/jwks/RestJwkSetService.java) will always fetch data using a HTTP call to a REST API.
@@ -15,7 +15,7 @@ Caching behaviour can be controlled via IG config.
 
 A heap object with name: `OBJwkSetService` of type `com.forgerock.securebanking.uk.gateway.jwks.JwkSetService` is a dependency of routes which need to fetch JWKS data.
 
-The following snippets can be placed into the heap section of [config.json](../config/7.0/obdemo-bank/ig/config/prod/config/config.json) to control which JwkSetService implementation is used.
+The following snippets can be placed into the heap section of [config.json](../config/7.1.0/securebanking/ig/config/prod/config/config.json) to control which JwkSetService implementation is used.
 
 ## Enable caching
 ```
@@ -48,7 +48,7 @@ The following snippets can be placed into the heap section of [config.json](../c
 | handler       | The org.forgerock.openig.handler.ClientHandler instance to use to send the HTTP requests to fetch the JWKS data                                    | "ClientHandler", which is the default ClientHandler |
 
 ## Route configuration
-The [ProcessDetachedSig](../config/7.0/obdemo-bank/ig/scripts/groovy/ProcessDetachedSig.groovy) filter has a dependency on a JwkSetService object in order to get JWKS data to verify the `x-jws-signature` header sent in OBIE API requests. 
+The [ProcessDetachedSig](../config/7.1.0/securebanking/ig/scripts/groovy/ProcessDetachedSig.groovy) filter has a dependency on a JwkSetService object in order to get JWKS data to verify the `x-jws-signature` header sent in OBIE API requests. 
 
 Routes which use the ProcessDetachedSig filter must ensure that they configure the filter arg: `"jwkSetService": "${heap['OBJwkSetService']}"`
 

@@ -91,7 +91,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>../config/7.0/obdemo-bank/ig/lib</outputDirectory>
+                            <outputDirectory>../config/7.1.0/securebanking/ig/lib</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${project.build.directory}</directory>

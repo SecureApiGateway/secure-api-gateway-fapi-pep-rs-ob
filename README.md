@@ -10,7 +10,7 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 
 | type                        | folder                               |
 |-----------------------------|--------------------------------------|
-| profile master              | `config/7.0/obdemo-bank/`            |
+| profile master              | `config/7.1.0/securebanking/`            |
 | component                   | `${profile master}/ig`               |
 | environment                 | `${component}/config/${environment}` |
 | shared configuration folder | `${component}/lib`                   |
@@ -21,17 +21,17 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 
 | type         | folder               |
 |--------------|----------------------|
-| staging area | `docker/7.0/`        |
+| staging area | `docker/7.1.0/`        |
 | component    | `${staging area}/ig` |
 
 | type        | folder                                        |
 |-------------|-----------------------------------------------|
-| overlay     | `kustomize/overlay/7.0/obdemo-bank`           |
-| defaults    | `kustomize/overlay/7.0/obdemo-bank/defaults`  |
+| overlay     | `kustomize/overlay/7.1.0/securebanking`           |
+| defaults    | `kustomize/overlay/7.1.0/securebanking/defaults`  |
 | environment | `${overlay}/${environment}` except `defaults` |
 > Defaults contains the map values configuration parameters shared through all environments
 
-> Each environment on `kustomize/overlay/7.0/obdemo-bank` can override the defaults map values
+> Each environment on `kustomize/overlay/7.1.0/securebanking` can override the defaults map values
 
 ## IG extensions
 ### Maven modules
@@ -48,14 +48,14 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 ```shell
 mvn clean install
 ```
-> Each module is configured using maven plugins to copy the generated library in `config/7.0/obdemo-bank/ig/lib` when necessary
+> Each module is configured using maven plugins to copy the generated library in `config/7.1.0/securebanking/ig/lib` when necessary
 
 **IG deployment**
 
 To make easier the deployment for developers there is a config script to initialise the IG docker with the below arguments.
-- IG Environment argument: allow to deploy any IG environment created on `configuration profile master` `config/7.0/obdemo-bank/ig/config/${environment}`
-  - config/7.0/obdemo-bank/ig/config/dev (default)
-  - config/7.0/obdemo-bank/ig/config/prod
+- IG Environment argument: allow to deploy any IG environment created on `configuration profile master` `config/7.1.0/securebanking/ig/config/${environment}`
+  - config/7.1.0/securebanking/ig/config/dev (default)
+  - config/7.1.0/securebanking/ig/config/prod
 - IG mode argument:
     - development (default): this mode make able the IG UI and Studio.
     - production: no IG UI and Studio.
@@ -66,7 +66,7 @@ To make easier the deployment for developers there is a config script to initial
 bin/config.sh init
 
 **************************************************************************************
-Initialisation of IG 'docker/7.0/ig-local' for [dev] environment in [development] mode
+Initialisation of IG 'docker/7.1.0/ig-local' for [dev] environment in [development] mode
 **************************************************************************************
 ....
 ....
@@ -76,7 +76,7 @@ Initialisation of IG 'docker/7.0/ig-local' for [dev] environment in [development
 bin/config.sh init --env prod --igmode production
 
 **************************************************************************************
-Initialisation of IG 'docker/7.0/ig-local' for [prod] environment in [production] mode
+Initialisation of IG 'docker/7.1.0/ig-local' for [prod] environment in [production] mode
 **************************************************************************************
 ....
 ....
@@ -100,18 +100,18 @@ skaffold run -p prod
 See [Principal Folder structure section](#principal-folder-structure)
 1. Create a new folder on `profile master` `${component}/config/` with the name of your environment.
    ```bash
-   mkdir config/7.0/obdemo-bank/ig/config/my-environment
+   mkdir config/7.1.0/securebanking/ig/config/my-environment
    ```
 1. Create the config folder on your `new-enviroment`
    ```bash
-   mkdir config/7.0/obdemo-bank/ig/config/my-environment/config
+   mkdir config/7.1.0/securebanking/ig/config/my-environment/config
    ```
 1. Add the configuration descriptor files for the `IG` component (you can copy them from other env):
     - admin.json
     - config.json
     - logback.xml
 1. Add the environment to kustomization
-   1. `mkdir kustomize/overlay/7.0/obdemo-bank/my-environment`
+   1. `mkdir kustomize/overlay/7.1.0/securebanking/my-environment`
    1. Copy the kustomization from another environment to `my-environment`
       1. Configmap.yaml
       2. kustomization.yaml
@@ -125,13 +125,13 @@ See [Principal Folder structure section](#principal-folder-structure)
       deploy:
         statusCheckDeadlineSeconds: 600
         kustomize:
-          path: ./kustomize/overlay/7.0/obdemo-bank/my-environment
+          path: ./kustomize/overlay/7.1.0/securebanking/my-environment
    ```
 1. Prepare stage area
     ```bash
     bin/config.sh --env my-environment --igmode development
     ****************************************************************************************
-    Initialisation of 'docker/7.0/ig' for [my-environment] environment in [development] mode
+    Initialisation of 'docker/7.1.0/ig' for [my-environment] environment in [development] mode
     ****************************************************************************************
     ```
 1. Run skaffold deployment
@@ -153,8 +153,8 @@ This deployment is based on the ForgeOps Cloud Developer Kit, with the following
 - The config initialisation script have new arguments `--env ${environment}` and `--igmode ${igmode}`
     - New environment `dev`
     - New environment `prod`
-- There is a kustomize overlay for each environment at `kustomize/overlay/7.0/obdemo-bank/${environment}` with the except of `defautls` folder that contains the defaults map values shared through `{environment}`. The default `skaffold.yaml` file uses this overlay by default
-- The IG deployment (`docker/7.0/ig`) has been modified to include a jar file with custom filters.
+- There is a kustomize overlay for each environment at `kustomize/overlay/7.1.0/securebanking/${environment}` with the except of `defautls` folder that contains the defaults map values shared through `{environment}`. The default `skaffold.yaml` file uses this overlay by default
+- The IG deployment (`docker/7.1.0/ig`) has been modified to include a jar file with custom filters.
 - The IG configuration has been updated to increase the vertx max client header size to 16k.
 
 ## Postman Collection

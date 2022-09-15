@@ -33,9 +33,27 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 
 > Each environment on `kustomize/overlay/7.0/obdemo-bank` can override the defaults map values
 
+## IG extensions
+### Maven modules
+| module                                                                                | Type           | Description                                                                | Dependencies                                                                                               |
+|---------------------------------------------------------------------------------------|----------------|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| [jwks](securebanking-openbanking-uk-gateway-jwks/README.md)                           | Heap config    | Support for fetching (and optionally caching) JSON Web Key Set (JWKS) data | IG                                                                                                         |
+
 ## Quick Start
-To make more easy the deployment for developers there is a config script to initialise the IG docker with the below arguments.
-- IG Environment argument: allow deploy any IG environment created on `configuration profile master` `config/7.0/obdemo-bank/ig/config/${environment}`
+**Steps**
+- Build IG extensions
+- Build IG deployment
+
+**Build IG extensions**
+```shell
+mvn clean install
+```
+> Each module is configured using maven plugins to copy the generated library in `config/7.0/obdemo-bank/ig/lib` when necessary
+
+**IG deployment**
+
+To make easier the deployment for developers there is a config script to initialise the IG docker with the below arguments.
+- IG Environment argument: allow to deploy any IG environment created on `configuration profile master` `config/7.0/obdemo-bank/ig/config/${environment}`
   - config/7.0/obdemo-bank/ig/config/dev (default)
   - config/7.0/obdemo-bank/ig/config/prod
 - IG mode argument:

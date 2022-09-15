@@ -15,7 +15,6 @@ Caching behaviour can be controlled via IG config.
 
 A heap object with name: `OBJwkSetService` of type `com.forgerock.securebanking.uk.gateway.jwks.JwkSetService` is a dependency of routes which need to fetch JWKS data.
 
-
 The following snippets can be placed into the heap section of [config.json](../config/7.0/obdemo-bank/ig/config/prod/config/config.json) to control which JwkSetService implementation is used.
 
 ## Enable caching
@@ -36,7 +35,6 @@ The following snippets can be placed into the heap section of [config.json](../c
 | expireAfterWriteDuration | Values will be removed from the cache when this time elapses after the value was last written.<br/>This is a String representation of org.forgerock.util.time.Duration | "5 minutes"                                            |
 | handler                  | The org.forgerock.openig.handler.ClientHandler instance to use to send the HTTP requests to fetch the JWKS data                                                        | "ClientHandler", which is the default IG ClientHandler |
 
-
 ## No Caching
 ```
 {
@@ -48,7 +46,6 @@ The following snippets can be placed into the heap section of [config.json](../c
 | config option | description                                                                                                                                        | default                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
 | handler       | The org.forgerock.openig.handler.ClientHandler instance to use to send the HTTP requests to fetch the JWKS data                                    | "ClientHandler", which is the default ClientHandler |
-
 
 ## Route configuration
 The [ProcessDetachedSig](../config/7.0/obdemo-bank/ig/scripts/groovy/ProcessDetachedSig.groovy) filter has a dependency on a JwkSetService object in order to get JWKS data to verify the `x-jws-signature` header sent in OBIE API requests. 

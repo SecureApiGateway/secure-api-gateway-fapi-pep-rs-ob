@@ -10,11 +10,11 @@ switch(method.toUpperCase()) {
     case "POST":
         def splitUri = request.uri.path.split("/")
         def version = splitUri[3]
+        def currentApi = splitUri[5]
 
         // Create the RS Calculate elements API
-        def requestURI = routeArgRsBaseURI + "/backoffice/payment-consent/calculate-elements" + "?" +
-                routeArgIntentIdQueryParameter + "=" + routeArgIntentType + "&" +
-                routeArgVersionQueryParameter + "=" + version
+        def requestURI = routeArgRsBaseURI + "/backoffice/" + version + "/" + currentApi + "/calculate-elements" + "?" +
+                routeArgIntentIdQueryParameter + "=" + routeArgIntentType
         logger.debug(SCRIPT_NAME + " The updated raw request uri: " + requestURI)
 
         Request RSRequest = new Request()

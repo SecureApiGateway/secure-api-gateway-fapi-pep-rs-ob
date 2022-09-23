@@ -106,6 +106,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "accountIds"           : intentResponseObject.accounts,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
@@ -116,6 +120,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO to make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -125,6 +133,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO to make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -134,6 +146,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -143,6 +159,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -152,6 +172,10 @@ def convertIDMResponse(intentResponseObject, intentType) {
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "data"                 : intentResponseObject.Data,
+                    // RS expect 'Data' instead 'data' to deserialize the json to OB object
+                    // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
+                    // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
+                    "Data"                 : intentResponseObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name

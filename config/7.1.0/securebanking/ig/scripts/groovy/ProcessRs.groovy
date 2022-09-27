@@ -63,6 +63,11 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.links.add("GetInternationalScheduledPaymentConsentsConsentIdFundsConfirmation", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-scheduled-payment-consents/{ConsentId}/funds-confirmation");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-scheduled-payment-consents/{ConsentId}/funds-confirmation");
 
+            //International Standing Order Consents
+            value.Links.links.add("CreateInternationalStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents");
+            value.Links.links.add("GetInternationalStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents/{ConsentId}");
         }
 
         response.entity = newEntity;

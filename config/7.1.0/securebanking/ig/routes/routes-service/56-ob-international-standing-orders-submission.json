@@ -1,0 +1,290 @@
+{
+  "comment": "Handle Open Banking International Standing Orders request",
+  "name": "56 - Open Banking International Standing Orders Submission",
+  "auditService": "AuditService-OB-Route",
+  "baseURI": "https://&{rs.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-standing-orders$')}",
+  "capture": [
+    "response",
+    "request"
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "comment": "Change the payment intent status to Consumed",
+          "name": "ConsumeThePaymentIntent",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ConsumeThePaymentIntent.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}"
+            }
+          }
+        },
+        {
+          "comment": "Add a detached signature to the response",
+          "name": "AddDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AddDetachedSig.groovy",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgAlgorithm": "PS256",
+              "routeArgSecretId": "&{aspsp.jwtsigner.alias}",
+              "routeArgKid": "&{aspsp.jwtsigner.kid}",
+              "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
+              "routeArgTrustedAnchor": "openbanking.org.uk"
+            }
+          }
+        },
+        {
+          "comment": "Ensure the response is Open Banking compliant",
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
+          "comment": "Extract client certificate details",
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "comment": "Ensure client certificate includes PISP role",
+          "name": "CertificateRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CertificateRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "PISP"
+            }
+          }
+        },
+        {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check certificate bound access token",
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "payments", "openid"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
+              "config": {
+                "delegate": {
+                  "type": "StatelessAccessTokenResolver",
+                  "config": {
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "authorization_code"
+            }
+          }
+        },
+        {
+          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
+          "name": "ProcessDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ProcessDetachedSig.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgObjApiClient": "apiClient",
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "routeArgTrustedAnchor": "openbanking.org.uk",
+              "routeArgClientIdFieldName": "aud",
+              "jwkSetService": "${heap['OBJwkSetService']}"
+            }
+          }
+        },
+        {
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Encode the payment request for safe transmission to the policy engine",
+          "name": "EncodeInitiation",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "EncodeInitiation.groovy"
+          }
+        },
+        {
+          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
+          "name": "SaveIntentIdOnAttributesContext",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SaveIntentIdOnAttributesContext.groovy"
+          }
+        },
+        {
+          "comment": "Check payment request against authorised consent, via AM policy engineß",
+          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type": "PolicyEnforcementFilter",
+          "config": {
+            "pepRealm": "/&{am.realm}",
+            "application": "Open Banking",
+            "claimsSubject": {
+              "sub": "${contexts.oauth2.accessToken.info.sub}",
+              "intent_type": "pisp"
+            },
+            "environment": {
+              "sub": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "tpp_client_id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "tpp_cert_id": [
+                "${attributes.tppId}"
+              ],
+              "intent_id": [
+                "${attributes.openbanking_intent_id}"
+              ],
+              "initiation": [
+                "${attributes.initiationRequest}"
+              ],
+              "request_method": [
+                "${request.method}"
+              ]
+            },
+            "amService": "AmService-OBIE",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnPolicyValidationError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
+          "name": "GetResourceOwnerIdFromConsent",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GetResourceOwnerIdFromConsent.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "routeArgObjUser": "&{user.object}"
+            }
+          }
+        },
+        {
+          "comment": "Adjust URL for downstream resource server",
+          "name": "TranslatePaymentResource",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "TranslatePaymentResource.groovy",
+            "args": {
+              "routeArgAccountIdHeader": "x-ob-account-id"
+            }
+          }
+        },
+        {
+          "comment": "Prepare consent audit trail",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
+              "role": "PISP",
+              "event": "EXEC"
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-ChangeHostToRS",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "rs.dev.forgerock.financial"
+              ]
+            }
+          }
+        }
+      ],
+      "handler": "ReverseProxyHandler"
+    }
+  }
+}

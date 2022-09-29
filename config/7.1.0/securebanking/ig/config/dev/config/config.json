@@ -1,4 +1,9 @@
 {
+  "properties": {
+    "security": {
+      "allowIgIssuedTestCerts": true
+    }
+  },
   "handler": "_router",
   "heap": [
     {

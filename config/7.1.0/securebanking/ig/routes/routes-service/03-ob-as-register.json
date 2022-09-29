@@ -46,7 +46,9 @@
             "args": {
               "comment": "TODO: use env variable",
               "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
-              "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy"
+              "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
+              "jwkSetService": "${heap['OBJwkSetService']}",
+              "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}"
             }
           }
         },

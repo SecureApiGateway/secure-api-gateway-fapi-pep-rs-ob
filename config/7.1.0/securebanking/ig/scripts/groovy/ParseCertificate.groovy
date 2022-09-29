@@ -218,8 +218,10 @@ class CertificateParserHelper {
     }
 }
 
-def certToObject(Certificate certificate) {
-
+def certToObject(String certPem) {
+    InputStream certStream = new ByteArrayInputStream(certPem.getBytes());
+    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+    Certificate certificate = cf.generateCertificate(certStream);
     def object = [
       expiryDate: certificate.getNotAfter().toString(),
       subjectDN: certificate.getSubjectDN(),
@@ -239,9 +241,11 @@ def certToObject(Certificate certificate) {
       type: certificate.getType(),
       version: certificate.getVersion(),
       roles: CertificateParserHelper.getRoles(certificate,logger),
-      publicKey: certificate.getPublicKey()
-
+      publicKey: certificate.getPublicKey(),
     ]
+    logger.debug(SCRIPT_NAME + "Parsed certificate " + object.toString())
+    // Add the X509Certificate object after the logging of the parsed data to prevent the logs being spammed
+    object.put("certificate", certificate)
 
     return object
 }
@@ -263,27 +267,9 @@ String certPem = URLDecoder.decode(header.firstValue.toString())
 
 logger.debug(SCRIPT_NAME + "Client certificate PEM: \n" + certPem)
 
-InputStream certStream = new ByteArrayInputStream(certPem.getBytes());
-
-CertificateFactory cf = CertificateFactory.getInstance("X.509");
-Certificate cert = cf.generateCertificate(certStream);
-
-def certObject = certToObject(cert)
-
-logger.debug(SCRIPT_NAME + "Parsed certificate " + certObject.toString())
+def certObject = certToObject(certPem)
 
 // Store certificate details for other filters
-
 attributes.clientCertificate = certObject
 
 next.handle(context, request)
-
-
-
-
-
-
-
-
-
-

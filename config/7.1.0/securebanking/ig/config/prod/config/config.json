@@ -1,4 +1,9 @@
 {
+  "properties": {
+    "security": {
+      "allowIgIssuedTestCerts": false
+    }
+  },
   "handler": {
     "type": "DispatchHandler",
     "config": {

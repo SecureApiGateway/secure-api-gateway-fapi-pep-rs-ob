@@ -159,7 +159,7 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "internationalStandingOrderIntent",
+              "routeArgObjDomesticPaymentConsent": "internationalStandingOrdersIntent",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "PISOC_"
             }

@@ -1,21 +1,17 @@
 {
-  "name": "40 - Open Banking RS Domestic Standing Order Consent",
+  "comment": "Handle Open Banking Domestic Standing Orders request",
+  "name": "42 - Open Banking Domestic Standing Orders Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{identity.platform.fqdn}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-order-consents')}",
+  "baseURI": "https://&{rs.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-orders')}",
+  "capture": [
+    "response",
+    "request"
+  ],
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
-        {
-          "comment": "Modify Payment Intent Response",
-          "name": "ModifyPaymentIntentResponse",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ModifyPaymentIntentResponse.groovy"
-          }
-        },
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
@@ -34,7 +30,7 @@
           }
         },
         {
-          "comment": "Ensure OB compliant response",
+          "comment": "Ensure the response is Open Banking compliant",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",
           "config": {
@@ -119,63 +115,80 @@
           }
         },
         {
-          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
-          "name": "ProcessDetachedSig",
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
+          "name": "GetResourceOwnerIdFromConsent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessDetachedSig.groovy",
+            "file": "GetResourceOwnerIdFromConsent.groovy",
             "clientHandler": "IDMClientHandler",
             "args": {
-              "routeArgHeaderName": "x-jws-signature",
-              "routeArgObjApiClient": "apiClient",
               "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgTrustedAnchor": "openbanking.org.uk",
-              "routeArgClientIdFieldName": "client_id",
-              "jwkSetService": "${heap['OBJwkSetService']}"
+              "routeArgObjUser": "&{user.object}"
             }
           }
         },
         {
-          "comment": "Calculate response elements in RS",
-          "name": "CalculateResponseElementsInRS",
-          "type": "ScriptableFilter",
+          "comment": "Check payment request against authorised consent, via AM policy engine",
+          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type": "PolicyEnforcementFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "CalculateResponseElementsInRS.groovy",
-            "args": {
-              "routeArgRsBaseURI": "https://&{rs.fqdn}",
-              "routeArgIntentIdQueryParameter": "intent",
-              "routeArgVersionQueryParameter": "version",
-              "routeArgIntentType": "PDSOC_"
+            "pepRealm": "/&{am.realm}",
+            "application": "Open Banking",
+            "claimsSubject": {
+              "sub": "${attributes.resourceOwnerUsername}",
+              "intent_type": "pisp"
+            },
+            "environment": {
+              "sub": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "tpp_client_id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "tpp_cert_id": [
+                "${attributes.tppId}"
+              ],
+              "intent_id": [
+                "${split(request.uri.path, '/')[5]}"
+              ],
+              "request_method": [
+                "${request.method}"
+              ]
+            },
+            "amService": "AmService-OBIE",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnPolicyValidationError.groovy"
+              }
             }
           }
         },
         {
-          "comment": "Check Frequency parameter in domestic standing order payload",
-          "name": "CheckFrequencyValue",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CheckFrequencyValue.groovy"
-          }
-        },
-        {
-          "comment": "Prepare request for IDM",
-          "name": "ProcessPaymentConsent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessPaymentConsent.groovy",
-            "args": {
-              "routeArgObjDomesticPaymentConsent": "domesticStandingOrdersIntent",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgConsentIdPrefix": "PDSOC_"
-            }
-          }
-        },
-        {
-          "comment": "Prepare audit trail for consent",
+          "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -185,37 +198,29 @@
               "clock": "${heap['Clock']}",
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
               "role": "PISP",
-              "event": "CREATE"
+              "event": "EXEC"
             }
           }
         },
         {
-          "comment": "Add host header for downstream services",
-          "name": "HeaderFilter-ChangeHostToIDM",
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-ChangeHostToRS",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
             "remove": [
-              "host"
-            ]
-          }
-        },
-        {
-          "comment": "Add access token to IDM request",
-          "type": "ClientCredentialsOAuth2ClientFilter",
-          "config": {
-            "clientId": "&{ig.client.id}",
-            "clientSecretId": "ig.client.secret",
-            "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
-            "scopes": [
-              "fr:idm:*"
+              "host",
+              "X-Forwarded-Host"
             ],
-            "handler": "TokenRequestHandler"
+            "add": {
+              "X-Forwarded-Host": [
+                "rs.dev.forgerock.financial"
+              ]
+            }
           }
         }
       ],
       "handler": "ReverseProxyHandler"
     }
   }
-} 
+}

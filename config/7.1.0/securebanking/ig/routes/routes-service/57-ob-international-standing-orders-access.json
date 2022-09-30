@@ -1,9 +1,9 @@
 {
-  "comment": "Handle Open Banking Domestic Standing Order request",
-  "name": "41 - Open Banking Domestic Standing Order Submission",
+  "comment": "Handle Open Banking International Standing Orders request",
+  "name": "42 - Open Banking International Standing Orders Access",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{rs.fqdn}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-orders$')}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-standing-orders')}",
   "capture": [
     "response",
     "request"
@@ -12,19 +12,6 @@
     "type": "Chain",
     "config": {
       "filters": [
-        {
-          "comment": "Change the payment intent status to Consumed",
-          "name": "ConsumeThePaymentIntent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ConsumeThePaymentIntent.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}"
-            }
-          }
-        },
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
@@ -123,35 +110,8 @@
             "type": "application/x-groovy",
             "file": "GrantTypeVerifier.groovy",
             "args": {
-              "allowedGrantType": "authorization_code"
+              "allowedGrantType": "client_credentials"
             }
-          }
-        },
-        {
-          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
-          "name": "ProcessDetachedSig",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessDetachedSig.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgHeaderName": "x-jws-signature",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgTrustedAnchor": "openbanking.org.uk",
-              "routeArgClientIdFieldName": "aud",
-              "jwkSetService": "${heap['OBJwkSetService']}"
-            }
-          }
-        },
-        {
-          "comment": "Check Frequency parameter in domestic standing order payload",
-          "name": "CheckFrequencyValue",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CheckFrequencyValue.groovy"
           }
         },
         {
@@ -176,65 +136,6 @@
           }
         },
         {
-          "comment": "Encode the payment request for safe transmission to the policy engine",
-          "name": "EncodeInitiation",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "EncodeInitiation.groovy"
-          }
-        },
-        {
-          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
-          "name": "SaveIntentIdOnAttributesContext",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "SaveIntentIdOnAttributesContext.groovy"
-          }
-        },
-        {
-          "comment": "Check payment request against authorised consent, via AM policy engineß",
-          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type": "PolicyEnforcementFilter",
-          "config": {
-            "pepRealm": "/&{am.realm}",
-            "application": "Open Banking",
-            "claimsSubject": {
-              "sub": "${contexts.oauth2.accessToken.info.sub}",
-              "intent_type": "pisp"
-            },
-            "environment": {
-              "sub": [
-                "${contexts.oauth2.accessToken.info.sub}"
-              ],
-              "tpp_client_id": [
-                "${contexts.oauth2.accessToken.info.aud}"
-              ],
-              "tpp_cert_id": [
-                "${attributes.tppId}"
-              ],
-              "intent_id": [
-                "${attributes.openbanking_intent_id}"
-              ],
-              "initiation": [
-                "${attributes.initiationRequest}"
-              ],
-              "request_method": [
-                "${request.method}"
-              ]
-            },
-            "amService": "AmService-OBIE",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnPolicyValidationError.groovy"
-              }
-            }
-          }
-        },
-        {
           "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
           "name": "GetResourceOwnerIdFromConsent",
           "type": "ScriptableFilter",
@@ -249,14 +150,40 @@
           }
         },
         {
-          "comment": "Adjust URL for downstream resource server",
-          "name": "TranslatePaymentResource",
-          "type": "ScriptableFilter",
+          "comment": "Check payment request against authorised consent, via AM policy engine",
+          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type": "PolicyEnforcementFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "TranslatePaymentResource.groovy",
-            "args": {
-              "routeArgAccountIdHeader": "x-ob-account-id"
+            "pepRealm": "/&{am.realm}",
+            "application": "Open Banking",
+            "claimsSubject": {
+              "sub": "${attributes.resourceOwnerUsername}",
+              "intent_type": "pisp"
+            },
+            "environment": {
+              "sub": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "tpp_client_id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "tpp_cert_id": [
+                "${attributes.tppId}"
+              ],
+              "intent_id": [
+                "${split(request.uri.path, '/')[5]}"
+              ],
+              "request_method": [
+                "${request.method}"
+              ]
+            },
+            "amService": "AmService-OBIE",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnPolicyValidationError.groovy"
+              }
             }
           }
         },

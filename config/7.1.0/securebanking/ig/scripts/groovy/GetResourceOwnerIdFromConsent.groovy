@@ -12,7 +12,7 @@ enum IntentType {
     PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT("PDSOC_", "domesticStandingOrderIntent"),
     PAYMENT_INTERNATIONAL_CONSENT("PIC_", "internationalPaymentIntent"),
     PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT("PISC_", "internationalScheduledPaymentIntent"),
-    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrdersIntent"),
+    PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT("PISOC_", "internationalStandingOrderIntent"),
     PAYMENT_FILE_CONSENT("PFC_", "filePaymentIntent"),
     FUNDS_CONFIRMATION_CONSENT("FCC_", "fundsConfirmationIntent"),
     DOMESTIC_VRP_PAYMENT_CONSENT("DVRP_", "domesticVrpPaymentIntent")

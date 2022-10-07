@@ -4,29 +4,40 @@ import java.text.SimpleDateFormat
 SCRIPT_NAME = "[RepoConsent] - "
 logger.debug(SCRIPT_NAME + "Running...")
 
-/**
- *  definitions
- */
-def buildPatchRequest(incomingRequest) {
+def buildPatchRequest(incomingRequest, intentType) {
     def body = [];
 
     if (incomingRequest.data && incomingRequest.data.Status) {
-        body.push([
-                "operation": "replace",
-                "field"    : "/Data/Status",
-                "value"    : incomingRequest.data.Status
-        ]);
-
         def tz = TimeZone.getTimeZone("UTC");
         def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         df.setTimeZone(tz);
         def nowAsISO = df.format(new Date());
 
-        body.push([
-                "operation": "replace",
-                "field"    : "/Data/StatusUpdateDateTime",
-                "value"    : nowAsISO
-        ]);
+        // Account Access Intent structure has been updated, therefore different logic is required.
+        if (intentType == IntentType.ACCOUNT_ACCESS_CONSENT) {
+            logger.debug(SCRIPT_NAME + "Patching account access consent: " + incomingRequest.data.Status)
+            body.push([
+                    "operation": "replace",
+                    "field"    : "OBIntentObject/Data/Status",
+                    "value"    : incomingRequest.data.Status
+            ]);
+            body.push([
+                    "operation": "replace",
+                    "field"    : "OBIntentObject/Data/StatusUpdateDateTime",
+                    "value"    : nowAsISO
+            ]);
+        } else {
+            body.push([
+                    "operation": "replace",
+                    "field"    : "/Data/Status",
+                    "value"    : incomingRequest.data.Status
+            ]);
+            body.push([
+                    "operation": "replace",
+                    "field"    : "/Data/StatusUpdateDateTime",
+                    "value"    : nowAsISO
+            ]);
+        }
     }
 
     if (incomingRequest.resourceOwnerUsername) {
@@ -105,11 +116,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.ACCOUNT_ACCESS_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "accountIds"           : intentResponseObject.accounts,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
@@ -237,14 +248,7 @@ enum IntentType {
         return consentObject
     }
 }
-/**
- * End definitions
- */
 
-
-/**
- * start script
- */
 def splitUri = request.uri.path.split("/")
 
 // response object
@@ -274,7 +278,12 @@ if(intentType){
     return response
 }
 
-def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
+def requestUri = null
+if (intentType == IntentType.ACCOUNT_ACCESS_CONSENT) {
+    requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
+} else {
+    requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
+}
 
 if (request.getMethod() == "GET") {
     Request intentRequest = new Request();
@@ -298,7 +307,7 @@ if (request.getMethod() == "GET") {
         def intentResponseObject = intentResponseContent.getJson();
 
         if(intentResponseObject.apiClient == null){
-            message = "Orfan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
+            message = "Orphan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
             logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"
@@ -319,7 +328,7 @@ if (request.getMethod() == "GET") {
     patchRequest.setMethod('POST');
     patchRequest.setUri(requestUri + "&_action=patch");
     patchRequest.getHeaders().add("Content-Type", "application/json");
-    patchRequest.setEntity(JsonOutput.toJson(buildPatchRequest(request.getEntity().getJson())))
+    patchRequest.setEntity(JsonOutput.toJson(buildPatchRequest(request.getEntity().getJson(), intentType)))
 
     http.send(patchRequest).then(patchResponse -> {
         patchRequest.close()
@@ -341,7 +350,7 @@ if (request.getMethod() == "GET") {
         def patchResponseObject = patchResponseContent.getJson();
 
         if(patchResponseObject.apiClient == null){
-            message = "Orfan consent, The consent requested to patch doesn't have an apiClient related."
+            message = "Orphan consent, The consent requested to patch doesn't have an apiClient related."
             logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"

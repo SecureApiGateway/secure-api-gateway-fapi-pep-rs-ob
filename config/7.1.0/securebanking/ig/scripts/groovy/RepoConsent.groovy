@@ -13,31 +13,17 @@ def buildPatchRequest(incomingRequest, intentType) {
         df.setTimeZone(tz);
         def nowAsISO = df.format(new Date());
 
-        // Account Access Intent structure has been updated, therefore different logic is required.
-        if (intentType == IntentType.ACCOUNT_ACCESS_CONSENT) {
-            logger.debug(SCRIPT_NAME + "Patching account access consent: " + incomingRequest.data.Status)
-            body.push([
-                    "operation": "replace",
-                    "field"    : "OBIntentObject/Data/Status",
-                    "value"    : incomingRequest.data.Status
-            ]);
-            body.push([
-                    "operation": "replace",
-                    "field"    : "OBIntentObject/Data/StatusUpdateDateTime",
-                    "value"    : nowAsISO
-            ]);
-        } else {
-            body.push([
-                    "operation": "replace",
-                    "field"    : "/Data/Status",
-                    "value"    : incomingRequest.data.Status
-            ]);
-            body.push([
-                    "operation": "replace",
-                    "field"    : "/Data/StatusUpdateDateTime",
-                    "value"    : nowAsISO
-            ]);
-        }
+        logger.debug(SCRIPT_NAME + "Patching consent: " + incomingRequest.data.Status)
+        body.push([
+                "operation": "replace",
+                "field"    : "OBIntentObject/Data/Status",
+                "value"    : incomingRequest.data.Status
+        ]);
+        body.push([
+                "operation": "replace",
+                "field"    : "OBIntentObject/Data/StatusUpdateDateTime",
+                "value"    : nowAsISO
+        ]);
     }
 
     if (incomingRequest.resourceOwnerUsername) {
@@ -70,7 +56,7 @@ def buildPatchRequest(incomingRequest, intentType) {
             body.push([
 
                     "operation": "add",
-                    "field"    : "/Data/Initiation/DebtorAccount/SchemeName",
+                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SchemeName",
                     "value"    : incomingRequest.data.debtorAccount.schemeName
             ])
         }
@@ -78,7 +64,7 @@ def buildPatchRequest(incomingRequest, intentType) {
             body.push([
 
                     "operation": "add",
-                    "field"    : "/Data/Initiation/DebtorAccount/Identification",
+                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Identification",
                     "value"    : incomingRequest.data.debtorAccount.identification
             ])
         }
@@ -86,7 +72,7 @@ def buildPatchRequest(incomingRequest, intentType) {
             body.push([
 
                     "operation": "add",
-                    "field"    : "/Data/Initiation/DebtorAccount/Name",
+                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Name",
                     "value"    : incomingRequest.data.debtorAccount.name
             ])
         }
@@ -94,7 +80,7 @@ def buildPatchRequest(incomingRequest, intentType) {
             body.push([
 
                     "operation": "add",
-                    "field"    : "/Data/Initiation/DebtorAccount/SecondaryIdentification",
+                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SecondaryIdentification",
                     "value"    : incomingRequest.data.debtorAccount.secondaryIdentification
             ])
         }
@@ -102,7 +88,7 @@ def buildPatchRequest(incomingRequest, intentType) {
             body.push([
 
                     "operation": "add",
-                    "field"    : "/Data/Initiation/DebtorAccount/AccountId",
+                    "field"    : "AccountId",
                     "value"    : incomingRequest.data.debtorAccount.accountId
             ])
         }
@@ -130,11 +116,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_DOMESTIC_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO to make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -143,11 +129,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_DOMESTIC_SCHEDULED_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO to make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -156,11 +142,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -169,11 +155,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_INTERNATIONAL_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -182,11 +168,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -195,11 +181,11 @@ def convertIDMResponse(intentResponseObject, intentType) {
         case IntentType.PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT:
             responseObj = [
                     "id"                   : intentResponseObject._id,
-                    "data"                 : intentResponseObject.Data,
+                    "data"                 : intentResponseObject.OBIntentObject.Data,
                     // RS expect 'Data' instead 'data' to deserialize the json to OB object
                     // TODO make it compatible with RS, until fixed on https://github.com/securebankingaccesstoolkit/securebankingaccesstoolkit/issues/522
                     // It's a duplication only to be compatible temporary, when the issue has been fixed delete 'data' and 'Data'
-                    "Data"                 : intentResponseObject.Data,
+                    "Data"                 : intentResponseObject.OBIntentObject.Data,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
@@ -278,12 +264,7 @@ if(intentType){
     return response
 }
 
-def requestUri = null
-if (intentType == IntentType.ACCOUNT_ACCESS_CONSENT) {
-    requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
-} else {
-    requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
-}
+def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
 
 if (request.getMethod() == "GET") {
     Request intentRequest = new Request();

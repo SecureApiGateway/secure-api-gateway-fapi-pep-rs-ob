@@ -8,15 +8,6 @@
     "config": {
       "filters": [
         {
-          "comment": "Modify Payment Intent Response",
-          "name": "ModifyPaymentIntentResponse",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ModifyPaymentIntentResponse.groovy"
-          }
-        },
-        {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
           "type": "ScriptableFilter",
@@ -160,6 +151,7 @@
             "file": "ProcessPaymentConsent.groovy",
             "args": {
               "routeArgObjDomesticPaymentConsent": "domesticPaymentIntent",
+              "routeArgObIntentObjectType": "OBWriteDomesticConsentResponse5",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "PDC_"
             }
@@ -174,7 +166,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
+              "consentIdLocator": "response.entity.getJson().OBIntentObject.Data.ConsentId",
               "role": "PISP",
               "event": "CREATE"
             }

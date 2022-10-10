@@ -11,7 +11,7 @@ def buildPatchRequest() {
 
     body.push([
             "operation": "replace",
-            "field"    : "/Data/Status",
+            "field"    : "OBIntentObject/Data/Status",
             "value"    : "Consumed"
     ]);
 

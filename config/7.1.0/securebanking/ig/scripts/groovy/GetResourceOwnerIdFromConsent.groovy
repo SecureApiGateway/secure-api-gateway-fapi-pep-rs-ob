@@ -130,7 +130,7 @@ if (intentType) {
     return response
 }
 
-def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,Data,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
+def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name,AccountId";
 
 if (request.getMethod() == "GET" || request.getMethod() == "POST") {
     Request intentRequest = new Request();
@@ -166,19 +166,19 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
         logger.debug(SCRIPT_NAME + "Resource owner username: " + intentResponseObject.user._id)
 
         try {
-            logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.Data.Initiation)
-            attributes.put("accountId", intentResponseObject.Data.Initiation.DebtorAccount.AccountId)
+            logger.debug(SCRIPT_NAME + "Debtor account identification: " + intentResponseObject.OBIntentObject.Data.Initiation)
+            attributes.put("accountId", intentResponseObject.AccountId)
 
             splitUri = request.uri.path.split("/")
             if (splitUri.size() == 7 && splitUri[6] != null && splitUri[6] == "funds-confirmation") {
-                if(intentResponseObject.Data.Status == "Consumed")
+                if(intentResponseObject.OBIntentObject.Data.Status == "Consumed")
                 {
                     logger.debug(SCRIPT_NAME + "The consent status is Consumed")
                     return newResultPromise(getErrorResponse())
                 }
 
-                attributes.put("amount", intentResponseObject.Data.Initiation.InstructedAmount.Amount)
-                logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.Data.Initiation.InstructedAmount.Amount)
+                attributes.put("amount", intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
+                logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
 
                 attributes.put("version", splitUri[2])
                 logger.debug(SCRIPT_NAME + "version: " + splitUri[2])

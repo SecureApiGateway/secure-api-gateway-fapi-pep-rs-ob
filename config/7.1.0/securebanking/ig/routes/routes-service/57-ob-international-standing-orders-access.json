@@ -1,6 +1,6 @@
 {
   "comment": "Handle Open Banking International Standing Orders request",
-  "name": "42 - Open Banking International Standing Orders Access",
+  "name": "57 - Open Banking International Standing Orders Access",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{rs.fqdn}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-standing-orders')}",

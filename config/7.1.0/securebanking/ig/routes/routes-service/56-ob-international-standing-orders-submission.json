@@ -146,6 +146,15 @@
           }
         },
         {
+          "comment": "Check Frequency parameter in standing order payload",
+          "name": "CheckFrequencyValue",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CheckFrequencyValue.groovy"
+          }
+        },
+        {
           "comment": "Adjust URL for downstream resource server",
           "type": "UriPathRewriteFilter",
           "config": {

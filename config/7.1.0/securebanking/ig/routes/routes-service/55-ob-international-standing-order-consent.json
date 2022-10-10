@@ -143,6 +143,15 @@
           }
         },
         {
+          "comment": "Check Frequency parameter in standing order payload",
+          "name": "CheckFrequencyValue",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CheckFrequencyValue.groovy"
+          }
+        },
+        {
           "comment": "Prepare request for IDM",
           "name": "ProcessPaymentConsent",
           "type": "ScriptableFilter",

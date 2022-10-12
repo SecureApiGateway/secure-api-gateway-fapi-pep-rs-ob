@@ -44,7 +44,13 @@ switch(method.toUpperCase()) {
     case "DELETE":
         def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
         request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
-        break
+        return next.handle(context, request).then(response -> {
+            if (response.status.isSuccessful()) {
+                // OB spec expects HTTP 204 No Content response
+                return new Response(Status.NO_CONTENT)
+            }
+            return response
+        })
 
     case "GET":
         def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);

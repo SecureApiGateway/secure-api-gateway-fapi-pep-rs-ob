@@ -1,0 +1,204 @@
+{
+  "name": "58 - Open Banking RS File Payment Consent",
+  "auditService": "AuditService-OB-Route",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "comment": "Add a detached signature to the response",
+          "name": "AddDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AddDetachedSig.groovy",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgAlgorithm": "PS256",
+              "routeArgSecretId": "&{aspsp.jwtsigner.alias}",
+              "routeArgKid": "&{aspsp.jwtsigner.kid}",
+              "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
+              "routeArgTrustedAnchor": "openbanking.org.uk"
+            }
+          }
+        },
+        {
+          "comment": "Ensure OB compliant response",
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
+          "comment": "Extract client certificate details",
+          "name": "ParseCertificate",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ParseCertificate.groovy",
+            "args": {
+              "routeArgCertificateHeader": "ssl-client-cert"
+            }
+          }
+        },
+        {
+          "comment": "Ensure client certificate includes PISP role",
+          "name": "CertificateRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CertificateRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "PISP"
+            }
+          }
+        },
+        {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check certificate bound access token",
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "payments"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
+              "config": {
+                "delegate": {
+                  "type": "StatelessAccessTokenResolver",
+                  "config": {
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "client_credentials"
+            }
+          }
+        },
+        {
+          "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
+          "name": "ProcessDetachedSig",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ProcessDetachedSig.groovy",
+            "clientHandler": "IDMClientHandler",
+            "args": {
+              "routeArgHeaderName": "x-jws-signature",
+              "routeArgObjApiClient": "apiClient",
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "routeArgTrustedAnchor": "openbanking.org.uk",
+              "routeArgClientIdFieldName": "client_id",
+              "jwkSetService": "${heap['OBJwkSetService']}"
+            }
+          }
+        },
+        {
+          "comment": "Calculate response elements in RS",
+          "name": "CalculateResponseElementsInRS",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "CalculateResponseElementsInRS.groovy",
+            "args": {
+              "routeArgRsBaseURI": "https://&{rs.fqdn}",
+              "routeArgIntentIdQueryParameter": "intent",
+              "routeArgVersionQueryParameter": "version",
+              "routeArgIntentType": "PDC_"
+            }
+          }
+        },
+        {
+          "comment": "Prepare request for IDM",
+          "name": "ProcessPaymentConsent",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ProcessPaymentConsent.groovy",
+            "args": {
+              "routeArgObjDomesticPaymentConsent": "filePaymentsIntent",
+              "routeArgObIntentObjectType": "OBWriteFileConsentResponse4",
+              "routeArgObjApiClient": "apiClient",
+              "routeArgConsentIdPrefix": "PFC_"
+            }
+          }
+        },
+        {
+          "comment": "Prepare audit trail for consent",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "AuditConsent.groovy",
+            "args": {
+              "auditService": "${heap['AuditService-OB-Consent']}",
+              "clock": "${heap['Clock']}",
+              "consentIdLocator": "response.entity.getJson().OBIntentObject.Data.ConsentId",
+              "role": "PISP",
+              "event": "CREATE"
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream services",
+          "name": "HeaderFilter-ChangeHostToIDM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host"
+            ]
+          }
+        },
+        {
+          "comment": "Add access token to IDM request",
+          "type": "ClientCredentialsOAuth2ClientFilter",
+          "config": {
+            "clientId": "&{ig.client.id}",
+            "clientSecretId": "ig.client.secret",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM",
+            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+            "scopes": [
+              "fr:idm:*"
+            ],
+            "handler": "TokenRequestHandler"
+          }
+        }
+      ],
+      "handler": "ReverseProxyHandler"
+    }
+  }
+}

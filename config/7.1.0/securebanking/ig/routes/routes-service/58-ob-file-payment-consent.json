@@ -138,7 +138,7 @@
               "routeArgRsBaseURI": "https://&{rs.fqdn}",
               "routeArgIntentIdQueryParameter": "intent",
               "routeArgVersionQueryParameter": "version",
-              "routeArgIntentType": "PDC_"
+              "routeArgIntentType": "PFC_"
             }
           }
         },

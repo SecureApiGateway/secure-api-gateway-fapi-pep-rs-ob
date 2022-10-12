@@ -68,6 +68,16 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents");
             value.Links.links.add("GetInternationalStandingOrderConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents/{ConsentId}");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/international-standing-order-consents/{ConsentId}");
+
+            //File payments Consents
+            value.Links.links.add("CreateFilePaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents");
+            value.Links.links.add("CreateFilePaymentFile", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
+            value.Links.links.add("GetFilePaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}");
+            value.Links.links.add("GetFilePaymentFile", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
         }
 
         response.entity = newEntity;

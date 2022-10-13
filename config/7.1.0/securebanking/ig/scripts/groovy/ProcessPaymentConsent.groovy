@@ -68,7 +68,6 @@ private void processProcessPaymentConsentRequestData(consentId, paymentIntentDat
     df.setTimeZone(tz);
     def nowAsISO = df.format(new Date())
     paymentIntentData.Data.ConsentId = consentId
-    paymentIntentData.Data.Status = "AwaitingAuthorisation";
     paymentIntentData.Data.CreationDateTime = nowAsISO
     paymentIntentData.Data.StatusUpdateDateTime = nowAsISO
 }

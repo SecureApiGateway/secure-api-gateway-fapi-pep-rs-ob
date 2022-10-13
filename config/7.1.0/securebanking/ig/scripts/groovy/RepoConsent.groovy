@@ -109,7 +109,7 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
             ]
             break
-        case IntentType.PAYMENT_DOMESTIC_CONSENT:
+        default: // For all payments intents
             responseObj = [
                     "id"                   : intentResponseObject._id,
                     "OBIntentObject"       : intentResponseObject.OBIntentObject,
@@ -117,53 +117,6 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
                     "oauth2ClientName"     : intentResponseObject.apiClient.name
             ]
-            break
-        case IntentType.PAYMENT_DOMESTIC_SCHEDULED_CONSENT:
-            responseObj = [
-                    "id"                   : intentResponseObject._id,
-                    "OBIntentObject"       : intentResponseObject.OBIntentObject,
-                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
-                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
-            ]
-            break
-        case IntentType.PAYMENT_DOMESTIC_STANDING_ORDERS_CONSENT:
-            responseObj = [
-                    "id"                   : intentResponseObject._id,
-                    "OBIntentObject"       : intentResponseObject.OBIntentObject,
-                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
-                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
-            ]
-            break
-        case IntentType.PAYMENT_INTERNATIONAL_CONSENT:
-            responseObj = [
-                    "id"                   : intentResponseObject._id,
-                    "OBIntentObject"       : intentResponseObject.OBIntentObject,
-                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
-                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
-            ]
-            break
-        case IntentType.PAYMENT_INTERNATIONAL_SCHEDULED_CONSENT:
-            responseObj = [
-                    "id"                   : intentResponseObject._id,
-                    "OBIntentObject"       : intentResponseObject.OBIntentObject,
-                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
-                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
-            ]
-            break
-        case IntentType.PAYMENT_INTERNATIONAL_STANDING_ORDERS_CONSENT:
-            responseObj = [
-                    "id"                   : intentResponseObject._id,
-                    "OBIntentObject"       : intentResponseObject.OBIntentObject,
-                    "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
-                    "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
-            ]
-            break
-
     }
 
     return responseObj;

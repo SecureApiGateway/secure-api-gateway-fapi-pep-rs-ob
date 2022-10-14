@@ -15,6 +15,9 @@ import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
 import java.text.ParseException
 import static org.forgerock.util.promise.Promises.newResultPromise
 
+/*
+JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
+ */
 /**
  Subject to waiver for earlier versions as per
  https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1112670669/W007
@@ -62,9 +65,11 @@ if (match.find()) {
 
 logger.debug(SCRIPT_NAME + "Building JWT from detached header")
 
-def header = request.headers.get(routeArgHeaderName)
+// JWS detached signature pattern: 'JWSHeader..JWSSignature' with no JWS payload
 
-if (header == null) {
+def jwsDetachedSignatureHeader = request.headers.get(routeArgHeaderName)
+
+if (jwsDetachedSignatureHeader == null) {
     message = "No detached signature header on inbound request " + routeArgHeaderName
     logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
@@ -72,29 +77,28 @@ if (header == null) {
     return response
 }
 
-String detachedSig = header.firstValue.toString()
+String detachedSignatureValue = jwsDetachedSignatureHeader.firstValue.toString()
 
-logger.debug(SCRIPT_NAME + "Inbound detached signature: " + detachedSig)
-String[] sigElements = detachedSig.split("\\.")
+logger.debug(SCRIPT_NAME + "Inbound detached signature: " + detachedSignatureValue)
+String[] signatureElements = detachedSignatureValue.split("\\.")
 
-if (sigElements.length != 3) {
-    message = "Wrong number of dots on inbound detached signature " + sigElements.length
+if (signatureElements.length != 3) {
+    message = "Wrong number of dots on inbound detached signature " + signatureElements.length
     logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
+// Get the JWS header, first part of array
+String jwsHeaderEncoded = signatureElements[0]
 
-String jwtHeader = sigElements[0]
-
-// Check JWT header for b64 claim
+// Check JWS header for b64 claim
 // If claim is present, and API version > 3.1.3 then reject
 // If claim is present, and is set to false, and API < 3.1.4 then accept and validate as non base64 payload
 
-String headerJson = new String(jwtHeader.decodeBase64Url())
-logger.debug(SCRIPT_NAME + "Got JWT header: " + headerJson)
-JsonSlurper slurper = new JsonSlurper()
-def headerObj = slurper.parseText(headerJson)
+String jwsHeaderDecoded = new String(jwsHeaderEncoded.decodeBase64Url())
+logger.debug(SCRIPT_NAME + "Got JWT header: " + jwsHeaderDecoded)
+def jwsHeaderDataStructure = new JsonSlurper().parseText(jwsHeaderDecoded)
 
 //Get the API client from the oauth2 token context. This will be used to query the IDM API client managed object.
 def tppClientId
@@ -121,16 +125,16 @@ logger.debug(SCRIPT_NAME + "TPP client id: " + tppClientId)
 
 if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
     //Processing pre v3.1.4 requests
-    if (headerObj.b64 == null) {
+    if (jwsHeaderDataStructure.b64 == null) {
         message = "B64 header must be presented in JWT header before v3.1.3"
         logger.error(SCRIPT_NAME + message)
         return getSignatureValidationErrorResponse()
-    } else if (headerObj.b64 != false) {
+    } else if (jwsHeaderDataStructure.b64 != false) {
         message = "B64 header must be false in JWT header before v3.1.3"
         logger.error(SCRIPT_NAME + message)
         return getSignatureValidationErrorResponse()
     } else {
-        String jwtPayload = request.entity.getString()
+        String requestPayload = request.entity.getString()
 
         Request apiClientRequest = new Request();
         apiClientRequest.setMethod('GET');
@@ -148,7 +152,7 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
             try {
                 logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
 
-                Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSig, jwks_uri, jwtPayload);
+                Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSignatureValue, jwks_uri, requestPayload)
                 return validJwsPromise.thenAsync(validJws -> {
                     if (Boolean.FALSE.equals(validJws)) {
                         return newResultPromise(getSignatureValidationErrorResponse())
@@ -167,13 +171,13 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
     }
 } else {
     //Processing post v3.1.4 requests
-    if (headerObj.b64 != null) {
+    if (jwsHeaderDataStructure.b64 != null) {
         message = "B64 header not permitted in JWT header after v3.1.3"
         logger.error(SCRIPT_NAME + message)
         return getSignatureValidationErrorResponse()
     }
 
-    String jwtPayload = request.entity.getString()
+    String requestPayload = request.entity.getString()
 
     Request apiClientRequest = new Request();
     apiClientRequest.setMethod('GET');
@@ -189,7 +193,7 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
 
         try {
             logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
-            Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSig, jwks_uri, jwtPayload);
+            Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSignatureValue, jwks_uri, requestPayload);
             return validJwsPromise.thenAsync(validJws -> {
                 if (Boolean.FALSE.equals(validJws)) {
                     return newResultPromise(getSignatureValidationErrorResponse())
@@ -219,14 +223,15 @@ next.handle(context, request)
  * The correct way to verify this version of detached signature with unencoded payload:
  * <b> b64Encode(header).payload.sign( concatenate( b64UrlEncode(header), ".", payload )) </b>
  *
- * @param jws the detached signature from the x-jws-signature header
- * @param payload the request payload that will not be encoded before validating the detched signature
- * @param routeArgJwkUrl the API client JWKS_URI
+ * @param detachedSignatureValue the detached signature value from the x-jws-signature header
+ * @param requestPayload the request payload that will not be encoded before validating the detached signature
+ * @param jwksUri the API client JWKS_URI
  * @return true if signature validation is successful, false otherwise
  */
-def validateUnencodedPayload(String jws, String routeArgJwkUrl, String payload) {
-    Payload detachedPayload = new Payload(payload);
-    JWSObject parsedJWSObject = JWSObject.parse(jws, detachedPayload);
+// detachedSignatureValue, jwks_uri, requestPayload
+def validateUnencodedPayload(String detachedSignatureValue, String jwksUri, String requestPayload) {
+    Payload payload = new Payload(requestPayload);
+    JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue, payload);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
 
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader)
@@ -235,13 +240,13 @@ def validateUnencodedPayload(String jws, String routeArgJwkUrl, String payload) 
         return false
     }
 
-    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(jwksUri, jwsHeader);
     return keyPromise.thenAsync(rsaPublicKey -> {
         logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
         RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
         return newResultPromise(parsedJWSObject.verify(verifier));
     }).thenCatchAsync(failedToLoadJwkEx -> {
-        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + routeArgJwkUrl, failedToLoadJwkEx);
+        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + jwksUri, failedToLoadJwkEx);
         return newResultPromise(false)
     })
 }
@@ -253,21 +258,21 @@ def validateUnencodedPayload(String jws, String routeArgJwkUrl, String payload) 
  * The correct way to verify this version of detached signature with encoded payload:
  * <b> b64Encode(header).b64UrlEncode(payload).sign( concatenate( b64UrlEncode(header), ".", b64UrlEncode(payload) ) ) </b>
  *
- * @param payload the request payload
- * @param routeArgJwkUrl the API client JWKS_URI
- * @param jwtPayload the request payload that will be encoded before validating the detached signature.
+ * @param detachedSignatureValue the request payload
+ * @param jwksUri the API client JWKS_URI
+ * @param requestPayload the request payload that will be encoded before validating the detached signature.
  * @return true if signature validation is successful, false otherwise
  */
-def validateEncodedPayload(String payload, String routeArgJwkUrl, String jwtPayload) {
-    JWSObject parsedJWSObject = JWSObject.parse(payload);
+def validateEncodedPayload(String detachedSignatureValue, String jwksUri, String requestPayload) {
+    JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
 
-    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(routeArgJwkUrl, jwsHeader);
+    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(jwksUri, jwsHeader);
     keyPromise.thenAsync(rsaPublicKey -> {
         logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
-        return isJwsValid(payload, rsaPublicKey, jwtPayload, jwsHeader);
+        return isJwsValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader);
     }).thenCatchAsync(failedToLoadJwkEx -> {
-        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + routeArgJwkUrl, failedToLoadJwkEx);
+        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + jwksUri, failedToLoadJwkEx);
         return newResultPromise(false)
     })
 }
@@ -294,13 +299,13 @@ def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
  * Encodes the payload for an encoded payload request and performs the signature validation. Defers the validation of
  * critical claims during the process of the signature validation.
  *
- * @param jwt The detached signature header value - x-jws-signature
+ * @param detachedSignatureValue The detached signature header value - x-jws-signature
  * @param rsaPublicKey The JWK used to validate the signature
- * @param jwtPayload The request payload or request body. Will be encoded before rebuilding the JWT
+ * @param requestPayload The request payload or request body. Will be encoded before rebuilding the JWT
  * @param jwsHeader The header of the detached signature
  * @return true if the signatures validation is successful, false otherwise
  */
-def isJwsValid(String jwt, RSAPublicKey rsaPublicKey, String jwtPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
+def isJwsValid(String detachedSignatureValue, RSAPublicKey rsaPublicKey, String requestPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
     // Validate crit claims - If this fails stop the flow, no point in continuing with the signature validation.
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader);
     if (!criticalParamsValid) {
@@ -309,13 +314,14 @@ def isJwsValid(String jwt, RSAPublicKey rsaPublicKey, String jwtPayload, JWSHead
     }
 
     //Validate Signature
-    logger.debug(SCRIPT_NAME + "JWT from header signature: " + jwt)
+    logger.debug(SCRIPT_NAME + "JWT from header signature: " + detachedSignatureValue)
 
     RSASSAVerifier jwsVerifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
 
-    String[] jwtElements = jwt.split("\\.")
+    String[] jwtElements = detachedSignatureValue.split("\\.")
 
-    String rebuiltJwt = jwtElements[0] + "." + Base64.getEncoder().withoutPadding().encodeToString(jwtPayload.getBytes()) + "." + jwtElements[2]
+    // The payload must be encoded with base64Url
+    String rebuiltJwt = jwtElements[0] + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." + jwtElements[2]
 
     logger.debug(SCRIPT_NAME + "JWT rebuilt using the request body: " + rebuiltJwt)
     JWSObject jwsObject = JWSObject.parse(rebuiltJwt);

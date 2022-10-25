@@ -169,10 +169,15 @@ switch(method.toUpperCase()) {
     });
     break
   case "DELETE":
-    def apiClientId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
-    request.uri.path = "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId
-    next.handle(context, request)
-    break
+    return next.handle(context, request).thenOnResult(response -> {
+      // ProcessRegistration filter will have added the client_id param
+      def apiClientId = request.getQueryParams().getFirst("client_id")
+      Request deleteApiClientReq = new Request()
+      deleteApiClientReq.setMethod('DELETE')
+      deleteApiClientReq.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
+      logger.info("Deleting IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
+      return http.send(deleteApiClientReq)
+    })
   default:
     logger.debug(SCRIPT_NAME + "Method not supported")
     next.handle(context, request)

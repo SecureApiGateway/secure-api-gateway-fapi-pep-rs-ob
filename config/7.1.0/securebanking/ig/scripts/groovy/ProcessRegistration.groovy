@@ -30,9 +30,8 @@ def errorResponse(httpCode, message) {
 def method = request.method
 
 switch(method.toUpperCase()) {
-
     case "POST":
-
+    case "PUT":
         def error = false
 
         def SCOPE_ACCOUNTS = "accounts"
@@ -182,6 +181,11 @@ switch(method.toUpperCase()) {
         logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
         request.setEntity(regJson)
 
+        // Put is editing an existing registration, so needs the client_id param in the uri
+        if (request.method == "PUT") {
+            rewriteUriToAccessExistingAmRegistration()
+        }
+
         // Verify that the tls transport cert is registered for the TPP's software statement
         if (apiClientOrgJwksUri != null) {
             logger.debug(SCRIPT_NAME + "Checking cert against remote jwks: " + apiClientOrgJwksUri)
@@ -201,12 +205,30 @@ switch(method.toUpperCase()) {
             def jwkSet = new JWKSet(new JsonValue(apiClientOrgJwks.get("keys")))
             return verifyTlsClientCertExistsInJwkSet(jwkSet)
         }
+
     case "DELETE":
-       break
+    case "GET":
+        rewriteUriToAccessExistingAmRegistration()
+        break
 
     default:
         logger.debug(SCRIPT_NAME + "Method not supported")
 
+}
+
+/**
+ * For operations on an existing registration, AM expects a uri of the form:
+ *   am/oauth2/realms/root/realms/alpha/register?client_id=8ed73b58-bd18-41c4-93f3-7a1bbf57a7eb
+ *
+ * This method takes the OB uri form: am/oauth2/realms/root/realms/alpha/8ed73b58-bd18-41c4-93f3-7a1bbf57a7eb and
+ * rewrites it to the AM form.
+ */
+private void rewriteUriToAccessExistingAmRegistration() {
+    def path = request.uri.path
+    def lastSlashIndex = path.lastIndexOf("/")
+    def apiClientId = path.substring(lastSlashIndex + 1);
+    request.uri.setRawPath(path.substring(0, lastSlashIndex))
+    request.uri.setRawQuery("client_id=" + apiClientId)
 }
 
 

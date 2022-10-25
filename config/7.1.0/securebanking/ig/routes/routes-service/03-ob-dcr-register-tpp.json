@@ -1,6 +1,6 @@
 {
-  "comment": "TPP dynamic registration",
-  "name": "03 - Open Banking Register TPP",
+  "comment": "Create new TPP dynamic client registration",
+  "name": "03 - Open Banking DCR - Dynamic Client Registration",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
@@ -96,22 +96,29 @@
           }
         },
         {
-          "comment": "Fetch access token for dynamic client registration",
-          "type": "ClientCredentialsOAuth2ClientFilter",
+          "name": "AddIgAccessTokenForNewRegistrations",
+          "comment": "When creating a new registration we need to obtain credentials to allow IG to talk to AM. For flows which operate on an existing registration, the TPP must supply the registration_access_token returned in the DCR response",
+          "type": "ConditionalFilter",
           "config": {
-            "clientId": "&{ig.client.id}",
-            "clientSecretId": "ig.client.secret",
-            "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
-            "scopes": [
-              "dynamic_client_registration fr:idm:*"
-            ],
-            "handler": "TokenRequestHandler"
+            "condition": "${request.method == 'POST'}",
+            "delegate": {
+              "comment": "Fetch access token for dynamic client registration - IG credentials to talk to AM",
+              "type": "ClientCredentialsOAuth2ClientFilter",
+              "config": {
+                "clientId": "&{ig.client.id}",
+                "clientSecretId": "ig.client.secret",
+                "secretsProvider": "SystemAndEnvSecretStore-IAM",
+                "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+                "scopes": [
+                  "dynamic_client_registration fr:idm:*"
+                ],
+                "handler": "TokenRequestHandler"
+              }
+            }
           }
         }
       ],
       "handler": "ReverseProxyHandler"
-      }
-
+    }
   }
 }

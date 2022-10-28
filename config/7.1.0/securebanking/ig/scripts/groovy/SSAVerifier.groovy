@@ -2,6 +2,7 @@ import org.forgerock.json.jose.jws.SigningManager;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.http.protocol.Status;
 import java.net.URI;
+import static org.forgerock.util.promise.Promises.newResultPromise
 
 SCRIPT_NAME = "[SSAVerifier] - "
 logger.debug(SCRIPT_NAME + "Running...")
@@ -62,6 +63,7 @@ def method = request.method
 switch(method.toUpperCase()) {
 
     case "POST":
+    case "PUT":
 
     if (!attributes.registrationJWTs) {
         return(errorResponse(Status.UNAUTHORIZED,"No registration JWT"));
@@ -110,8 +112,7 @@ switch(method.toUpperCase()) {
     // jwksRequest.getHeaders().add("Host",ssaJwksUri.getHost());
 
 
-    http.send(jwksRequest).then(jwksResponse -> {
-
+    return http.send(jwksRequest).thenAsync(jwksResponse -> {
       jwksRequest.close();
       logger.debug(SCRIPT_NAME + "Back from JWKS URI");
       def jwksResponseContent = jwksResponse.getEntity().getString();
@@ -121,30 +122,18 @@ switch(method.toUpperCase()) {
       logger.debug(SCRIPT_NAME + "entity " + jwksResponseContent);
 
       if (jwksResponseStatus != Status.OK) {
-          return(errorResponse(Status.UNAUTHORIZED,"Bad response from JWKS URI " + jwksResponseStatus));
+          return newResultPromise(errorResponse(Status.UNAUTHORIZED,"Bad response from JWKS URI " + jwksResponseStatus))
       }
       else if (!verifySignature(ssaJwt,jwksResponseContent)) {
-          return(errorResponse(Status.UNAUTHORIZED,"Signature not verified"));
+          return newResultPromise(errorResponse(Status.UNAUTHORIZED,"Signature not verified"))
       }
-
-      return null;
-    }).thenAsync (error -> {
-      if (error) {
-          // TODO: This doesn't work - get cast error from Response to Promise
-          logger.error(SCRIPT_NAME + "Sending back error response");
-          return error;
-      }
-      next.handle(context, request);
-    });
-    break
+      return next.handle(context, request)
+    })
 
     case "DELETE":
-       break
+    case "GET":
+        return next.handle(context, request)
     default:
         logger.debug(SCRIPT_NAME + "Method not supported")
-
+        return errorResponse(Status.METHOD_NOT_ALLOWED,"Method Not Allowed")
 }
-
-
-next.handle(context, request)
-

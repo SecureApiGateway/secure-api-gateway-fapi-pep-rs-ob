@@ -62,7 +62,13 @@ switch(method.toUpperCase()) {
 
         // Pull the SSA from the reg data
 
-        def oidcRegistration = regJwt.getClaimsSet();
+        def oidcRegistration = regJwt.getClaimsSet()
+
+        // Valid exp claim
+        Date expirationTime = oidcRegistration.getExpirationTime()
+        if (expirationTime.before(new Date())) {
+            return errorResponse(Status.BAD_REQUEST,"registration has expired")
+        }
 
         def ssa = oidcRegistration.getClaim("software_statement", String.class);
 

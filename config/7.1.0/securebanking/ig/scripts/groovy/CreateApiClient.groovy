@@ -1,6 +1,7 @@
 import org.forgerock.http.protocol.*
 import groovy.json.JsonOutput
 import org.forgerock.json.jose.*
+import static org.forgerock.util.promise.Promises.newResultPromise
 
 /*
  * Script to read OIDC dynamic registration response and create apiClientOrg managed object in IDM
@@ -169,14 +170,25 @@ switch(method.toUpperCase()) {
     });
     break
   case "DELETE":
-    return next.handle(context, request).thenOnResult(response -> {
-      // ProcessRegistration filter will have added the client_id param
-      def apiClientId = request.getQueryParams().getFirst("client_id")
-      Request deleteApiClientReq = new Request()
-      deleteApiClientReq.setMethod('DELETE')
-      deleteApiClientReq.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
-      logger.info("Deleting IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
-      return http.send(deleteApiClientReq)
+    return next.handle(context, request).thenAsync(response -> {
+      // Delete IDM object only if AM delete was successful
+      if (response.status.isSuccessful()) {
+        // ProcessRegistration filter will have added the client_id param
+        def apiClientId = request.getQueryParams().getFirst("client_id")
+        Request deleteApiClientReq = new Request()
+        deleteApiClientReq.setMethod('DELETE')
+        deleteApiClientReq.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
+        logger.info("Deleting IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
+        return http.send(deleteApiClientReq).thenAsync(idmResponse -> {
+          if (idmResponse.status.isSuccessful()) {
+            logger.debug("IDM object successfully deleted for client_id: " + apiClientId)
+            return newResultPromise(new Response(Status.NO_CONTENT))
+          }
+          return newResultPromise(errorResponse(Status.BAD_REQUEST, "Failed to delete registration"))
+        })
+      }
+      // AM returned an error, pass this on
+      return newResultPromise(response)
     })
   default:
     logger.debug(SCRIPT_NAME + "Method not supported")

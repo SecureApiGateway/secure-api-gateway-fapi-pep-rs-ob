@@ -71,11 +71,9 @@ switch(method.toUpperCase()) {
         }
 
         def ssa = oidcRegistration.getClaim("software_statement", String.class);
-
         if (!ssa) {
             return(errorResponse(Status.BAD_REQUEST,"No SSA"));
         }
-
         oidcRegistration.setClaim("software_statement",null);
 
         logger.debug(SCRIPT_NAME + "Got ssa [" + ssa + "]")
@@ -84,11 +82,19 @@ switch(method.toUpperCase()) {
 
         def ssaClaims = ssaJwt.getClaimsSet();
 
+        // Validate the issuer claim for the registration matches the SSA software_id
+        // NOTE: At this stage we do not know if the SSA is valid, it is assumed the SSAVerifier filter will run after
+        //       this filter and raise an error if the SSA is invalid.
+        def registrationIssuer = oidcRegistration.getIssuer()
+        def ssaSoftwareId = ssaClaims.getClaim("software_id")
+        if (registrationIssuer == null || ssaSoftwareId == null || registrationIssuer != ssaSoftwareId) {
+            return errorResponse(Status.BAD_REQUEST,"invalid issuer claim")
+        }
+
         def apiClientOrgName = ssaClaims.getClaim("software_client_name", String.class);
         def apiClientOrgCertId = ssaClaims.getClaim("org_id", String.class);
         def apiClientOrgJwksUri = ssaClaims.getClaim("software_jwks_endpoint");
         def apiClientOrgJwks = ssaClaims.getClaim("software_jwks");
-
 
         logger.debug(SCRIPT_NAME + "Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {} apiClientOrgJwksUri: {} apiClientOrgJwks: {}",
                 apiClientOrgName,

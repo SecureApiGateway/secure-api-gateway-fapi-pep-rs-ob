@@ -157,6 +157,11 @@ switch(method.toUpperCase()) {
         oidcRegistration.setClaim("client_name",apiClientOrgName)
         oidcRegistration.setClaim("tls_client_certificate_bound_access_tokens", true)
 
+        def subject_type = oidcRegistration.getClaim("subject_type", String.class);
+        if(!subject_type){
+            oidcRegistration.setClaim("subject_type", "pairwise");
+        }
+
         // Sanity check on scopes
 
         def scopes = oidcRegistration.getClaim("scope")

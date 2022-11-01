@@ -148,6 +148,7 @@ switch(method.toUpperCase()) {
         // Store SSA and registration JWT for signature check
 
         attributes.registrationJWTs = [
+                "ssaStr": ssa,
                 "ssaJwt" : ssaJwt,
                 "registrationJwt": regJwt,
                 "registrationJwksUri": apiClientOrgJwksUri,
@@ -206,12 +207,19 @@ switch(method.toUpperCase()) {
         // Verify that the tls transport cert is registered for the TPP's software statement
         if (apiClientOrgJwksUri != null) {
             logger.debug(SCRIPT_NAME + "Checking cert against remote jwks: " + apiClientOrgJwksUri)
-            return jwkSetService.getJwkSet(new URL(apiClientOrgJwksUri)).thenAsync(jwkSet -> {
-                return verifyTlsClientCertExistsInJwkSet(jwkSet)
-            }).thenCatchAsync(e -> {
-                logger.debug(SCRIPT_NAME + "failed to get jwks due to exception", e)
-                return newResultPromise(errorResponse(Status.BAD_REQUEST, "unable to get jwks from url: " + apiClientOrgJwksUri))
-            })
+            return jwkSetService.getJwkSet(new URL(apiClientOrgJwksUri))
+                                .thenCatchAsync(e -> {
+                                    logger.debug(SCRIPT_NAME + "failed to get jwks due to exception", e)
+                                    return newResultPromise(errorResponse(Status.BAD_REQUEST, "unable to get jwks from url: " + apiClientOrgJwksUri))
+                                })
+                                .thenAsync(jwtSet -> {
+                                    if (!tlsClientCertExistsInJwkSet(jwtSet)) {
+                                        return newResultPromise(errorResponse(Status.BAD_REQUEST, "tls transport cert does not match any certs registered in jwks for software statement"))
+                                    }
+                                    return next.handle(context, request)
+                                               .thenOnResult(response -> addSoftwareStatementToResponse(response, ssa))
+                                })
+
         } else {
             // Verify against the software_jwks which is a JWKSet embedded within the software_statement
             // NOTE: this is only suitable for developer testing purposes
@@ -220,16 +228,28 @@ switch(method.toUpperCase()) {
             }
             logger.debug(SCRIPT_NAME + "Checking cert against ssa software_jwks: " + apiClientOrgJwks)
             def jwkSet = new JWKSet(new JsonValue(apiClientOrgJwks.get("keys")))
-            return verifyTlsClientCertExistsInJwkSet(jwkSet)
+            if (!tlsClientCertExistsInJwkSet(jwtSet)) {
+                return newResultPromise(errorResponse(Status.BAD_REQUEST, "tls transport cert does not match any certs registered in jwks for software statement"))
+            }
+            return next.handle(context, request)
+                       .thenOnResult(response -> addSoftwareStatementToResponse(response, ssa))
         }
 
     case "DELETE":
+        rewriteUriToAccessExistingAmRegistration()
+        return next.handle(context, request)
     case "GET":
         rewriteUriToAccessExistingAmRegistration()
-        break
-
+        return next.handle(context, request)
+                   .thenOnResult(response -> {
+                       var apiClient = attributes.apiClient
+                       if (apiClient && apiClient.ssa) {
+                           addSoftwareStatementToResponse(response, apiClient.ssa)
+                       }
+                   })
     default:
         logger.debug(SCRIPT_NAME + "Method not supported")
+        return next.handle(context, request)
 
 }
 
@@ -243,13 +263,20 @@ switch(method.toUpperCase()) {
 private void rewriteUriToAccessExistingAmRegistration() {
     def path = request.uri.path
     def lastSlashIndex = path.lastIndexOf("/")
-    def apiClientId = path.substring(lastSlashIndex + 1);
+    def apiClientId = path.substring(lastSlashIndex + 1)
     request.uri.setRawPath(path.substring(0, lastSlashIndex))
     request.uri.setRawQuery("client_id=" + apiClientId)
 }
 
+private void addSoftwareStatementToResponse(response, ssa) {
+    var registrationResponse = response.getEntity().getJson()
+    if (!registrationResponse["software_statement"]) {
+        registrationResponse["software_statement"] = ssa
+    }
+    response.entity.setJson(registrationResponse)
+}
 
-private Promise<Response, NeverThrowsException> verifyTlsClientCertExistsInJwkSet(jwkSet) {
+private boolean tlsClientCertExistsInJwkSet(jwkSet) {
     def tlsClientCert = attributes.clientCertificate.certificate
     // RSAKey.parse produces a JWK, we can then extract the cert from the x5c field
     def tlsClientCertX5c = RSAKey.parse(tlsClientCert).getX509CertChain().get(0).toString()
@@ -258,10 +285,9 @@ private Promise<Response, NeverThrowsException> verifyTlsClientCertExistsInJwkSe
         final String jwkX5c = x509Chain.get(0);
         if ("tls".equals(jwk.getUse()) && tlsClientCertX5c.equals(jwkX5c)) {
             logger.debug(SCRIPT_NAME + "Found matching tls cert for provided pem, with kid: " + jwk.getKeyId() + " x5t#S256: " + jwk.getX509ThumbprintS256())
-            return next.handle(context, request)
+            return true
         }
     }
-    return newResultPromise(errorResponse(Status.BAD_REQUEST, "tls transport cert does not match any certs registered in jwks for software statement"))
+    logger.debug(SCRIPT_NAME + "tls transport cert does not match any certs registered in jwks for software statement")
+    return false
 }
-
-next.handle(context, request)

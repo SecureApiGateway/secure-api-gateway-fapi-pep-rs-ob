@@ -27,6 +27,9 @@ def errorResponse(httpCode, message) {
     return response;
 }
 
+def defaultResponseTypes =  ["code id_token"]
+def supportedResponseTypes = [defaultResponseTypes]
+
 def method = request.method
 
 switch(method.toUpperCase()) {
@@ -68,6 +71,13 @@ switch(method.toUpperCase()) {
         Date expirationTime = oidcRegistration.getExpirationTime()
         if (expirationTime.before(new Date())) {
             return errorResponse(Status.BAD_REQUEST,"registration has expired")
+        }
+
+        def responseTypes = oidcRegistration.getClaim("response_types")
+        if (!responseTypes) {
+            oidcRegistration.setClaim("response_types", defaultResponseTypes)
+        } else if (!supportedResponseTypes.contains(responseTypes)) {
+            return errorResponse(Status.BAD_REQUEST, "response_types: " + responseTypes + " not supported")
         }
 
         def ssa = oidcRegistration.getClaim("software_statement", String.class);

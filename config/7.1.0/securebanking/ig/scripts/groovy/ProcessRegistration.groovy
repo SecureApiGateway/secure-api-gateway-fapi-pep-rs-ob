@@ -279,11 +279,13 @@ private void rewriteUriToAccessExistingAmRegistration() {
 }
 
 private void addSoftwareStatementToResponse(response, ssa) {
-    var registrationResponse = response.getEntity().getJson()
-    if (!registrationResponse["software_statement"]) {
-        registrationResponse["software_statement"] = ssa
+    if (response.status.isSuccessful()) {
+        var registrationResponse = response.getEntity().getJson()
+        if (!registrationResponse["software_statement"]) {
+            registrationResponse["software_statement"] = ssa
+        }
+        response.entity.setJson(registrationResponse)
     }
-    response.entity.setJson(registrationResponse)
 }
 
 private boolean tlsClientCertExistsInJwkSet(jwkSet) {

@@ -6,3 +6,5 @@ data:
   IG_FQDN: obdemo.jorgesanchezperez.forgerock.financial
   RS_FQDN: rs.jorgesanchezperez.forgerock.financial
   RCS_FQDN: rcs.jorgesanchezperez.forgerock.financial
+  RCS_UI_FQDN: rcs-ui.jorgesanchezperez.forgerock.financial
+  IDENTITY_PLATFORM_FQDN: iam.jorgesanchezperez.forgerock.financial  

@@ -6,3 +6,5 @@ data:
   IG_FQDN: obdemo.frlaura-jianu.forgerock.financial
   RS_FQDN: rs.frlaura-jianu.forgerock.financial
   RCS_FQDN: rcs.frlaura-jianu.forgerock.financial
+  RCS_UI_FQDN: rcs-ui.frlaura-jianu.forgerock.financial
+  IDENTITY_PLATFORM_FQDN: iam.frlaura-jianu.forgerock.financial

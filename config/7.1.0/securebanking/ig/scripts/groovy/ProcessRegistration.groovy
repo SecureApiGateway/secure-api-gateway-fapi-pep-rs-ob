@@ -222,8 +222,8 @@ switch(method.toUpperCase()) {
                                     logger.debug(SCRIPT_NAME + "failed to get jwks due to exception", e)
                                     return newResultPromise(errorResponse(Status.BAD_REQUEST, "unable to get jwks from url: " + apiClientOrgJwksUri))
                                 })
-                                .thenAsync(jwtSet -> {
-                                    if (!tlsClientCertExistsInJwkSet(jwtSet)) {
+                                .thenAsync(jwkSet -> {
+                                    if (!tlsClientCertExistsInJwkSet(jwkSet)) {
                                         return newResultPromise(errorResponse(Status.BAD_REQUEST, "tls transport cert does not match any certs registered in jwks for software statement"))
                                     }
                                     return next.handle(context, request)
@@ -238,7 +238,7 @@ switch(method.toUpperCase()) {
             }
             logger.debug(SCRIPT_NAME + "Checking cert against ssa software_jwks: " + apiClientOrgJwks)
             def jwkSet = new JWKSet(new JsonValue(apiClientOrgJwks.get("keys")))
-            if (!tlsClientCertExistsInJwkSet(jwtSet)) {
+            if (!tlsClientCertExistsInJwkSet(jwkSet)) {
                 return newResultPromise(errorResponse(Status.BAD_REQUEST, "tls transport cert does not match any certs registered in jwks for software statement"))
             }
             return next.handle(context, request)

@@ -36,7 +36,13 @@ next.handle(context, request).thenOnResult({ response ->
     signingManager.newSigningHandler(purpose).then({ signingHandler ->
         logger.debug(SCRIPT_NAME + "Building of the JWT started")
 
-        JwtClaimsSet jwtClaimsSet = new JwtClaimsSet(response.getEntity().getJson())
+        JwtClaimsSet jwtClaimsSet
+        // We get content empty on submit file payment API
+        if (response.getEntity().isRawContentEmpty()) {
+            jwtClaimsSet = new JwtClaimsSet()
+        } else {
+            jwtClaimsSet = new JwtClaimsSet(response.getEntity().getJson())
+        }
         logger.debug(SCRIPT_NAME + "jwtClaimsSet: " + jwtClaimsSet)
 
         List<String> critClaims = new ArrayList<String>();

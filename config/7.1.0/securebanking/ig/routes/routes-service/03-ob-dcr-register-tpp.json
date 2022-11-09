@@ -48,7 +48,8 @@
               "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
               "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",
-              "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}"
+              "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}",
+              "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
             }
           }
         },
@@ -64,7 +65,8 @@
               "routeArgSSAIssuerJwksUrls": {
                 "OpenBanking Ltd": "https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks",
                 "test-publisher": "https://&{ig.fqdn}/jwkms/apiclient/jwks"
-              }
+              },
+              "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
             }
           }
         },

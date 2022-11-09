@@ -202,6 +202,10 @@
         "maxCacheEntries": 500,
         "expireAfterWriteDuration": "1 hour"
       }
+    },
+    {
+      "name": "RsaJwtSignatureValidator",
+      "type": "com.forgerock.securebanking.uk.gateway.jws.RsaJwtSignatureValidator"
     }
   ],
   "monitor": true

@@ -1,53 +1,22 @@
-import org.forgerock.json.jose.jws.SigningManager;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.http.protocol.Status;
 import java.net.URI;
+import java.security.SignatureException
 import static org.forgerock.util.promise.Promises.newResultPromise
 
 SCRIPT_NAME = "[SSAVerifier] - "
 logger.debug(SCRIPT_NAME + "Running...")
 
-def verifySignature(signedJwt,jwksJson) {
 
-    if (!signedJwt) {
-        logger.error(SCRIPT_NAME + "Failed to reconstruct JWT")
-        return false;
-    }
-
-    def kid = signedJwt.getHeader().getKeyId();
-
-    if (!kid) {
-        logger.error(SCRIPT_NAME + "Couldn't find kid in jwt header")
-        return false;
-    }
-
+def verifySignature(signedJwt, jwksJson) {
     def jwks = JWKSet.parse(jwksJson);
-
-    if (!jwks) {
-        logger.error(SCRIPT_NAME + "Failed to parse JWKS")
-        return false;
+    try {
+        jwtSignatureValidator.validateSignature(signedJwt, jwks)
+        return true
+    } catch (SignatureException se) {
+        logger.error("jwt signature validation failed", se)
+        return false
     }
-
-    def jwk = jwks.findJwk(kid);
-
-    if (!jwk) {
-        logger.error(SCRIPT_NAME + "Could jwk with kid {} in JWKS",kid)
-        return false;
-    }
-
-    def publicKey = jwk.toRSAPublicKey();
-
-    if (!publicKey) {
-        logger.error(SCRIPT_NAME + "Couldn't get RSA public key from JWKS entry for kid {}",kid);
-        return false;
-    }
-
-    def verificationHandler = new SigningManager().newRsaSigningHandler(publicKey);
-    def signatureVerified = signedJwt.verify(verificationHandler);
-
-    logger.debug(SCRIPT_NAME + "Signature verified: {}",signatureVerified);
-
-    return signatureVerified;
 }
 
 def errorResponse(httpCode, message) {

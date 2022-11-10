@@ -78,6 +78,16 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}");
             value.Links.links.add("GetFilePaymentFile", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/file-payment-consents/{ConsentId}/file");
+
+            //Domestic VRP Payment Consents
+            value.Links.links.add("CreateDomesticVRPConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents");
+            value.Links.links.add("GetDomesticVRPConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
+            value.Links.links.add("DeleteDomesticVRPConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
+            value.Links.links.add("CreateDomesticVRPConsentsConsentIdFundsConfirmation", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}/funds-confirmation");
+            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}/funds-confirmation");
         }
 
         response.entity = newEntity;

@@ -62,8 +62,6 @@ switch(method.toUpperCase()) {
 
         def regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(),SignedJwt.class)
 
-        // TODO: Check signature
-
         // Pull the SSA from the reg data
 
         def oidcRegistration = regJwt.getClaimsSet()

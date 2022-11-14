@@ -1,13 +1,14 @@
 {
   "comment": "Return Open Banking endpoints supported by Resource Server",
-  "name" : "01 - Open Banking RS Metadata",
+  "name": "01 - Open Banking RS Metadata",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
+  "baseURI": "https://&{rs.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Adjust inbound URL to resource server base URL",
           "name": "UriPathRewriteFilter-RS",
@@ -56,11 +57,11 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file" : "ProcessRs.groovy"
+            "file": "ProcessRs.groovy"
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
 }

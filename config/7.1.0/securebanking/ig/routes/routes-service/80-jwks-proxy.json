@@ -1,12 +1,13 @@
 {
   "comment": "JWK set proxy - provides publicly trusted route to Open Banking JWK publishing points protected with non-public SSL certs",
-  "name" : "80 - Open Banking JWKS Proxy",
+  "name": "80 - Open Banking JWKS Proxy",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${matches(request.uri.path, '^/jwkms/jwksproxy')}",
+  "condition": "${matches(request.uri.path, '^/jwkms/jwksproxy')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "name": "JWKSProxyProcessRequest",
           "type": "ScriptableFilter",
@@ -30,9 +31,13 @@
           "type": "HeaderFilter",
           "config": {
             "messageType": "RESPONSE",
-            "remove": [ "Content-Type" ],
+            "remove": [
+              "Content-Type"
+            ],
             "add": {
-              "Content-Type": [ "application/json" ]
+              "Content-Type": [
+                "application/json"
+              ]
             }
           }
         }
@@ -40,4 +45,4 @@
       "handler": "OBReverseProxyHandler"
     }
   }
-} 
+}

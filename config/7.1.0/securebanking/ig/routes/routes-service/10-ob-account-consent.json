@@ -1,13 +1,18 @@
 {
   "comment": "Open Banking Account Access Consents",
-  "name" : "10 - Open Banking Account Access Consent",
+  "name": "10 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{identity.platform.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "comment": "Add x-fapi-interaction-id header if one was not present in the request",
+          "name": "FapiInteractionIdFilter",
+          "type": "FapiInteractionIdFilter"
+        },
         {
           "comment": "Check Open Banking compliant response",
           "name": "ObResponseCheck",
@@ -31,7 +36,7 @@
         },
         {
           "comment": "Make sure client certificate includes AISP role",
-          "name" : "CertificateRoleCheck",
+          "name": "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -58,13 +63,15 @@
         },
         {
           "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
-          "name" : "OAuth2ResourceServerFilter-OB",
-          "type" : "OAuth2ResourceServerFilter",
-          "config" : {
-            "scopes" : [ "accounts" ],
-            "requireHttps" : false,
-            "realm" : "OpenIG",
-            "accessTokenResolver" : {
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "accounts"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
               "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
@@ -124,11 +131,13 @@
         },
         {
           "comment": "Add Host header for downstream IDM",
-          "name" : "HeaderFilter-ChangeHostToIDM",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "REQUEST",
-            "remove" : [ "host" ]
+          "name": "HeaderFilter-ChangeHostToIDM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host"
+            ]
           }
         },
         {
@@ -146,7 +155,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
-} 
+}

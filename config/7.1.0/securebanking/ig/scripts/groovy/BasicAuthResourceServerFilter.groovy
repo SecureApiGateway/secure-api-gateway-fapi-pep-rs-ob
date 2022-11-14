@@ -13,7 +13,11 @@ import static org.forgerock.util.promise.Promises.newResultPromise
 import java.nio.charset.Charset;
 import org.forgerock.util.encode.Base64;
 
-SCRIPT_NAME = "[BasicAuthResourceServerFilter] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[BasicAuthResourceServerFilter] (" + fapiInteractionId + ") - "
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 String authorizationHeader = request.getHeaders().getFirst("Authorization");

@@ -1,6 +1,8 @@
 import org.forgerock.http.protocol.*
 
-SCRIPT_NAME = "[GrantTypeVerifier] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[GrantTypeVerifier] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def tokenGrantType = contexts.oauth2.accessToken.info.grant_type

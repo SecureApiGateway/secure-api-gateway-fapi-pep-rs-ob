@@ -29,7 +29,9 @@ JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
  and any TPPs using these ASPSPs must do the same.
  */
 
-SCRIPT_NAME = "[ProcessDetachedSig] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ProcessDetachedSig] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def method = request.method

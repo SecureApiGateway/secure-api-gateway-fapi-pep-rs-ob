@@ -1,13 +1,17 @@
 {
-  "name" : "11 - Open Banking Account Access",
+  "name": "11 - Open Banking Account Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{rs.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/accounts')}",
-  "capture" : [ "response", "request" ],
-  "handler" : {
-    "type" : "Chain",
-    "config" : {
-      "filters" : [
+  "baseURI": "https://&{rs.fqdn}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/accounts')}",
+  "capture": [
+    "response",
+    "request"
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",
@@ -31,7 +35,7 @@
         },
         {
           "comment": "Ensure client certificate includes AISP role",
-          "name" : "CertificateRoleCheck",
+          "name": "CertificateRoleCheck",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -79,13 +83,16 @@
         },
         {
           "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
-          "name" : "OAuth2ResourceServerFilter-OB",
-          "type" : "OAuth2ResourceServerFilter",
-          "config" : {
-            "scopes" : [ "accounts", "openid" ],
-            "requireHttps" : false,
-            "realm" : "OpenIG",
-            "accessTokenResolver" : {
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "accounts",
+              "openid"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
               "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
@@ -116,22 +123,30 @@
         },
         {
           "comment": "Check consent authorised via AM authz policy",
-          "name" : "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type" : "PolicyEnforcementFilter",
-          "config" : {
-            "pepRealm" : "/&{am.realm}",
-            "application" : "Open Banking",
-            "claimsSubject" : {
+          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
+          "type": "PolicyEnforcementFilter",
+          "config": {
+            "pepRealm": "/&{am.realm}",
+            "application": "Open Banking",
+            "claimsSubject": {
               "sub": "${contexts.oauth2.accessToken.info.sub}",
               "intent_type": "aisp"
             },
             "environment": {
-              "sub": [ "${contexts.oauth2.accessToken.info.sub}" ],
-              "tpp_client_id" : [ "${contexts.oauth2.accessToken.info.aud}" ],
-              "tpp_cert_id" : [ "${attributes.tppId}" ],
-              "intent_id": [ "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}" ]
+              "sub": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "tpp_client_id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "tpp_cert_id": [
+                "${attributes.tppId}"
+              ],
+              "intent_id": [
+                "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}"
+              ]
             },
-            "amService" : "AmService-OBIE",
+            "amService": "AmService-OBIE",
             "failureHandler": {
               "type": "ScriptableHandler",
               "config": {
@@ -172,18 +187,23 @@
         },
         {
           "comment": "Add host header for downstream resource server",
-          "name" : "HeaderFilter-ChangeHostToRS",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "REQUEST",
-            "remove" : [ "host", "X-Forwarded-Host" ],
-            "add" : {
-              "X-Forwarded-Host" : [ "rs.dev.forgerock.financial" ]
+          "name": "HeaderFilter-ChangeHostToRS",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "rs.dev.forgerock.financial"
+              ]
             }
           }
         }
       ],
-      "handler" : "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
 }

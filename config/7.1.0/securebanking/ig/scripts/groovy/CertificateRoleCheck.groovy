@@ -2,8 +2,10 @@ import org.forgerock.http.protocol.*
 import org.forgerock.json.jose.*
 
 // Check transport certificate for roles appropriate to request
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[CertificateRoleCheck] (" + fapiInteractionId + ") - ";
 
-SCRIPT_NAME = "[CertificateRoleCheck] - "
 logger.debug(SCRIPT_NAME + "Running...")
 
 logger.debug(SCRIPT_NAME + "Checking certificate roles for {} request",routeArgRole)

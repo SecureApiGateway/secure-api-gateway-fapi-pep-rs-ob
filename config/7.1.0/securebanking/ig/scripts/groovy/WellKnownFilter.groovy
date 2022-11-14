@@ -1,4 +1,7 @@
-SCRIPT_NAME = "[WellKnownFilter] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[WellKnownFilter] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 next.handle(context, request).thenOnResult(response -> {

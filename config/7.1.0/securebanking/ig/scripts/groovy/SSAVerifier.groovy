@@ -4,7 +4,10 @@ import java.net.URI;
 import java.security.SignatureException
 import static org.forgerock.util.promise.Promises.newResultPromise
 
-SCRIPT_NAME = "[SSAVerifier] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[SSAVerifier] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 

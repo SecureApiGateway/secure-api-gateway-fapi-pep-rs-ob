@@ -5,7 +5,9 @@ import java.security.*;
 import java.security.cert.X509Certificate
 import java.io.StringWriter;
 
-SCRIPT_NAME = "[JwkmsGetTlsCert] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[JwkmsGetTlsCert] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def getTlsKey(jwks) {

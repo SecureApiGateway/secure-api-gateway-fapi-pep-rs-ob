@@ -1,6 +1,8 @@
 import groovy.json.JsonOutput
 
-SCRIPT_NAME = "[RepoApiClient] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[RepoApiClient] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 // Fetch the API Client from IDM

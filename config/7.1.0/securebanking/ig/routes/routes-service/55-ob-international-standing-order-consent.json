@@ -7,6 +7,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
@@ -207,7 +208,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
-} 
+}

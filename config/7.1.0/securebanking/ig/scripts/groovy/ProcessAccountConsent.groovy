@@ -8,7 +8,9 @@ import java.util.UUID
  * Output: IDM create object
  */
 
-SCRIPT_NAME = "[ProcessAccountConsent] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ProcessAccountConsent] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def oauth2ClientId = contexts.oauth2.accessToken.info.client_id

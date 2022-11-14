@@ -8,6 +8,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Enforce response content type as application/json",
           "name": "HeaderFilter-AddResponseHeaders",
@@ -15,7 +16,8 @@
           "config": {
             "messageType": "REQUEST",
             "remove": [
-              "Content-Type"
+              "Content-Type",
+              "X-Request-ID"
             ],
             "add": {
               "Content-Type": [
@@ -87,13 +89,18 @@
         },
         {
           "comment": "Set Host header for downstream",
-          "name" : "HeaderFilter-ChangeHostToIAM",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "REQUEST",
-            "remove" : [ "host", "X-Forwarded-Host" ],
-            "add" : {
-              "X-Forwarded-Host" : [ "&{identity.platform.fqdn}" ]
+          "name": "HeaderFilter-ChangeHostToIAM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "&{identity.platform.fqdn}"
+              ]
             }
           }
         },
@@ -120,7 +127,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
 }

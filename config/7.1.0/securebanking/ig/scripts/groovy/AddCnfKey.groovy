@@ -1,6 +1,9 @@
 import java.util.Base64
 
-SCRIPT_NAME = "[AddCnfKey] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[AddCnfKey] (" + fapiInteractionId + ") - "
 logger.debug(SCRIPT_NAME + "Running...")
 def cnfKey = "{ \"x5t#S256\" : \"" + attributes._ig_client_certificate_thumbprint__ + "\" }"
 

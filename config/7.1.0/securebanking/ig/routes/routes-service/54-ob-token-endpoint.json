@@ -1,13 +1,14 @@
 {
   "comment": "Authorise access to token endpoint",
-  "name" : "54 - Open Banking OAuth2 token endpoint",
+  "name": "54 - Open Banking OAuth2 token endpoint",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{identity.platform.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Ensure Open Banking compliant response",
           "name": "ObResponseCheck",
@@ -51,7 +52,7 @@
         },
         {
           "comment": "Add the extracted cert thumbprint to the token request",
-          "name" : "AddCnf",
+          "name": "AddCnf",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -74,7 +75,7 @@
         },
         {
           "comment": "Add gateway access token to downstream request",
-          "name" : "AddGatewayAuthorization",
+          "name": "AddGatewayAuthorization",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -82,7 +83,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
-} 
+}

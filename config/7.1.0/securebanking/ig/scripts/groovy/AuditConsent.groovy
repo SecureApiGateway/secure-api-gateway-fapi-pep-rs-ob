@@ -1,6 +1,12 @@
 import static org.forgerock.json.resource.Requests.newCreateRequest;
 import static org.forgerock.json.resource.ResourcePath.resourcePath;
 
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[AuditConsent] (" + fapiInteractionId + ") - "
+
+logger.debug(SCRIPT_NAME + "Running...")
+
 // Helper functions
 def String transactionId() {
   return contexts.transactionId.transactionId.value;

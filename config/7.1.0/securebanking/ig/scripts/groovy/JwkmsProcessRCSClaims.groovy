@@ -3,7 +3,11 @@ import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import org.forgerock.json.JsonValueFunctions.*
 
-SCRIPT_NAME = "[JwkmsProcessRCSClaims] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[JwkmsProcessRCSClaims] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 logger.debug(SCRIPT_NAME + "Signing claims as RCS")

@@ -17,7 +17,9 @@ import static org.forgerock.util.promise.Promises.newResultPromise
  * Output: Verified OIDC registration JSON
  */
 
-SCRIPT_NAME = "[ProcessRegistration] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[ProcessRegistration] (" + fapiInteractionId + ") - "
 logger.debug(SCRIPT_NAME + "Running...")
 
 def errorResponse(httpCode, message) {

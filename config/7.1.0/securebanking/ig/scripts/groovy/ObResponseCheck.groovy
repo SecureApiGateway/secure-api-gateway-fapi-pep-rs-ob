@@ -16,7 +16,9 @@ import groovy.json.JsonSlurper
  * If HTTP error response with no OB error in shared state, set response body to generic OB error
  */
 
-SCRIPT_NAME = "[ObResponseCheck] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ObResponseCheck] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 String HEADER_INTERACTION_ID = "x-fapi-interaction-id"

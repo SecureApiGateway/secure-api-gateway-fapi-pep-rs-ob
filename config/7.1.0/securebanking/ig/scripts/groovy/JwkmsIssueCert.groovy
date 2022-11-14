@@ -45,7 +45,11 @@ QC_STATEMENTS_QWAC  = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAzAJBgcEAIvsS
 QC_STATEMENTS_QSEAL = "MIHLMAgGBgQAjkYBATATBgYEAI5GAQYwCQYHBACORgEGAjAJBgcEAIvsSQECMIGeBgYEAIGYJwIwgZMwajApBgcEAIGYJwEEDB5DYXJkIEJhc2VkIFBheW1lbnQgSW5zdHJ1bWVudHMwHgYHBACBmCcBAwwTQWNjb3VudCBJbmZvcm1hdGlvbjAdBgcEAIGYJwECDBJQYXltZW50IEluaXRpYXRpb24MHUZvcmdlUm9jayBGaW5hbmNpYWwgQXV0aG9yaXR5DAZHQi1GRkE="
 BC_PROVIDER = "BC";
 KEY_ALGORITHM = "RSA";
-SCRIPT_NAME = "[JwkmsIssueCert] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[JwkmsIssueCert] (" + fapiInteractionId + ") - ";
+
 enum EidasCertType{
     SEAL, WAC
 }

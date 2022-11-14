@@ -12,7 +12,9 @@ import static org.forgerock.util.promise.Promises.newResultPromise
 // TODO: handle IDM error response - pass back to caller?
 // TODO: handle AM bad response - reformat to OB
 
-SCRIPT_NAME = "[CreateApiClient] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[CreateApiClient] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def errorResponse(httpCode, message) {

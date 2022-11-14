@@ -6,7 +6,10 @@ import java.text.SimpleDateFormat
  * Output: IDM create object
  */
 
-SCRIPT_NAME = "[ProcessPaymentConsent] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ProcessPaymentConsent] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 def apiClientId = contexts.oauth2.accessToken.info.client_id

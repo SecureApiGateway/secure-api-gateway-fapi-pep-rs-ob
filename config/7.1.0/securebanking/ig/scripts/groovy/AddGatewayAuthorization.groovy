@@ -7,7 +7,10 @@
  *
  */
 
-SCRIPT_NAME = "[AddGatewayAuthorization] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[AddGatewayAuthorization] (" + fapiInteractionId + ") - "
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 def authHeader = request.getHeaders().getFirst("Authorization");

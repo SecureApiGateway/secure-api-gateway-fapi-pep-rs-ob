@@ -1,7 +1,8 @@
 import org.joda.time.DateTime;
 
-
-SCRIPT_NAME = "[ScheduledPaymentExecutionTimeVerification] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ScheduledPaymentExecutionTimeVerification] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def method = request.method

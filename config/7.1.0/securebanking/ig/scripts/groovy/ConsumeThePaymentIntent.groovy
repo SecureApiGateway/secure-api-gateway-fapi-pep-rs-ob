@@ -1,6 +1,9 @@
 import groovy.json.JsonOutput
 
-SCRIPT_NAME = "[ConsumeThePaymentIntent] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[ConsumeThePaymentIntent] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 /**

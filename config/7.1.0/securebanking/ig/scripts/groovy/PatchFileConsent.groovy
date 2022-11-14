@@ -3,8 +3,9 @@ import org.forgerock.json.jose.*
 import groovy.json.JsonOutput
 
 // Start script processing area
-
-SCRIPT_NAME = "[PatchFileConsent] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[PatchFileConsent] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def splitUri = request.uri.path.split("/")

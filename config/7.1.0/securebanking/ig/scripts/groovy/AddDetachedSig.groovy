@@ -16,7 +16,10 @@ import org.forgerock.http.protocol.Status
  *
  */
 
-SCRIPT_NAME = "[AddDetachedSig] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[AddDetachedSig] (" + fapiInteractionId + ") - "
+
 IAT_CRIT_CLAIM = "http://openbanking.org.uk/iat"
 ISS_CRIT_CLAIM = "http://openbanking.org.uk/iss"
 TAN_CRIT_CLAIM = "http://openbanking.org.uk/tan"

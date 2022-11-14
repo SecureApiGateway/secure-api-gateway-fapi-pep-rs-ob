@@ -20,7 +20,10 @@ import com.nimbusds.jose.jwk.JWKSet
 
 import groovy.json.JsonOutput
 
-SCRIPT_NAME = "[JwkmsSignClientClaims] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[JwkmsSignClientClaims] (" + fapiInteractionId + ") - ";
+
 logger.debug(SCRIPT_NAME + "Running...")
 
 logger.debug(SCRIPT_NAME + "Signing claims as ApiClient")

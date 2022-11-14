@@ -1,7 +1,9 @@
 import groovy.json.JsonOutput
 import java.text.SimpleDateFormat
 
-SCRIPT_NAME = "[RepoConsent] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[RepoConsent] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def buildPatchRequest(incomingRequest, intentType) {

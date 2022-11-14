@@ -1,4 +1,7 @@
-SCRIPT_NAME = "[TranslateAccountsResource] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[TranslateAccountsResource] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 String[] grantedAccounts = contexts.policyDecision.attributes.grantedAccounts

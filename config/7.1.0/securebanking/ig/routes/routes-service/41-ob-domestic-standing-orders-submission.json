@@ -12,6 +12,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Change the payment intent status to Consumed",
           "name": "ConsumeThePaymentIntent",
@@ -96,7 +97,8 @@
           "type": "OAuth2ResourceServerFilter",
           "config": {
             "scopes": [
-              "payments", "openid"
+              "payments",
+              "openid"
             ],
             "requireHttps": false,
             "realm": "OpenIG",
@@ -293,7 +295,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
 }

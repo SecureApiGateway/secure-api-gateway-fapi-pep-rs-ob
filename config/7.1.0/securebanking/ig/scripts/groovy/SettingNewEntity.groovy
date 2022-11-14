@@ -1,4 +1,7 @@
-SCRIPT_NAME = "[SettingNewEntity] - "
+
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[SettingNewEntity] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 def newEntity = request.getEntity().getString().replace('grant_type=client_credentials','grant_type=password&username=' + userId + '&password=' + java.net.URLEncoder.encode(password, 'UTF-8'))

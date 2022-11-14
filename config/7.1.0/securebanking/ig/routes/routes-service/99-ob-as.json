@@ -1,27 +1,33 @@
 {
   "comment": "Passthrough for any unprotected AM endpoints",
-  "name" : "99 - OBIE AS General",
+  "name": "99 - OBIE AS General",
   "auditService": "AuditService-OB-Route",
-  "baseURI" : "https://&{identity.platform.fqdn}",
-  "condition" : "${matches(request.uri.path, '^/am')}",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/am')}",
   "handler": {
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Add host header to downstream request",
-          "name" : "HeaderFilter-ChangeHostToIAM",
-          "type" : "HeaderFilter",
-          "config" : {
-            "messageType" : "REQUEST",
-            "remove" : [ "host", "X-Forwarded-Host" ],
-            "add" : {
-              "X-Forwarded-Host" : [ "&{ig.fqdn}" ]
+          "name": "HeaderFilter-ChangeHostToIAM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "&{ig.fqdn}"
+              ]
             }
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
-} 
+}

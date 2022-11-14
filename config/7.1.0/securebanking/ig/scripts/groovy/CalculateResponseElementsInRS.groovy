@@ -1,7 +1,10 @@
 import org.forgerock.http.protocol.*
 import org.forgerock.json.jose.*
 
-SCRIPT_NAME = "[CalculateResponseElementsInRS] - "
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
+SCRIPT_NAME = "[CalculateResponseElementsInRS] (" + fapiInteractionId + ") - "
+
 logger.debug(SCRIPT_NAME + "Running...")
 def method = request.method
 

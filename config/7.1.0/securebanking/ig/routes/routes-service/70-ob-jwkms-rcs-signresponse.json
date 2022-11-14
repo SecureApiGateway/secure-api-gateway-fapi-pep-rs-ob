@@ -1,8 +1,8 @@
 {
   "comment": "70 - Signing service for Remote Consent service, used to sign responses with RCS registered key",
-  "name" : "70 - OB JWKMS",
+  "name": "70 - OB JWKMS",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
+  "condition": "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
   "heap": [
     {
       "name": "SecretKeyPropertyFormat-RCS",
@@ -16,10 +16,12 @@
       "name": "SystemAndEnvSecretStore-RCS",
       "type": "SystemAndEnvSecretStore",
       "config": {
-        "mappings": [{
-          "secretId": "ig.rcs.secret",
-          "format": "SecretKeyPropertyFormat-RCS"
-        }]
+        "mappings": [
+          {
+            "secretId": "ig.rcs.secret",
+            "format": "SecretKeyPropertyFormat-RCS"
+          }
+        ]
       }
     }
   ],
@@ -27,6 +29,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Prepare JWT payload",
           "name": "JwkmsProcessRequest",

@@ -12,6 +12,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
@@ -83,7 +84,8 @@
           "type": "OAuth2ResourceServerFilter",
           "config": {
             "scopes": [
-              "payments", "openid"
+              "payments",
+              "openid"
             ],
             "requireHttps": false,
             "realm": "OpenIG",
@@ -220,7 +222,7 @@
           }
         }
       ],
-      "handler": "ReverseProxyHandler"
+      "handler": "SBATReverseProxyHandler"
     }
   }
 }

@@ -69,18 +69,57 @@
       "name" : "ForgeRockClientHandler",
       "type" : "Chain",
       "config" : {
-        "filters" : [ "TransactionIdOutboundFilter" ],
+        "filters" : [ 
+          "TransactionIdOutboundFilter"
+       ],
         "handler" : "ClientHandler"
       },
       "capture" : [ "response", "request" ]
     },
+    {
+      "name": "SBATFapiInteractionFilterChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",
+      "config" : {
+        "filters": [
+          {
+            "comment": "Add x-fapi-interaction-id header if one was not present in the request",
+            "name": "FapiInteractionIdFilter",
+            "type": "FapiInteractionIdFilter"
+          },
+          {
+            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext",
+            "name": "FapiTransactionIdFilter-1",
+            "type": "ScriptableFilter",
+            "config": {
+              "type": "application/x-groovy",
+              "file": "FapiTransactionIdFilter.groovy"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SBATReverseProxyHandler",
+      "type": "Chain",
+      "capture": [
+        "request",
+        "response"
+      ],
+      "config": {
+        "filters" : [ 
+          "TransactionIdOutboundFilter"
+       ],
+        "handler" : "ReverseProxyHandler"
+      }
+    },    
     {
       "name" : "AmService-OBIE",
       "type" : "AmService",
       "config" : {
         "url" : "https://&{identity.platform.fqdn}/am",
         "realm" : "/&{am.realm}",
-        "version" : "6.5.1",
+        "version" : "7.2.0",
         "agent" : {
           "username" : "ig-agent",
           "passwordSecretId" : "ig.agent.password"

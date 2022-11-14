@@ -2,8 +2,10 @@
  * The script validates if the current request entity contains a valid value for the Frequency field.
  * The frequency field should be found under this hierarchy in the request JSON payload: Data.Initiation.Frequency
  */
+def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
+if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+SCRIPT_NAME = "[CheckFrequencyValue] (" + fapiInteractionId + ") - ";
 
-SCRIPT_NAME = "[CheckFrequencyValue] - "
 FREQUENCY_REGEX = "^(EvryDay)\$|^(EvryWorkgDay)\$|^(IntrvlWkDay:0[1-9]:0[1-7])\$|^(WkInMnthDay:0[1-5]:0[1-7])\$|^(IntrvlMnthDay:(0[1-6]|12|24):(-0[1-5]|0[1-9]|[12][0-9]|3[01]))\$|^(QtrDay:(ENGLISH|SCOTTISH|RECEIVED))\$"
 logger.debug(SCRIPT_NAME + "Running...")
 

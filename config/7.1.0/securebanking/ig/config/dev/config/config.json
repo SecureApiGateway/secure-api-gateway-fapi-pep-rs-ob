@@ -100,7 +100,8 @@
       }
     },
     {
-      "name": "SBATReverseProxyHandler",
+      "name": "SBATReverseProxyHandlerIdentityPlatform",
+      "comment": "ReverseProxyHandler for calls to Identity Platform services (AM or IDM)",
       "type": "Chain",
       "capture": [
         "request",
@@ -112,7 +113,35 @@
        ],
         "handler" : "ReverseProxyHandler"
       }
-    },    
+    },
+    {
+      "name": "SBATReverseProxyHandlerRs",
+      "comment": "ReverseProxyHandler for calls to the SBAT RS",
+      "type": "Chain",
+      "capture": [
+        "request",
+        "response"
+      ],
+      "config": {
+        "filters": [
+          {
+            "comment": "Add x-ob-url header (used by RS)",
+            "name": "HeaderFilter-Add-x-ob-url",
+            "type": "HeaderFilter",
+            "config": {
+              "messageType": "REQUEST",
+              "add": {
+                "x-ob-url": [
+                  "https://&{ig.fqdn}${contexts.router.remainingUri}"
+                ]
+              }
+            }
+          },
+          "TransactionIdOutboundFilter"
+        ],
+        "handler": "ReverseProxyHandler"
+      }
+    },
     {
       "name" : "AmService-OBIE",
       "type" : "AmService",

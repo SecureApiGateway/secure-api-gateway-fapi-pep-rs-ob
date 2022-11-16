@@ -10,15 +10,6 @@
       "filters": [
         "SBATFapiInteractionFilterChain",
         {
-          "comment": "Ensure Open Banking compliant response",
-          "name": "ObResponseCheck",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ObResponseCheck.groovy"
-          }
-        },
-        {
           "comment": "Add host to downstream request",
           "name": "HeaderFilter-ChangeHostToIAM",
           "type": "HeaderFilter",
@@ -83,7 +74,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandler"
+      "handler": "SBATReverseProxyHandlerIdentityPlatform"
     }
   }
 }

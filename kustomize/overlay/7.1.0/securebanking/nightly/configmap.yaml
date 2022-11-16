@@ -4,6 +4,7 @@ metadata:
   name: securebanking-platform-config
 data:
   ENVIRONMENT_TYPE: FIDC
+  BASE_FQDN: nightly.forgerock.financial
   IG_FQDN: obdemo.nightly.forgerock.financial
   RS_FQDN: rs.nightly.forgerock.financial
   RCS_FQDN: rcs.nightly.forgerock.financial

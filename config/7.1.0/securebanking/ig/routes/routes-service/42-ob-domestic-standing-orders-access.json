@@ -96,7 +96,7 @@
                   "type": "StatelessAccessTokenResolver",
                   "config": {
                     "secretsProvider": "SecretsProvider-AmJWK",
-                    "issuer": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
                     "verificationSecretId": "any.value.in.regex.format"
                   }
                 }
@@ -222,7 +222,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandler"
+      "handler": "SBATReverseProxyHandlerRs"
     }
   }
 }

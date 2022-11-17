@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: securebanking-platform-config
+data:
+  IG_FQDN: obdemo.shaunharrisonfr.forgerock.financial
+  RS_FQDN: rs.shaunharrisonfr.forgerock.financial
+  RCS_FQDN: rcs.shaunharrisonfr.forgerock.financial
+  RCS_UI_FQDN: rcs-ui.shaunharrisonfr.forgerock.financial
+  IDENTITY_PLATFORM_FQDN: iam.shaunharrisonfr.forgerock.financial

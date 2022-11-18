@@ -20,19 +20,6 @@
               "X-Forwarded-Host" : [ "&{ig.fqdn}" ]
             }
           }
-        },
-        {
-          "comment": "Update well-known config to go via IG",
-          "name": "WellKnownFilter",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "WellKnownFilter.groovy",
-            "args": {
-              "routeArgInternalUri" : "&{identity.platform.fqdn}",
-              "routeArgExternalUri" : "&{ig.fqdn}"
-            }
-          }
         }
       ],
       "handler": "SBATReverseProxyHandlerIdentityPlatform"

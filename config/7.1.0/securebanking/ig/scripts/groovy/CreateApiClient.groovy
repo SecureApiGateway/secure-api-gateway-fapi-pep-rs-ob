@@ -30,13 +30,17 @@ def method = request.method
 switch(method.toUpperCase()) {
 
   case "POST":
-    next.handle(context, request).thenOnResult(response -> {
+    next.handle(context, request).thenOnResult(amResponse -> {
+      // Skip AM error responses
+      if (!amResponse.status.isSuccessful()) {
+        return
+      }
       def error = false
 
-      def clientData = response.entity.getJson();
+      def clientData = amResponse.entity.getJson();
 
       if (!clientData) {
-        return (errorResponse(Status.BAD_REQUEST, "No registration data in response"));
+        return (errorResponse(Status.BAD_REQUEST, "No registration data in amResponse"));
       }
 
       def oauth2ClientId = clientData.client_id;
@@ -57,9 +61,9 @@ switch(method.toUpperCase()) {
       def clientJwks = attributes.registrationJWTs.registrationJwks;
       def ssaLogoUri = ssaClaims.getClaim("software_logo_uri", String.class)
 
-      // response object
-      response = new Response(Status.OK)
-      response.headers['Content-Type'] = "application/json"
+      // amResponse object
+      amResponse = new Response(Status.OK)
+      amResponse.headers['Content-Type'] = "application/json"
       responseMessage = "OK"
 
       // Create the apiClient object
@@ -151,12 +155,12 @@ switch(method.toUpperCase()) {
 
       if (error) {
         logger.error(SCRIPT_NAME + responseMessage)
-        response.status = Status.INTERNAL_SERVER_ERROR
-        response.entity = "{ \"error\":\"" + responseMessage + "\"}"
-        return response
+        amResponse.status = Status.INTERNAL_SERVER_ERROR
+        amResponse.entity = "{ \"error\":\"" + responseMessage + "\"}"
+        return amResponse
       }
 
-      return response
+      return amResponse
 
     });
     break

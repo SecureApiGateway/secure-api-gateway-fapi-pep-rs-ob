@@ -47,7 +47,9 @@
             "file": "ProcessRegistration.groovy",
             "args": {
               "comment": "TODO: use env variable",
-              "routeArgObJwksHosts": "[\"keystore.openbankingtest.org.uk\"]",
+              "routeArgObJwksHosts": [
+                "keystore.openbankingtest.org.uk"
+              ],
               "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",
               "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}",
@@ -65,8 +67,8 @@
             "clientHandler": "OBClientHandler",
             "args": {
               "routeArgSSAIssuerJwksUrls": {
-                "OpenBanking Ltd": "https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks",
-                "test-publisher": "https://&{ig.fqdn}/jwkms/apiclient/jwks"
+                "OpenBanking Ltd": "${urlDecode('https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks')}",
+                "test-publisher": "${urlDecode('https://&{ig.fqdn}/jwkms/apiclient/jwks')}"
               },
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
             }

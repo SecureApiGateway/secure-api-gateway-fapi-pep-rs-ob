@@ -49,7 +49,13 @@ switch(method.toUpperCase()) {
 
         // Parse incoming registration JWT
         logger.debug(SCRIPT_NAME + "Parsing registration request");
-        def regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(),SignedJwt.class)
+        def regJwt
+        try {
+            regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(), SignedJwt.class)
+        } catch (e) {
+            logger.warn(SCRIPT_NAME + "failed to decode registration request JWT", e)
+            return errorResponseFactory.invalidClientMetadataErrorResponse("registration request object is not a valid JWT")
+        }
 
         // Pull the SSA from the reg data
 
@@ -75,7 +81,13 @@ switch(method.toUpperCase()) {
         logger.debug(SCRIPT_NAME + "Got ssa [" + ssa + "]")
         oidcRegistration.setClaim("software_statement", null);
 
-        def ssaJwt = new JwtReconstruction().reconstructJwt(ssa,SignedJwt.class)
+        def ssaJwt
+        try {
+            ssaJwt = new JwtReconstruction().reconstructJwt(ssa, SignedJwt.class)
+        } catch (e) {
+            logger.warn(SCRIPT_NAME + "failed to decode software_statement JWT", e)
+            return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_statement is not a valid JWT")
+        }
         def ssaClaims = ssaJwt.getClaimsSet();
 
         // Validate the issuer claim for the registration matches the SSA software_id

@@ -272,7 +272,7 @@ def validateEncodedPayload(String detachedSignatureValue, String jwksUri, String
     Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(jwksUri, jwsHeader);
     keyPromise.thenAsync(rsaPublicKey -> {
         logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
-        return isJwsValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader);
+        return isJwsSignatureValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader);
     }).thenCatchAsync(failedToLoadJwkEx -> {
         logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + jwksUri, failedToLoadJwkEx);
         return newResultPromise(false)
@@ -307,7 +307,7 @@ def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
  * @param jwsHeader The header of the detached signature
  * @return true if the signatures validation is successful, false otherwise
  */
-def isJwsValid(String detachedSignatureValue, RSAPublicKey rsaPublicKey, String requestPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
+def isJwsSignatureValid(String detachedSignatureValue, RSAPublicKey rsaPublicKey, String requestPayload, JWSHeader jwsHeader) throws JOSEException, ParseException {
     // Validate crit claims - If this fails stop the flow, no point in continuing with the signature validation.
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader);
     if (!criticalParamsValid) {
@@ -372,6 +372,23 @@ def validateCriticalParameters(JWSHeader jwsHeader) {
     X500Name jwtHeaderSubject = new X500Name(jwsHeader.getCustomParam(ISS_CRIT_CLAIM))
     logger.debug(SCRIPT_NAME + "Initialized jwtHeaderSubject: " + jwtHeaderSubject)
 
+    // ToDo: This looks wrong. Spec:
+    // https://openbankinguk.github.io/read-write-api-site3/v3.1.10/profiles/read-write-data-api-profile.html#step-2-form-the-jose-header
+    // This says for http://openbanking.org.uk/iss:
+    //   This must be a string that identifies the PSP.
+    //   If the issuer is using a certificate this value must match the subject of the signing certificate.
+    //   If the issuer is using a signing key lodged with a Trust Anchor, the value is defined by the Trust Anchor and should uniquely identify the PSP.
+    //   For example, when using the Open Banking Directory, the value must be:
+    //      When issued by a TPP, of the form {{org-id}}/{{software-statement-id}},
+    //      When issued by an ASPSP of the form {{org-id}}
+    //   Where:
+    //     org-id is the open-banking issued organization id
+    //     software-statement-id is the open-banking issued software-statement-id 
+    // 
+    // So, there are two issues here. 
+    // 1. First, the cert we are checking here is the Transport cert, and it should be the signing cert.
+    // 2. The expected value here should be of the form {{org-id}}/{{software-statement-id}} as this jwt was issued
+    //    by the TPP.
     X500Name routeSubjectDn = new X500Name(attributes.clientCertificate.subjectDN.toString())
     logger.debug(SCRIPT_NAME + "Initialized routeSubjectDn: " + routeSubjectDn)
 

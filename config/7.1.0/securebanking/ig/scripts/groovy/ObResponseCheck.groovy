@@ -91,28 +91,7 @@ static isObCompliantError(responseBody) {
   return false
 }
 
-void bounceBackHeader(Request req, Response rsp, String headerName, boolean createIfAbsent) {
-  String val = null
-  inboundValues = req.headers.get(headerName)
-  if (inboundValues == null && createIfAbsent) {
-    logger.debug(SCRIPT_NAME + "No inbound header value - creating one")
-    val = UUID.randomUUID().toString();
-  }
-  else {
-    val = inboundValues.firstValue;
-  }
-
-  if (val) {
-    rsp.headers.add(headerName, val)
-  }
-
-}
-
 next.handle(context, request).thenOnResult({response ->
-
-  // Check for FAPI interaction ID
-
-  bounceBackHeader(request,response,HEADER_INTERACTION_ID,true)
 
   // Check for OB compliant error response
 

@@ -30,6 +30,10 @@ class ErrorResponseFactory {
         return errorResponse(Status.BAD_REQUEST, "invalid_software_statement", errorMessage)
     }
 
+    def invalidRedirectUriErrorResponse(errorMessage) {
+        return errorResponse(Status.BAD_REQUEST, "invalid_redirect_uri", errorMessage)
+    }
+
     def errorResponse(httpCode, errorMessage) {
         return errorResponse(httpCode, null, errorMessage)
     }

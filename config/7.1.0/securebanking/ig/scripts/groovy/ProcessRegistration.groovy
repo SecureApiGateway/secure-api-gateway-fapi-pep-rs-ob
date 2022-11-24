@@ -57,8 +57,6 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("registration request object is not a valid JWT")
         }
 
-        // Pull the SSA from the reg data
-
         def oidcRegistration = regJwt.getClaimsSet()
 
         // Valid exp claim
@@ -89,6 +87,13 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_statement is not a valid JWT")
         }
         def ssaClaims = ssaJwt.getClaimsSet();
+
+        try {
+            validateRegistrationRedirectUris(oidcRegistration, ssaClaims)
+        } catch (e) {
+            logger.warn(SCRIPT_NAME + "failed to validate redirect_uris", e)
+            return errorResponseFactory.invalidRedirectUriErrorResponse(e.getMessage())
+        }
 
         // Validate the issuer claim for the registration matches the SSA software_id
         // NOTE: At this stage we do not know if the SSA is valid, it is assumed the SSAVerifier filter will run after
@@ -300,5 +305,44 @@ private boolean validateRegistrationJwtSignature(jwt, jwkSet) {
     } catch (SignatureException se) {
         logger.warn(SCRIPT_NAME + "jwt signature validation failed", se)
         return false
+    }
+}
+
+/**
+ * Validate the redirect_uris claim in the registration request is valid as per the OB DCR spec:
+ * https://openbankinguk.github.io/dcr-docs-pub/v3.2/dynamic-client-registration.html
+ */
+private void validateRegistrationRedirectUris(oidcRegistration, ssaClaims) {
+    def regRedirectUris = oidcRegistration.getClaim("redirect_uris")
+    def ssaRedirectUris = ssaClaims.getClaim("software_redirect_uris")
+    if (!ssaRedirectUris || ssaRedirectUris.size() == 0) {
+        throw new IllegalStateException("software_statement must contain redirect_uris")
+    }
+    // If no redirect_uris supplied in registration request, use all of the uris defined in software_redirect_uris
+    if (!regRedirectUris || regRedirectUris.size() == 0) {
+        oidcRegistration.setClaim("redirect_uris", ssaRedirectUris)
+    } else {
+        // validate registration redirects are the same as, or a subset of, software_redirect_uris
+        if (regRedirectUris.size() > ssaRedirectUris.size()) {
+            throw new IllegalStateException("invalid registration request redirect_uris value, must match or be a subset of the software_redirect_uris")
+        } else {
+            for (regRedirect in regRedirectUris) {
+                def redirectUrl
+                try {
+                    redirectUrl = new URL(regRedirect)
+                } catch (e) {
+                    throw new IllegalStateException("invalid registration request redirect_uris value: " + regRedirect + " is not a valid URI")
+                }
+                if (!"https".equals(redirectUrl.getProtocol())) {
+                    throw new IllegalStateException("invalid registration request redirect_uris value: " + regRedirect + " must use https")
+                }
+                if ("localhost".equals(redirectUrl.getHost())) {
+                    throw new IllegalStateException("invalid registration request redirect_uris value: " + regRedirect + " must not point to localhost")
+                }
+                if (!ssaRedirectUris.contains(regRedirect)) {
+                    throw new IllegalStateException("invalid registration request redirect_uris value, must match or be a subset of the software_redirect_uris")
+                }
+            }
+        }
     }
 }

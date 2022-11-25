@@ -180,7 +180,12 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
                     return newResultPromise(getErrorResponse())
                 }
 
-                attributes.put("amount", intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
+                if (intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount != null && intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount != null) {
+                    attributes.put("amount", intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
+                } else {
+                    // For VRP, checking the max individual amount to confirm the debtor accounts has funds for the maximum amount possible for the payment
+                    attributes.put("amount", intentResponseObject.OBIntentObject.Data.ControlParameters.MaximumIndividualAmount.Amount)
+                }
                 logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
 
                 attributes.put("version", splitUri[2])

@@ -13,7 +13,7 @@ import static org.forgerock.util.promise.Promises.newResultPromise
  * New apiClient and apiClientOrg objects are created in IDM when a new DCR has been completed. Note, the apiClientOrg
  * may already exist, in which case only the apiClient is created. In both cases, the apiClient is linked to the apiClientOrg
  *
- * Get and Delete operations are also supported for existing IDM apiClient objects
+ * Get, Put, Delete operations are also supported for existing IDM apiClient objects
  */
 
 /**
@@ -39,10 +39,11 @@ def errorResponse(httpCode, message) {
 def method = request.method
 
 switch(method.toUpperCase()) {
-
+  // Create or Update a DCR, which requires us to Create or Update ApiClient data in IDM
   case "POST":
+  case "PUT":
     return next.handle(context, request).thenAsync(amResponse -> {
-      // Do not create ApiClient if AM did not successfully process the registration
+      // Do not create or update ApiClient if AM did not successfully process the registration
       if (!amResponse.status.isSuccessful()) {
         return newResultPromise(amResponse)
       }
@@ -63,30 +64,40 @@ switch(method.toUpperCase()) {
         return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Missing request data"))
       }
 
-      def ssaJwt = attributes.registrationJWTs.ssaJwt
       def oauth2ClientId = amResponse.entity.getJson().client_id
       if (!oauth2ClientId) {
         logger.error(SCRIPT_NAME + "Required client_id field not found in AM registration response")
         return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to get client_id"))
       }
-      def ssaClaims = ssaJwt.getClaimsSet()
-      def organisationName = ssaClaims.getClaim("org_name")
-      def organisationIdentifier = ssaClaims.getClaim("org_id")
-      def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(organisationIdentifier, organisationName)
+      def ssaClaims = attributes.registrationJWTs.ssaJwt.getClaimsSet()
       def apiClientIdmObject = buildApiClientIdmObject(oauth2ClientId, ssaClaims)
+      def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(ssaClaims)
 
       return createApiClientOrganisation(apiClientOrgIdmObject).thenAsync(createApiClientOrgResponse -> {
         if (!createApiClientOrgResponse.status.isSuccessful()) {
           return newResultPromise(createApiClientOrgResponse)
         }
-        return createApiClient(apiClientIdmObject).then(createApiClientResponse -> {
-          if (!createApiClientResponse.status.isSuccessful()) {
-            return createApiClientResponse
-          } else {
-            // Return the original AM success response if we created the IDM objects
-            return amResponse
-          }
-        })
+        // POST creates new DCR and therefore must create apiClient in IDM
+        if ("POST".equals(method)) {
+          return createApiClient(apiClientIdmObject).then(createApiClientResponse -> {
+            if (!createApiClientResponse.status.isSuccessful()) {
+              return createApiClientResponse
+            } else {
+              // Return the original AM success response if we created the IDM objects
+              return amResponse
+            }
+          })
+        } else {
+          // Updating a DCR, update apiClient data in IDM
+          return updateApiClient(apiClientIdmObject).then(updateApiClientResponse -> {
+            if (!updateApiClientResponse.status.isSuccessful()) {
+              return updateApiClientResponse
+            } else {
+              // Return the original AM success response if we updated the IDM objects
+              return amResponse
+            }
+          })
+        }
       })
     })
   case "DELETE":
@@ -159,7 +170,9 @@ def buildApiClientIdmObject(oauth2ClientId, ssaClaims) {
   return apiClientIdmObj
 }
 
-def buildApiClientOrganisationIdmObject(organisationIdentifier, organisationName) {
+def buildApiClientOrganisationIdmObject(ssaClaims) {
+  def organisationName = ssaClaims.getClaim("org_name")
+  def organisationIdentifier = ssaClaims.getClaim("org_id")
   return [
           "_id" : organisationIdentifier,
           "id"  : organisationIdentifier,
@@ -198,6 +211,23 @@ def createApiClient(apiClientIdmObject) {
       return new Response(Status.INTERNAL_SERVER_ERROR)
     } else {
       logger.debug(SCRIPT_NAME + "successfully created apiClient")
+      return apiClientResponse
+    }
+  })
+}
+
+def updateApiClient(apiClientIdmObject) {
+  Request apiClientRequest = new Request()
+  apiClientRequest.setMethod('PUT')
+  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientIdmObject["_id"])
+  apiClientRequest.setEntity(apiClientIdmObject)
+  logger.debug(SCRIPT_NAME + "Attempting to update {} _id: {} in IDM", routeArgObjApiClient, apiClientIdmObject["_id"])
+  return http.send(apiClientRequest).then(apiClientResponse -> {
+    if (!apiClientResponse.status.isSuccessful()) {
+      logger.error(SCRIPT_NAME + "unexpected IDM response when attempting to update {}, status: {}, entity: {}", routeArgObjApiClient, apiClientResponse.status, apiClientResponse.entity)
+      return new Response(Status.INTERNAL_SERVER_ERROR)
+    } else {
+      logger.debug(SCRIPT_NAME + "successfully updated apiClient")
       return apiClientResponse
     }
   })

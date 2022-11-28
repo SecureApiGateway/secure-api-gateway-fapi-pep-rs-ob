@@ -53,7 +53,8 @@
               "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",
               "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}",
-              "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
+              "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",
+              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}"
             }
           }
         },

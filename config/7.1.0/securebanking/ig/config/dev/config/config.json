@@ -2,6 +2,9 @@
   "properties": {
     "security": {
       "allowIgIssuedTestCerts": true
+    },
+    "oauth2": {
+      "tokenEndpointAuthMethodsSupported": ["private_key_jwt"]
     }
   },
   "handler": "_router",

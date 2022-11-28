@@ -10,6 +10,18 @@
       "filters": [
         "SBATFapiInteractionFilterChain",
         {
+          "comment": "Update AS well-known config returned by AM",
+          "name": "ASWellKnownFilter",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ASWellKnownFilter.groovy",
+            "args": {
+              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}"
+            }
+          }
+        },
+        {
           "comment": "Set downstream Host header",
           "name" : "HeaderFilter-ChangeHostToIAM",
           "type" : "HeaderFilter",

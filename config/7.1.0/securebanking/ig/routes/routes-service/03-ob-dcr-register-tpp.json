@@ -39,6 +39,16 @@
           }
         },
         {
+          "comment": "Validate that the request will result in an OAuth2 client that is FAPI compliant",
+          "name": "FAPIAdvancedDCRValidationFilter",
+          "type": "FAPIAdvancedDCRValidationFilter",
+          "config": {
+            "clientTlsCertHeader": "ssl-client-cert",
+            "supportedSigningAlgorithms": ["PS256"],
+            "supportedTokenEndpointAuthMethods": ["tls_client_auth", "private_key_jwt"]
+          }
+        },
+        {
           "comment": "Pre process registration request",
           "name": "ProcessRegistration",
           "type": "ScriptableFilter",

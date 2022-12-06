@@ -39,7 +39,7 @@
     </licenses>
 
     <modules>
-        <module>securebanking-openbanking-uk-gateway-jwks</module>
+        <module>secure-api-gateway-ig-extensions</module>
     </modules>
 
     <properties>

@@ -1,0 +1,42 @@
+{
+  "comment": "Ensure FAPI compliant authorize requests",
+  "name": "04 - Open Banking Authorize endpoint",
+  "auditService": "AuditService-OB-Route",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${matches(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/authorize')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "comment": "Add host to downstream request",
+          "name": "HeaderFilter-ChangeHostToIAM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "&{ig.fqdn}"
+              ]
+            }
+          }
+        },
+        {
+          "comment": "Ensure authorize request object is FAPI compliant",
+          "name": "FapiAuthorizeRequestFilter",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "FapiCompliantAuthorizeRequestFilter.groovy"
+          }
+        }        
+      ],
+      "handler": "SBATReverseProxyHandlerIdentityPlatform"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "comment": "Passthrough for any unprotected AM endpoints",
+  "comment": "Passthrough for any unprotected AM endpoints (such as the XUI)",
   "name": "99 - OBIE AS General",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
@@ -27,7 +27,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandlerIdentityPlatform"
+      "handler": "SBATReverseProxyHandlerIdentityPlatformNoCapture"
     }
   }
 }

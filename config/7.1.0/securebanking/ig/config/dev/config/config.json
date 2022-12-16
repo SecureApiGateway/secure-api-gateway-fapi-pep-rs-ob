@@ -5,6 +5,12 @@
     },
     "oauth2": {
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt"]
+    },
+    "vertxConfig": {
+      "maxHeaderSize": 16384,
+      "initialSettings": {
+        "maxHeaderListSize": 16384
+      }
     }
   },
   "handler": "_router",
@@ -62,12 +68,18 @@
       "capture": [
         "request",
         "response"
-      ]
+      ],
+      "config": {
+        "vertx": "${vertxConfig}"
+      }
     },
     {
       "name": "ReverseProxyHandlerNoCapture",
       "type": "ReverseProxyHandler",
-      "comment": "ReverseProxyHandler with no capture decorator configuration"
+      "comment": "ReverseProxyHandler with no capture decorator configuration",
+      "config": {
+        "vertx": "${vertxConfig}"
+      }
     },
     {
       "name": "JwtSession",

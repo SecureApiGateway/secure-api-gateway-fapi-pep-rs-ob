@@ -6,6 +6,9 @@
     "oauth2": {
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt"]
     },
+    "urls": {
+      "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient"
+    },
     "vertxConfig": {
       "maxHeaderSize": 16384,
       "initialSettings": {

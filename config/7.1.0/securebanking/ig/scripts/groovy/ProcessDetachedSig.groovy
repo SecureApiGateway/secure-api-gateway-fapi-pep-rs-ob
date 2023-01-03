@@ -102,28 +102,11 @@ String jwsHeaderDecoded = new String(jwsHeaderEncoded.decodeBase64Url())
 logger.debug(SCRIPT_NAME + "Got JWT header: " + jwsHeaderDecoded)
 def jwsHeaderDataStructure = new JsonSlurper().parseText(jwsHeaderDecoded)
 
-//Get the API client from the oauth2 token context. This will be used to query the IDM API client managed object.
-def tppClientId
-if (routeArgClientIdFieldName == "client_id") {
-    tppClientId = contexts.oauth2.accessToken.info.client_id
-} else {
-    tppClientId = contexts.oauth2.accessToken.info.aud
+def apiClient = attributes.apiClient
+if (!apiClient) {
+    logger.error(SCRIPT_NAME + "attributes.apiClient not found, ensure that filter which sets this attribute is installed prior to this filter in the chain")
+    return new Response(Status.INTERNAL_SERVER_ERROR)
 }
-
-if (tppClientId == null) {
-    // in case of client credentials grant
-    tppClientId = contexts.oauth2.accessToken.info.sub
-}
-
-if (tppClientId == null) {
-    message = "Cannot obtain TPP client id from the access token"
-    logger.error(SCRIPT_NAME + message)
-    response.status = Status.BAD_REQUEST
-    response.entity = "{ \"error\":\"" + message + "\"}"
-    return response
-}
-
-logger.debug(SCRIPT_NAME + "TPP client id: " + tppClientId)
 
 if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
     //Processing pre v3.1.4 requests
@@ -137,65 +120,11 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
         return getSignatureValidationErrorResponse()
     } else {
         String requestPayload = request.entity.getString()
-
-        Request apiClientRequest = new Request();
-        apiClientRequest.setMethod('GET');
-        apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + tppClientId)
-
-        //Get API client details in order to obtain the jwks_uri required for the signature validation
-        return http.send(apiClientRequest).thenAsync(apiClientResponse -> {
-            def responseBody = apiClientResponse.getEntity().getJson();
-            def responseStatus = apiClientResponse.getStatus();
-            logger.debug(SCRIPT_NAME + "Get API client response status: " + responseStatus)
-
-            def jwks_uri = responseBody.get("jwksUri");
-            logger.debug(SCRIPT_NAME + "API client jwks_uri: " + jwks_uri)
-
-            try {
-                logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
-
-                Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSignatureValue, jwks_uri, requestPayload)
-                return validJwsPromise.thenAsync(validJws -> {
-                    if (Boolean.FALSE.equals(validJws)) {
-                        return newResultPromise(getSignatureValidationErrorResponse())
-                    }
-                    return next.handle(context, request)
-                })
-            }
-            catch (java.lang.Exception e) {
-                logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
-                return newResultPromise(getSignatureValidationErrorResponse())
-            }
-
-            logger.debug(SCRIPT_NAME + "Detached signature verified successfully against unencoded payload!")
-            return next.handle(context, request)
-        })
-    }
-} else {
-    //Processing post v3.1.4 requests
-    if (jwsHeaderDataStructure.b64 != null) {
-        message = "B64 header not permitted in JWT header after v3.1.3"
-        logger.error(SCRIPT_NAME + message)
-        return getSignatureValidationErrorResponse()
-    }
-
-    String requestPayload = request.entity.getString()
-
-    Request apiClientRequest = new Request();
-    apiClientRequest.setMethod('GET');
-    apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + tppClientId)
-
-    //Get API client details in order to obtain the jwks_uri required for the signature validation
-    return http.send(apiClientRequest).thenAsync(apiClientResponse -> {
-        def responseBody = apiClientResponse.getEntity().getJson();
-        def responseStatus = apiClientResponse.getStatus();
-        logger.debug(SCRIPT_NAME + "Get API client response status: " + responseStatus)
-        def jwks_uri = responseBody.get("jwksUri");
+        def jwks_uri = apiClient.jwksUri
         logger.debug(SCRIPT_NAME + "API client jwks_uri: " + jwks_uri)
-
         try {
-            logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
-            Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSignatureValue, jwks_uri, requestPayload);
+            logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
+            Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSignatureValue, jwks_uri, requestPayload)
             return validJwsPromise.thenAsync(validJws -> {
                 if (Boolean.FALSE.equals(validJws)) {
                     return newResultPromise(getSignatureValidationErrorResponse())
@@ -207,9 +136,33 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
             logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
             return newResultPromise(getSignatureValidationErrorResponse())
         }
-        logger.debug(SCRIPT_NAME + "Detached signature validation was succesful with encoded payload!")
-        return next.handle(context, request)
-    })
+    }
+} else {
+    //Processing post v3.1.4 requests
+    if (jwsHeaderDataStructure.b64 != null) {
+        message = "B64 header not permitted in JWT header after v3.1.3"
+        logger.error(SCRIPT_NAME + message)
+        return getSignatureValidationErrorResponse()
+    }
+
+    String requestPayload = request.entity.getString()
+    def jwks_uri = apiClient.jwksUri
+    logger.debug(SCRIPT_NAME + "API client jwks_uri: " + jwks_uri)
+    try {
+        logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
+        Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSignatureValue, jwks_uri, requestPayload);
+        return validJwsPromise.thenAsync(validJws -> {
+            if (Boolean.FALSE.equals(validJws)) {
+                return newResultPromise(getSignatureValidationErrorResponse())
+            }
+            return next.handle(context, request)
+        })
+    }
+    catch (java.lang.Exception e) {
+        logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
+        return newResultPromise(getSignatureValidationErrorResponse())
+    }
+
 }
 
 next.handle(context, request)
@@ -231,7 +184,7 @@ next.handle(context, request)
  * @return true if signature validation is successful, false otherwise
  */
 // detachedSignatureValue, jwks_uri, requestPayload
-def validateUnencodedPayload(String detachedSignatureValue, String jwksUri, String requestPayload) {
+def validateUnencodedPayload(String detachedSignatureValue, URI jwksUri, String requestPayload) {
     Payload payload = new Payload(requestPayload);
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue, payload);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
@@ -265,7 +218,7 @@ def validateUnencodedPayload(String detachedSignatureValue, String jwksUri, Stri
  * @param requestPayload the request payload that will be encoded before validating the detached signature.
  * @return true if signature validation is successful, false otherwise
  */
-def validateEncodedPayload(String detachedSignatureValue, String jwksUri, String requestPayload) {
+def validateEncodedPayload(String detachedSignatureValue, URI jwksUri, String requestPayload) {
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
 
@@ -283,15 +236,15 @@ def validateEncodedPayload(String detachedSignatureValue, String jwksUri, String
  * Given a JWKS_URI and a JWS header, the method will load the JWKS_URI and will return the first matching public key,
  * if any are found. They key will be initialized and returned as RSAKey
  *
- * @param routeArgJwkUrl the API client JWKS_URI
+ * @param jwksUri the API client JWKS_URI
  * @param jwsHeader the JWS header for which we need to find the public key
  * @return the RSAKey that matches the kid from the JWS header given
  */
-def getRSAKeyFromJwks(String routeArgJwkUrl, JWSHeader jwsHeader) {
+def getRSAKeyFromJwks(URI jwksUri, JWSHeader jwsHeader) {
     var keyId = jwsHeader.getKeyID()
     logger.debug(SCRIPT_NAME + "Fetching key for keyId: " + keyId)
 
-    Promise<RSAPublicKey, FailedToLoadJWKException> jwkPromise = jwkSetService.getJwk(new URL(routeArgJwkUrl), keyId).then(jwk -> {
+    Promise<RSAPublicKey, FailedToLoadJWKException> jwkPromise = jwkSetService.getJwk(jwksUri.toURL(), keyId).then(jwk -> {
         return ((RsaJWK) jwk).toRSAPublicKey()
     })
     return jwkPromise

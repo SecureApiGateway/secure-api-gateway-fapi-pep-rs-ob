@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.forgerock.openig.alias.ClassAliasResolver;
 
+import com.forgerock.sapi.gateway.dcr.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
 import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
@@ -35,6 +36,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("RestJwkSetService", RestJwkSetService.class);
         ALIASES.put("RsaJwtSignatureValidator", RsaJwtSignatureValidator.class);
         ALIASES.put("TrustedDirectoriesService", TrustedDirectoryService.class);
+        ALIASES.put("FetchApiClientFilter", FetchApiClientFilter.class);
     }
 
     /**

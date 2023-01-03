@@ -1,9 +1,12 @@
+import com.forgerock.sapi.gateway.jwt.JwtUtils
 import org.forgerock.util.promise.*
 import org.forgerock.http.protocol.*
 import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.*
 import org.forgerock.json.jose.common.JwtReconstruction
+import org.forgerock.json.jose.jwt.JwtClaimsSet
 import org.forgerock.json.jose.jws.SignedJwt
+import org.forgerock.json.jose.jwt.Jwt
 import java.net.URI
 import groovy.json.JsonSlurper
 import com.forgerock.securebanking.uk.gateway.jwks.*
@@ -16,6 +19,29 @@ import static org.forgerock.util.promise.Promises.newResultPromise
  * Script to verify the registration request, and prepare AM OIDC dynamic client reg
  * Input:  Registration JWT
  * Output: Verified OIDC registration JSON
+ *
+ * Relevant specifications:
+ * https://openbankinguk.github.io/dcr-docs-pub/v3.3/dynamic-client-registration.html#data-mapping
+ * https://openid.net/specs/openid-connect-registration-1_0.html
+ * https://datatracker.ietf.org/doc/html/rfc7591
+ *
+ * NOTE: This filter should be used AFTER the FAPIAdvancedDCRValidationFilter. That filter will check that the request
+ * is fapi compliant:
+ * - validateRedirectUris
+ *   - request object must contain redirect_uris field
+ *   - redirect_uris array must not be empty
+ *   - redirect_uris contain valid URIs
+ *   - redirect_uris must use https scheme
+ * - validateResponseTypes
+ *   - request object must contain field: response_types
+ *   - response types are FAPI compliant, i.e. "code" or "code id_token"
+ *   - if response type is "code", response_mode is "jwt"
+ *   - if response type is "code id_token" then request must contain field 'scope' and scope must contain 'openid'
+ * - validateSigningAlgorithmUsed
+ *   - that the signing algorythm supported is PS256
+ * - validateTokenEndpointAuthMethods
+ *   - request object must contain field: token_endpoint_auth_method
+ *   - that token_endpoint_auth_method is a valid value, either 'private_key_jwt' or 'tls_client_auth'
  */
 
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
@@ -47,42 +73,40 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("No roles in client certificate for registration")
         }
 
-        // Parse incoming registration JWT
-        logger.debug(SCRIPT_NAME + "Parsing registration request");
-        def regJwt
-        try {
-            regJwt = new JwtReconstruction().reconstructJwt(request.entity.getString(), SignedJwt.class)
-        } catch (e) {
-            logger.warn(SCRIPT_NAME + "failed to decode registration request JWT", e)
+        Jwt regJwt = JwtUtils.getSignedJwtFromString(SCRIPT_NAME, request.entity.getString(), "registration JWT")
+        if(!regJwt){
             return errorResponseFactory.invalidClientMetadataErrorResponse("registration request object is not a valid JWT")
         }
 
-        def oidcRegistration = regJwt.getClaimsSet()
+        JwtClaimsSet registrationJwtClaimSet = regJwt.getClaimsSet()
 
-        // Valid exp claim
-        Date expirationTime = oidcRegistration.getExpirationTime()
-        if (expirationTime.before(new Date())) {
+        if (JwtUtils.hasExpired(registrationJwtClaimSet)) {
+            logger.debug(SCRIPT_NAME, "Registration request JWT has expired")
             return errorResponseFactory.invalidClientMetadataErrorResponse("registration has expired")
         }
 
-        def responseTypes = oidcRegistration.getClaim("response_types")
+
+        def responseTypes = registrationJwtClaimSet.getClaim("response_types")
         if (!responseTypes) {
-            oidcRegistration.setClaim("response_types", defaultResponseTypes)
+            registrationJwtClaimSet.setClaim("response_types", defaultResponseTypes)
         } else if (!supportedResponseTypes.contains(responseTypes)) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("response_types: " + responseTypes + " not supported")
         }
 
-        def tokenEndpointAuthMethod = oidcRegistration.getClaim("token_endpoint_auth_method")
+        def tokenEndpointAuthMethod = registrationJwtClaimSet.getClaim("token_endpoint_auth_method")
         if (!tokenEndpointAuthMethod || !tokenEndpointAuthMethodsSupported.contains(tokenEndpointAuthMethod)) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("token_endpoint_auth_method claim must be one of: " + tokenEndpointAuthMethodsSupported)
         }
 
-        def ssa = oidcRegistration.getClaim("software_statement", String.class);
+        def ssa = registrationJwtClaimSet.getClaim("software_statement", String.class);
         if (!ssa) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_statement claim is missing")
         }
         logger.debug(SCRIPT_NAME + "Got ssa [" + ssa + "]")
-        oidcRegistration.setClaim("software_statement", null);
+
+        // This is nulled down because currently the SSA issued by the Open Banking Test Directory is not valid and is
+        // rejected by AM. This is set to change when OBIE release a new version of the Directory in Feb 2023.
+        registrationJwtClaimSet.setClaim("software_statement", null);
 
         def ssaJwt
         try {
@@ -94,7 +118,7 @@ switch(method.toUpperCase()) {
         def ssaClaims = ssaJwt.getClaimsSet();
 
         try {
-            validateRegistrationRedirectUris(oidcRegistration, ssaClaims)
+            validateRegistrationRedirectUris(registrationJwtClaimSet, ssaClaims)
         } catch (e) {
             logger.warn(SCRIPT_NAME + "failed to validate redirect_uris", e)
             return errorResponseFactory.invalidRedirectUriErrorResponse(e.getMessage())
@@ -103,7 +127,7 @@ switch(method.toUpperCase()) {
         // Validate the issuer claim for the registration matches the SSA software_id
         // NOTE: At this stage we do not know if the SSA is valid, it is assumed the SSAVerifier filter will run after
         //       this filter and raise an error if the SSA is invalid.
-        def registrationIssuer = oidcRegistration.getIssuer()
+        def registrationIssuer = registrationJwtClaimSet.getIssuer()
         def ssaSoftwareId = ssaClaims.getClaim("software_id")
         if (registrationIssuer == null || ssaSoftwareId == null || registrationIssuer != ssaSoftwareId) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("invalid issuer claim")
@@ -141,7 +165,7 @@ switch(method.toUpperCase()) {
 
                 }
             }
-            oidcRegistration.setClaim("jwks_uri", apiClientOrgJwksUri)
+            registrationJwtClaimSet.setClaim("jwks_uri", apiClientOrgJwksUri)
         }
         else if (apiClientOrgJwks) {
             if (!allowIgIssuedTestCerts) {
@@ -149,7 +173,7 @@ switch(method.toUpperCase()) {
                 return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_statement must contain software_jwks_endpoint")
             }
             logger.debug(SCRIPT_NAME + "Using jwks from software_statement")
-            oidcRegistration.setClaim("jwks",  apiClientOrgJwks )
+            registrationJwtClaimSet.setClaim("jwks",  apiClientOrgJwks )
         }
         else {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("No JWKS or JWKS URI in software_statement")
@@ -164,16 +188,16 @@ switch(method.toUpperCase()) {
                 "registrationJwks": apiClientOrgJwks
         ]
 
-        oidcRegistration.setClaim("client_name",apiClientOrgName)
-        oidcRegistration.setClaim("tls_client_certificate_bound_access_tokens", true)
+        registrationJwtClaimSet.setClaim("client_name",apiClientOrgName)
+        registrationJwtClaimSet.setClaim("tls_client_certificate_bound_access_tokens", true)
 
-        def subject_type = oidcRegistration.getClaim("subject_type", String.class);
+        def subject_type = registrationJwtClaimSet.getClaim("subject_type", String.class);
         if(!subject_type){
-            oidcRegistration.setClaim("subject_type", "pairwise");
+            registrationJwtClaimSet.setClaim("subject_type", "pairwise");
         }
 
         // Sanity check on scopes
-        def scopes = oidcRegistration.getClaim("scope")
+        def scopes = registrationJwtClaimSet.getClaim("scope")
         def roles = attributes.clientCertificate.roles
         if (scopes.contains(SCOPE_ACCOUNTS) && !(roles.contains(ROLE_ACCOUNT_INFORMATION))) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("Requested scope " + SCOPE_ACCOUNTS + " requires certificate role " + ROLE_ACCOUNT_INFORMATION)
@@ -198,7 +222,7 @@ switch(method.toUpperCase()) {
         // TODO: Subject DN for cert bound access tokens
 
         // Convert to JSON and pass it on
-        def regJson = oidcRegistration.build();
+        def regJson = registrationJwtClaimSet.build();
         logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
         request.setEntity(regJson)
 
@@ -262,6 +286,8 @@ switch(method.toUpperCase()) {
 
 }
 
+
+
 /**
  * For operations on an existing registration, AM expects a uri of the form:
  *   am/oauth2/realms/root/realms/alpha/register?client_id=8ed73b58-bd18-41c4-93f3-7a1bbf57a7eb
@@ -317,15 +343,15 @@ private boolean validateRegistrationJwtSignature(jwt, jwkSet) {
  * Validate the redirect_uris claim in the registration request is valid as per the OB DCR spec:
  * https://openbankinguk.github.io/dcr-docs-pub/v3.2/dynamic-client-registration.html
  */
-private void validateRegistrationRedirectUris(oidcRegistration, ssaClaims) {
-    def regRedirectUris = oidcRegistration.getClaim("redirect_uris")
+private void validateRegistrationRedirectUris(registrationJwtClaimSet, ssaClaims) {
+    def regRedirectUris = registrationJwtClaimSet.getClaim("redirect_uris")
     def ssaRedirectUris = ssaClaims.getClaim("software_redirect_uris")
     if (!ssaRedirectUris || ssaRedirectUris.size() == 0) {
         throw new IllegalStateException("software_statement must contain redirect_uris")
     }
     // If no redirect_uris supplied in registration request, use all of the uris defined in software_redirect_uris
     if (!regRedirectUris || regRedirectUris.size() == 0) {
-        oidcRegistration.setClaim("redirect_uris", ssaRedirectUris)
+        registrationJwtClaimSet.setClaim("redirect_uris", ssaRedirectUris)
     } else {
         // validate registration redirects are the same as, or a subset of, software_redirect_uris
         if (regRedirectUris.size() > ssaRedirectUris.size()) {

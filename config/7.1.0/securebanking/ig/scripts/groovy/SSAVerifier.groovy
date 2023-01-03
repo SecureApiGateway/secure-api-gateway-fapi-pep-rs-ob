@@ -4,12 +4,19 @@ import java.net.URI;
 import java.security.SignatureException
 import com.securebanking.gateway.dcr.ErrorResponseFactory
 import static org.forgerock.util.promise.Promises.newResultPromise
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory
 
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
 SCRIPT_NAME = "[SSAVerifier] (" + fapiInteractionId + ") - ";
 
 logger.debug(SCRIPT_NAME + "Running...")
+
+
+if(trustedDirectoryService == null) {
+    logger.error(SCRIPT_NAME + "No TrustedDirectoriesService defined on the heap in config.json")
+    return new Response(Status.INTERNAL_SERVER_ERROR).body("No TrustedDirectoriesService defined on the heap in config.json")
+}
 
 def verifySignature(signedJwt, jwksJson) {
     def jwks = JWKSet.parse(jwksJson);
@@ -43,7 +50,15 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer claim is required")
         }
 
-        def ssaJwksUrl = routeArgSSAIssuerJwksUrls[ssaIssuer]
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer)
+        if(trustedDirectory){
+            logger.debug(SCRIPT_NAME + "Found trusted directory for issuer '" + ssaIssuer + "'")
+        } else {
+            logger.debug(SCRIPT_NAME + "Could not find Trusted Directory for issuer '" + ssaIssuer + "'")
+            return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer: " + ssaIssuer + " is not supported")
+        }
+
+        def ssaJwksUrl = trustedDirectory.getJwksUri()
         if (!ssaJwksUrl) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer: " + ssaIssuer + " is not supported")
         }
@@ -60,7 +75,7 @@ switch(method.toUpperCase()) {
           def jwksResponseStatus = jwksResponse.getStatus()
 
           logger.debug(SCRIPT_NAME + "status " + jwksResponseStatus)
-          logger.debug(SCRIPT_NAME + "entity " + jwksResponseContent)
+          logger.debug(SCRIPT_NAME + "entity " + jwksResponseContent.replaceAll("[\\n\\t ]", ""))
 
           if (jwksResponseStatus != Status.OK) {
               return newResultPromise(errorResponseFactory.errorResponse(Status.UNAUTHORIZED, "Bad response from JWKS URI " + jwksResponseStatus))

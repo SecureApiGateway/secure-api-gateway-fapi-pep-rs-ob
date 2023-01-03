@@ -77,10 +77,7 @@
             "file": "SSAVerifier.groovy",
             "clientHandler": "OBClientHandler",
             "args": {
-              "routeArgSSAIssuerJwksUrls": {
-                "OpenBanking Ltd": "${urlDecode('https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks')}",
-                "test-publisher": "${urlDecode('https://&{ig.fqdn}/jwkms/apiclient/jwks')}"
-              },
+              "trustedDirectoryService": "${heap['TrustedDirectoriesService']}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
             }
           }

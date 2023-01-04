@@ -42,10 +42,17 @@ public class RestJwkSetService implements JwkSetService {
 
     @Override
     public Promise<JWK, FailedToLoadJWKException> getJwk(URL jwkStoreUrl, String keyId) {
-        return getJwkSet(jwkStoreUrl).then(findJwkInJwkSet(keyId));
+        return getJwkSet(jwkStoreUrl).then(findJwkByKeyId(keyId));
     }
 
-    private static Function<JWKSet, JWK, FailedToLoadJWKException> findJwkInJwkSet(String keyId) {
+    /**
+     * Creates a helper function which locates a JWK in a JWKSet using the keyId (kid)
+     *
+     * @param keyId String the kid value of the JWK to match
+     * @return Function which takes as input a JWKSet and returns the JWK with matching keyId, if no match can be found
+     * then a FailedToLoadJWKException is thrown
+     */
+    public static Function<JWKSet, JWK, FailedToLoadJWKException> findJwkByKeyId(String keyId) {
         return jwkSet -> {
             final JWK jwk = jwkSet.findJwk(keyId);
             if (jwk != null) {

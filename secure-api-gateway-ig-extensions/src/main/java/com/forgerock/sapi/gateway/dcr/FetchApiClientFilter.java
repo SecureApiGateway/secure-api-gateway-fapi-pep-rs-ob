@@ -17,7 +17,6 @@ package com.forgerock.sapi.gateway.dcr;
 
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
@@ -29,8 +28,6 @@ import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
-import org.forgerock.json.jose.common.JwtReconstruction;
-import org.forgerock.json.jose.jws.SignedJwt;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.AttributesContext;
@@ -42,6 +39,7 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 /**
@@ -83,6 +81,23 @@ public class FetchApiClientFilter implements Filter {
      */
     private final String accessTokenClientIdClaim;
 
+    /**
+     * Decoder which transforms the IDM json response into an ApiClient object
+     */
+    private final IdmApiClientDecoder idmApiClientDecoder = new IdmApiClientDecoder();
+
+    /**
+     * Utility method to retrieve an ApiClient object from a Context.
+     * This method can be used by other filters to retrieve the ApiClient installed into the attributes context by
+     * this filter.
+     *
+     * @param context the context to retrieve the ApiClient from
+     * @return the ApiClient or null if it is not set in the context.
+     */
+    public static ApiClient getApiClientFromContext(Context context) {
+        return (ApiClient) context.asContext(AttributesContext.class).getAttributes().get(API_CLIENT_ATTR_KEY);
+    }
+
     public FetchApiClientFilter(Client clientHandler, String idmGetApiClientBaseUri, String accessTokenClientIdClaim) {
         Reject.ifNull(clientHandler, "clientHandler must be provided");
         Reject.ifBlank(idmGetApiClientBaseUri, "idmGetApiClientBaseUri must be provided");
@@ -109,6 +124,9 @@ public class FetchApiClientFilter implements Filter {
         }, ex -> {
             logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to get apiClient from idm due to exception", ex);
             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
+        }, rte -> {
+            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to get apiClient from idm due to exception", rte);
+            return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
         });
     }
 
@@ -122,28 +140,12 @@ public class FetchApiClientFilter implements Filter {
                                      throw new Exception("Failed to get ApiClient from IDM, response status: " + response.getStatus());
                                  }
                                  return response.getEntity().getJsonAsync()
-                                                            .then(json -> convertJsonObjectToApiClient(JsonValue.json(json)),
+                                                            .then(json -> idmApiClientDecoder.decode(JsonValue.json(json)),
                                                                   ioe -> { throw new Exception("Failed to decode apiClient response json", ioe); });
                              }, nte -> Promises.newExceptionPromise(new Exception(nte)));
         } catch (URISyntaxException e) {
             return Promises.newExceptionPromise(new Exception(e));
         }
-    }
-
-    private ApiClient convertJsonObjectToApiClient(JsonValue apiClientJson) {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setClientName(apiClientJson.get("name").asString());
-        apiClient.setOauth2ClientId(apiClientJson.get("oauth2ClientId").asString());
-        apiClient.setSoftwareStatementAssertion(apiClientJson.get("ssa").as(ssa -> new JwtReconstruction().reconstructJwt(ssa.asString(), SignedJwt.class)));
-        apiClient.setSoftwareClientId(apiClientJson.get("id").asString());
-        apiClient.setJwksUri(apiClientJson.get("jwksUri").as(jwks -> URI.create(jwks.asString())));
-        apiClient.setOrganisation(apiClientJson.get("apiClientOrg").as(org -> {
-            final JsonValue orgJson = JsonValue.json(org);
-            final String orgId = orgJson.get("id").asString();
-            final String orgName = orgJson.get("name").asString();
-            return new ApiClientOrganisation(orgId, orgName);
-        }));
-        return apiClient;
     }
 
     /**

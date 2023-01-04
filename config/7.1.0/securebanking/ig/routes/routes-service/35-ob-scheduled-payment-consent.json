@@ -107,15 +107,7 @@
             }
           }
         },
-        {
-          "comment": "Add ApiClient data to the context attributes",
-          "name": "FetchApiClientFilter",
-          "type": "FetchApiClientFilter",
-          "config": {
-            "idmGetApiClientBaseUri": "&{urls.idmGetApiClientBaseUri}",
-            "clientHandler": "IDMClientHandler"
-          }
-        },
+        "FetchApiClientAndTrustedDirectoryDataChain",
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",

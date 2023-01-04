@@ -25,6 +25,7 @@ import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
 import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
 import com.forgerock.sapi.gateway.jws.RsaJwtSignatureValidator;
+import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
 
 public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
@@ -37,6 +38,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("RsaJwtSignatureValidator", RsaJwtSignatureValidator.class);
         ALIASES.put("TrustedDirectoriesService", TrustedDirectoryService.class);
         ALIASES.put("FetchApiClientFilter", FetchApiClientFilter.class);
+        ALIASES.put("FetchTrustedDirectoryFilter", FetchTrustedDirectoryFilter.class);
     }
 
     /**

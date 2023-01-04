@@ -100,6 +100,32 @@
       "capture" : [ "response", "request" ]
     },
     {
+      "name": "FetchApiClientAndTrustedDirectoryDataChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain will set the apiClient and trustedDirectory attributes in the context based on the client_id of the request",
+      "config" : {
+        "filters": [
+          {
+            "comment": "Add ApiClient data to the context attributes",
+            "name": "FetchApiClientFilter",
+            "type": "FetchApiClientFilter",
+            "config": {
+              "idmGetApiClientBaseUri": "&{urls.idmGetApiClientBaseUri}",
+              "clientHandler": "IDMClientHandler"
+            }
+          },
+          {
+            "comment": "Add TrustedDirectory configuration to the context attributes",
+            "name": "FetchTrustedDirectoryFilter",
+            "type": "FetchTrustedDirectoryFilter",
+            "config": {
+              "trustedDirectoryService": "TrustedDirectoriesService"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "SBATFapiInteractionFilterChain",
       "type": "ChainOfFilters",
       "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",

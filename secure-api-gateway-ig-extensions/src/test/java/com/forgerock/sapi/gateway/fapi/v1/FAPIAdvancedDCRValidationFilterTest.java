@@ -22,6 +22,7 @@ import static org.forgerock.json.JsonValue.object;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.forgerock.http.Handler;
 import org.forgerock.http.header.ContentTypeHeader;
 import org.forgerock.http.header.GenericHeader;
 import org.forgerock.http.protocol.Request;
@@ -52,7 +52,6 @@ import org.forgerock.services.context.AttributesContext;
 import org.forgerock.services.context.TransactionIdContext;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
-import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +62,7 @@ import com.forgerock.sapi.gateway.dcr.ValidationException;
 import com.forgerock.sapi.gateway.dcr.ValidationException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.Validator;
 import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter.Heaplet;
+import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -99,16 +99,16 @@ class FAPIAdvancedDCRValidationFilterTest {
             "-----END CERTIFICATE-----\n";
 
     private static RSASSASigner RSA_SIGNER;
-    private static Handler SUCCESS_HANDLER;
     private static Map<String, Object> VALID_REG_REQUEST_OBJ;
     private static final HeapImpl EMPTY_HEAP = new HeapImpl(Name.of("testHeap"));
+
+    private TestSuccessResponseHandler successHandler;
 
     private FAPIAdvancedDCRValidationFilter fapiValidationFilter;
 
     @BeforeAll
     public static void beforeAll() throws NoSuchAlgorithmException {
         RSA_SIGNER = createRSASSASigner();
-        SUCCESS_HANDLER = (ctx, req) -> Promises.newResultPromise(new Response(Status.OK));
         VALID_REG_REQUEST_OBJ = Map.of("token_endpoint_auth_method", "private_key_jwt",
                                        "scope", "openid accounts payments",
                                        "redirect_uris", List.of("https://google.co.uk"),
@@ -116,6 +116,12 @@ class FAPIAdvancedDCRValidationFilterTest {
                                        "token_endpoint_auth_signing_alg", "PS256",
                                        "id_token_signed_response_alg", "PS256",
                                        "request_object_signing_alg", "PS256");
+    }
+
+    @BeforeEach
+    public void beforeEach() throws HeapException {
+        fapiValidationFilter = createDefaultFapiFilter();
+        successHandler = new TestSuccessResponseHandler();
     }
 
     /**
@@ -126,11 +132,6 @@ class FAPIAdvancedDCRValidationFilterTest {
         generator.initialize(2048);
         KeyPair pair = generator.generateKeyPair();
         return new RSASSASigner(pair.getPrivate());
-    }
-
-    @BeforeEach
-    public void beforeEach() throws HeapException {
-        fapiValidationFilter = createDefaultFapiFilter();
     }
 
     /**
@@ -178,11 +179,12 @@ class FAPIAdvancedDCRValidationFilterTest {
         final String signedJwt = createSignedJwt(validRegRequestObj);
         request.getEntity().setString(signedJwt);
 
-        final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, SUCCESS_HANDLER);
+        final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, successHandler);
         final Response response = responsePromise.get(1, TimeUnit.SECONDS);
         if (!response.getStatus().isSuccessful()) {
             fail("Expected a successful response instead got: " + response.getStatus() + ", entity: " + response.getEntity().getJson());
         }
+        assertTrue(successHandler.hasBeenInteractedWith(), "Filter was expected to pass the request on to the successHandler");
     }
 
     /**
@@ -370,7 +372,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final Request request = new Request().setMethod(httpMethod);
 
             // Do a POST first, verify that it fails
-            assertEquals(Status.BAD_REQUEST, fapiValidationFilter.filter(context, request, SUCCESS_HANDLER)
+            assertEquals(Status.BAD_REQUEST, fapiValidationFilter.filter(context, request, successHandler)
                                                                  .get(1, TimeUnit.SECONDS)
                                                                  .getStatus());
 
@@ -379,7 +381,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             for (String method : skippedHttpMethods) {
                 request.setMethod(method);
                 // Verify we hit the SUCCESS_HANDLER
-                assertEquals(Status.OK, fapiValidationFilter.filter(context, request, SUCCESS_HANDLER)
+                assertEquals(Status.OK, fapiValidationFilter.filter(context, request, successHandler)
                                                             .get(1, TimeUnit.SECONDS)
                                                             .getStatus());
             }
@@ -396,7 +398,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final String signedJwt = createSignedJwt(invalidRegistrationRequest);
             request.getEntity().setString(signedJwt);
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
@@ -414,7 +416,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final String signedJwt = createSignedJwt(validRegRequestObj);
             request.getEntity().setString(signedJwt);
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
@@ -432,7 +434,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final String signedJwt = createSignedJwt(validRegRequestObj);
             request.getEntity().setString(signedJwt);
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
@@ -449,7 +451,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final String signedJwt = createSignedJwt(validRegRequestObj);
             request.getEntity().setString(signedJwt);
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
@@ -463,7 +465,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             request.addHeaders(new GenericHeader(CERT_HEADER_NAME, URLEncoder.encode(TEST_CERT_PEM, StandardCharsets.UTF_8)));
             request.getEntity().setString("plain text instead of a JWT");
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
@@ -480,7 +482,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             final String signedJwt = createSignedJwt(VALID_REG_REQUEST_OBJ, JWSAlgorithm.RS256);
             request.getEntity().setString(signedJwt);
 
-            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, SUCCESS_HANDLER);
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");

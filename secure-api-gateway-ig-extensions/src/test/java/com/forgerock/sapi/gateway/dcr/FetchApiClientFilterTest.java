@@ -15,13 +15,17 @@
  */
 package com.forgerock.sapi.gateway.dcr;
 
-import static com.forgerock.sapi.gateway.dcr.FetchApiClientFilter.API_CLIENT_ATTR_KEY;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.forgerock.json.JsonValue.*;
+import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataAllFields;
+import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataRequiredFieldsOnly;
+import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
+import static org.forgerock.json.JsonValue.field;
+import static org.forgerock.json.JsonValue.json;
+import static org.forgerock.json.JsonValue.object;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -37,12 +41,6 @@ import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
 import org.forgerock.json.JsonValueException;
-import org.forgerock.json.jose.common.JwtReconstruction;
-import org.forgerock.json.jose.jws.JwsAlgorithm;
-import org.forgerock.json.jose.jws.JwsHeader;
-import org.forgerock.json.jose.jws.SignedJwt;
-import org.forgerock.json.jose.jws.handlers.SigningHandler;
-import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.forgerock.openig.handler.Handlers;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.openig.heap.HeapImpl;
@@ -67,12 +65,23 @@ import com.forgerock.sapi.gateway.dcr.FetchApiClientFilter.Heaplet;
 class FetchApiClientFilterTest {
 
     @Test
-    void fetchApiClientUsingMockedIdmResponse() throws Exception {
+    void fetchApiClientUsingMockedIdmResponseWithAllFields() throws Exception {
         final String idmBaseUri = "http://localhost/openidm/managed/";
         final String clientId = "1234-5678-9101";
-        final JsonValue idmClientData = createIdmApiClientData(clientId);
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = createIdmApiClientDataAllFields(clientId);
+        testFetchingApiClient(idmBaseUri, clientId, idmClientData);
+    }
 
+    @Test
+    void fetchApiClientUsingMockedIdmResponseWithMandatoryFieldsOnly() throws Exception {
+        final String idmBaseUri = "http://localhost/openidm/managed/";
+        final String clientId = "9999";
+        final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(clientId);
+        testFetchingApiClient(idmBaseUri, clientId, idmClientData);
+    }
+
+    private static void testFetchingApiClient(String idmBaseUri, String clientId, JsonValue idmClientData) throws Exception {
+        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
         final String clientIdClaim = "aud";
         final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
         final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(idmResponseHandler), idmBaseUri, clientIdClaim);
@@ -124,6 +133,22 @@ class FetchApiClientFilterTest {
     }
 
     @Test
+    void returnsErrorResponseWhenIdmReturnsApiClientMissingRequiredFields() throws Exception {
+        final String idmBaseUri = "http://localhost/openidm/managed/";
+        final String clientId = "1234-5678-9101";
+        final JsonValue idmClientData = createIdmApiClientDataAllFields(clientId);
+        idmClientData.remove("ssa"); // Remove the required ssa field
+        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+
+        final String clientIdClaim = "aud";
+        final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
+        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(idmResponseHandler), idmBaseUri, clientIdClaim);
+        callFilter(accessToken, filter, (response, attributesContext) -> {
+            assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
+        });
+    }
+
+    @Test
     void returnsErrorResponseWhenIdmUrlIsInvalid() throws Exception {
         // Invalid base uri
         final String idmBaseUri = "999://localhost/openidm/managed/";
@@ -161,7 +186,7 @@ class FetchApiClientFilterTest {
         void successfullyCreatesFilterWithRequiredConfigOnly() throws Exception {
             final String idmBaseUri = "http://idm/managed/";
             final String clientId = "999999999";
-            final JsonValue idmApiClientData = createIdmApiClientData(clientId);
+            final JsonValue idmApiClientData = createIdmApiClientDataAllFields(clientId);
             final Handler idmClientHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
@@ -182,7 +207,7 @@ class FetchApiClientFilterTest {
         void successfullyCreatesFilterWithAllOptionalConfigSupplied() throws Exception {
             final String idmBaseUri = "http://idm/managed/";
             final String clientId = "999999999";
-            final JsonValue idmApiClientData = createIdmApiClientData(clientId);
+            final JsonValue idmApiClientData = createIdmApiClientDataAllFields(clientId);
             final Handler idmClientHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
@@ -196,7 +221,7 @@ class FetchApiClientFilterTest {
 
             final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
             // Test the filter created by the Heaplet
-            callFilterValidateSuccessBehaviour(accessToken, createIdmApiClientData(clientId), filter);
+            callFilterValidateSuccessBehaviour(accessToken, createIdmApiClientDataAllFields(clientId), filter);
         }
     }
 
@@ -244,7 +269,7 @@ class FetchApiClientFilterTest {
             assertEquals(Status.NO_CONTENT, response.getStatus());
 
             // Verify that the context was updated with the apiClient data
-            final ApiClient apiClient = (ApiClient) ctxt.getAttributes().get(API_CLIENT_ATTR_KEY);
+            final ApiClient apiClient = FetchApiClientFilter.getApiClientFromContext(ctxt);
             assertNotNull(apiClient, "apiClient was not found in context");
             verifyIdmClientDataMatchesApiClientObject(idmClientData, apiClient);
         };
@@ -268,53 +293,5 @@ class FetchApiClientFilterTest {
 
     private static AccessTokenInfo createAccessToken(String clientIdClaim, String clientId) {
         return new AccessTokenInfo(json(object(field(clientIdClaim, clientId))), "token", Set.of("scope1"), 0L);
-    }
-
-    private static void verifyIdmClientDataMatchesApiClientObject(JsonValue idmClientData, ApiClient actualApiClient) {
-        assertEquals(idmClientData.get("id").asString(), actualApiClient.getSoftwareClientId());
-        assertEquals(idmClientData.get("name").asString(), actualApiClient.getClientName());
-        assertEquals(idmClientData.get("oauth2ClientId").asString(), actualApiClient.getOauth2ClientId());
-        assertEquals(idmClientData.get("jwksUri").asString(), actualApiClient.getJwksUri().toString());
-        assertEquals(idmClientData.get("apiClientOrg").get("id").asString(), actualApiClient.getOrganisation().getId());
-        assertEquals(idmClientData.get("apiClientOrg").get("name").asString(), actualApiClient.getOrganisation().getName());
-
-        final String ssaStr = idmClientData.get("ssa").asString();
-        final SignedJwt expectedSignedJwt = new JwtReconstruction().reconstructJwt(ssaStr, SignedJwt.class);
-        assertEquals(expectedSignedJwt.getHeader(), actualApiClient.getSoftwareStatementAssertion().getHeader());
-        assertEquals(expectedSignedJwt.getClaimsSet(), actualApiClient.getSoftwareStatementAssertion().getClaimsSet());
-    }
-
-    private static JsonValue createIdmApiClientData(String clientId) {
-        return json(object(field("id", "ebSqTNqmQXFYz6VtWGXZAa"),
-                           field("name", "Automated Testing"),
-                           field("description", "Blah blah blah"),
-                           field("ssa", createTestSoftwareStatementAssertion().build()),
-                           field("oauth2ClientId", clientId),
-                           field("jwksUri", "https://somelocation/jwks.jwks"),
-                           field("apiClientOrg", object(field("id", "98761234"),
-                                                        field("name", "Test Organisation")))));
-    }
-
-    /**
-     * @return SignedJwt which represents a Software Statement Assertion (ssa). This is a dummy JWT in place of a real
-     * software statement, it does not contain a realistic set of claims and the signature (and kid) are junk.
-     *
-     * This is good enough for this test as the ssa is not processed, only decoded into a SignedJwt object
-     */
-    private static SignedJwt createTestSoftwareStatementAssertion() {
-        final JwsHeader header = new JwsHeader();
-        header.setKeyId("12345");
-        header.setAlgorithm(JwsAlgorithm.PS256);
-        return new SignedJwt(header, new JwtClaimsSet(Map.of("claim1", "value1")), new SigningHandler() {
-            @Override
-            public byte[] sign(JwsAlgorithm algorithm, byte[] data) {
-                return "gYdMUpAvrotMnMP8tHj".getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public boolean verify(JwsAlgorithm algorithm, byte[] data, byte[] signature) {
-                return true;
-            }
-        });
     }
 }

@@ -117,7 +117,7 @@
             }
           }
         },
-        "FetchApiClientAndTrustedDirectoryDataChain",
+        "FetchApiClientResourcesChain",
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",
@@ -137,14 +137,9 @@
           "config": {
             "type": "application/x-groovy",
             "file": "ProcessDetachedSig.groovy",
-            "clientHandler": "IDMClientHandler",
             "args": {
               "routeArgHeaderName": "x-jws-signature",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgTrustedAnchor": "openbanking.org.uk",
-              "routeArgClientIdFieldName": "aud",
-              "jwkSetService": "${heap['OBJwkSetService']}"
+              "routeArgTrustedAnchor": "openbanking.org.uk"
             }
           }
         },

@@ -20,12 +20,31 @@ import java.net.URL;
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException;
 import org.forgerock.json.jose.jwk.JWK;
 import org.forgerock.json.jose.jwk.JWKSet;
+import org.forgerock.util.Function;
 import org.forgerock.util.promise.Promise;
 
 /**
  * Service which can retrieve JWKSet and JWK objects
  */
 public interface JwkSetService {
+
+    /**
+     * Creates a helper function which locates a JWK in a JWKSet using the keyId (kid)
+     *
+     * @param keyId String the kid value of the JWK to match
+     * @return Function which takes as input a JWKSet and returns the JWK with matching keyId, if no match can be found
+     * then a FailedToLoadJWKException is thrown
+     */
+    static Function<JWKSet, JWK, FailedToLoadJWKException> findJwkByKeyId(String keyId) {
+        return jwkSet -> {
+            final JWK jwk = jwkSet.findJwk(keyId);
+            if (jwk != null) {
+                return jwk;
+            } else {
+                throw new FailedToLoadJWKException("Failed to find keyId: " + keyId + " in JWKSet");
+            }
+        };
+    }
 
     /**
      * Retrieves a JWKSet for the specified url

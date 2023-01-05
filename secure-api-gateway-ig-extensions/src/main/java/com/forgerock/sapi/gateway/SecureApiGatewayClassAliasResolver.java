@@ -22,6 +22,7 @@ import org.forgerock.openig.alias.ClassAliasResolver;
 
 import com.forgerock.sapi.gateway.dcr.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
+import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
 import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
 import com.forgerock.sapi.gateway.jws.RsaJwtSignatureValidator;
@@ -39,6 +40,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("TrustedDirectoriesService", TrustedDirectoryService.class);
         ALIASES.put("FetchApiClientFilter", FetchApiClientFilter.class);
         ALIASES.put("FetchTrustedDirectoryFilter", FetchTrustedDirectoryFilter.class);
+        ALIASES.put("FetchApiClientJwksFilter", FetchApiClientJwksFilter.class);
     }
 
     /**

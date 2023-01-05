@@ -6,11 +6,13 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.forgerock.http.protocol.*
 import org.forgerock.json.JsonValueFunctions.*
 import org.forgerock.json.jose.*
+import org.forgerock.json.jose.jwk.JWKSet
 import org.forgerock.json.jose.jwk.RsaJWK
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import com.forgerock.securebanking.uk.gateway.jwks.*
 import java.security.interfaces.RSAPublicKey
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
+import com.forgerock.sapi.gateway.jwks.JwkSetService
 
 import java.text.ParseException
 import static org.forgerock.util.promise.Promises.newResultPromise
@@ -102,9 +104,9 @@ String jwsHeaderDecoded = new String(jwsHeaderEncoded.decodeBase64Url())
 logger.debug(SCRIPT_NAME + "Got JWT header: " + jwsHeaderDecoded)
 def jwsHeaderDataStructure = new JsonSlurper().parseText(jwsHeaderDecoded)
 
-def apiClient = attributes.apiClient
-if (!apiClient) {
-    logger.error(SCRIPT_NAME + "attributes.apiClient not found, ensure that filter which sets this attribute is installed prior to this filter in the chain")
+def jwkSet = attributes.apiClientJwkSet
+if (!jwkSet) {
+    logger.error(SCRIPT_NAME + "attributes.apiClientJwkSet not found, ensure that filter which sets this attribute is installed prior to this filter in the chain")
     return new Response(Status.INTERNAL_SERVER_ERROR)
 }
 
@@ -120,17 +122,12 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
         return getSignatureValidationErrorResponse()
     } else {
         String requestPayload = request.entity.getString()
-        def jwks_uri = apiClient.jwksUri
-        logger.debug(SCRIPT_NAME + "API client jwks_uri: " + jwks_uri)
         try {
             logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
-            Promise<Boolean, NeverThrowsException> validJwsPromise = validateUnencodedPayload(detachedSignatureValue, jwks_uri, requestPayload)
-            return validJwsPromise.thenAsync(validJws -> {
-                if (Boolean.FALSE.equals(validJws)) {
-                    return newResultPromise(getSignatureValidationErrorResponse())
-                }
-                return next.handle(context, request)
-            })
+            if (!validateUnencodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
+                return newResultPromise(getSignatureValidationErrorResponse())
+            }
+            return next.handle(context, request)
         }
         catch (java.lang.Exception e) {
             logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
@@ -146,17 +143,12 @@ if (['v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3'].contains(apiVersion)) {
     }
 
     String requestPayload = request.entity.getString()
-    def jwks_uri = apiClient.jwksUri
-    logger.debug(SCRIPT_NAME + "API client jwks_uri: " + jwks_uri)
     try {
         logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
-        Promise<Boolean, NeverThrowsException> validJwsPromise = validateEncodedPayload(detachedSignatureValue, jwks_uri, requestPayload);
-        return validJwsPromise.thenAsync(validJws -> {
-            if (Boolean.FALSE.equals(validJws)) {
-                return newResultPromise(getSignatureValidationErrorResponse())
-            }
-            return next.handle(context, request)
-        })
+        if (!validateEncodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
+            return newResultPromise(getSignatureValidationErrorResponse())
+        }
+        return next.handle(context, request)
     }
     catch (java.lang.Exception e) {
         logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e);
@@ -179,12 +171,11 @@ next.handle(context, request)
  * <b> b64Encode(header).payload.sign( concatenate( b64UrlEncode(header), ".", payload )) </b>
  *
  * @param detachedSignatureValue the detached signature value from the x-jws-signature header
+ * @param jwkSet containing the signing keys for this apiClient
  * @param requestPayload the request payload that will not be encoded before validating the detached signature
- * @param jwksUri the API client JWKS_URI
  * @return true if signature validation is successful, false otherwise
  */
-// detachedSignatureValue, jwks_uri, requestPayload
-def validateUnencodedPayload(String detachedSignatureValue, URI jwksUri, String requestPayload) {
+def validateUnencodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
     Payload payload = new Payload(requestPayload);
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue, payload);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
@@ -195,15 +186,9 @@ def validateUnencodedPayload(String detachedSignatureValue, URI jwksUri, String 
         return false
     }
 
-    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(jwksUri, jwsHeader);
-    return keyPromise.thenAsync(rsaPublicKey -> {
-        logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
-        RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
-        return newResultPromise(parsedJWSObject.verify(verifier));
-    }).thenCatchAsync(failedToLoadJwkEx -> {
-        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + jwksUri, failedToLoadJwkEx);
-        return newResultPromise(false)
-    })
+    var rsaPublicKey = getRSAKeyFromJwks(jwkSet, jwsHeader)
+    RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
+    return parsedJWSObject.verify(verifier)
 }
 
 /**
@@ -214,40 +199,22 @@ def validateUnencodedPayload(String detachedSignatureValue, URI jwksUri, String 
  * <b> b64Encode(header).b64UrlEncode(payload).sign( concatenate( b64UrlEncode(header), ".", b64UrlEncode(payload) ) ) </b>
  *
  * @param detachedSignatureValue the request payload
- * @param jwksUri the API client JWKS_URI
+ * @param jwkSet containing the signing keys for this apiClient
  * @param requestPayload the request payload that will be encoded before validating the detached signature.
  * @return true if signature validation is successful, false otherwise
  */
-def validateEncodedPayload(String detachedSignatureValue, URI jwksUri, String requestPayload) {
+def validateEncodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue);
     JWSHeader jwsHeader = parsedJWSObject.getHeader();
-
-    Promise<RSAPublicKey, FailedToLoadJWKException> keyPromise = getRSAKeyFromJwks(jwksUri, jwsHeader);
-    keyPromise.thenAsync(rsaPublicKey -> {
-        logger.debug(SCRIPT_NAME + "Processing RSAKey promise, rsaPublicKey: " + rsaPublicKey)
-        return isJwsSignatureValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader);
-    }).thenCatchAsync(failedToLoadJwkEx -> {
-        logger.debug(SCRIPT_NAME + " failed to load key for routeArgJwkUrl: " + jwksUri, failedToLoadJwkEx);
-        return newResultPromise(false)
-    })
+    var rsaPublicKey = getRSAKeyFromJwks(jwkSet, jwsHeader)
+    return isJwsSignatureValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader);
 }
 
-/**
- * Given a JWKS_URI and a JWS header, the method will load the JWKS_URI and will return the first matching public key,
- * if any are found. They key will be initialized and returned as RSAKey
- *
- * @param jwksUri the API client JWKS_URI
- * @param jwsHeader the JWS header for which we need to find the public key
- * @return the RSAKey that matches the kid from the JWS header given
- */
-def getRSAKeyFromJwks(URI jwksUri, JWSHeader jwsHeader) {
+def getRSAKeyFromJwks(JWKSet jwkSet, JWSHeader jwsHeader) {
     var keyId = jwsHeader.getKeyID()
     logger.debug(SCRIPT_NAME + "Fetching key for keyId: " + keyId)
-
-    Promise<RSAPublicKey, FailedToLoadJWKException> jwkPromise = jwkSetService.getJwk(jwksUri.toURL(), keyId).then(jwk -> {
-        return ((RsaJWK) jwk).toRSAPublicKey()
-    })
-    return jwkPromise
+    var jwk = JwkSetService.findJwkByKeyId(keyId).apply(jwkSet)
+    return ((RsaJWK) jwk).toRSAPublicKey()
 }
 
 /**
@@ -284,7 +251,7 @@ def isJwsSignatureValid(String detachedSignatureValue, RSAPublicKey rsaPublicKey
     boolean isValidJws = jwsObject.verify(jwsVerifier);
     logger.debug(SCRIPT_NAME + "Signature validation result: " + isValidJws)
 
-    return newResultPromise(isValidJws);
+    return isValidJws
 }
 
 /**

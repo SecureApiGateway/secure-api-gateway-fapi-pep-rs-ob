@@ -15,8 +15,6 @@
  */
 package com.forgerock.sapi.gateway.jwks.cache;
 
-import static com.forgerock.sapi.gateway.jwks.RestJwkSetService.findJwkByKeyId;
-
 import java.net.URL;
 
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException;
@@ -87,7 +85,7 @@ public class CachingJwkSetService implements JwkSetService {
                 logger.debug("keyId: {} not found in cached JWKSet for url: {}, invalidating and fetching JWKSet from url again", keyId, jwkStoreUrl);
                 // JWKSet exists but key not in set, new key may have been added to set since it was cached, fetch it again
                 jwkSetCache.invalidate(jwkStoreUrl);
-                return getJwkSet(jwkStoreUrl).then(findJwkByKeyId(keyId));
+                return getJwkSet(jwkStoreUrl).then(JwkSetService.findJwkByKeyId(keyId));
             }
         };
     }

@@ -38,7 +38,7 @@ public interface TrustedDirectory {
      * @return a String containing the jwks_uri against which software statement issued by this trusted directory
      * can be validated
      */
-    String getJwksUri();
+    String getDirectoryJwksUri();
 
     /**
      *

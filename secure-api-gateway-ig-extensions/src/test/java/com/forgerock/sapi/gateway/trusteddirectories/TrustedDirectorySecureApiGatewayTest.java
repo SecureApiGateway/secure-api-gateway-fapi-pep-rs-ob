@@ -30,7 +30,7 @@ class TrustedDirectorySecureApiGatewayTest {
         // When
         // Then
         assertThat(trustedDirectory.getIssuer()).isEqualTo(TrustedDirectorySecureApiGateway.issuer);
-        assertThat(trustedDirectory.getJwksUri()).isEqualTo(testDirectoryFQDN);
+        assertThat(trustedDirectory.getDirectoryJwksUri()).isEqualTo(testDirectoryFQDN);
         assertThat(trustedDirectory.softwareStatementHoldsJwksUri()).isFalse();
         assertThat(trustedDirectory.getSoftwareStatementJwksUriClaimName()).isNull();
         assertThat(trustedDirectory.getSoftwareStatementJwksClaimName()).isEqualTo(TrustedDirectorySecureApiGateway.softwareStatementJwksClaimName);

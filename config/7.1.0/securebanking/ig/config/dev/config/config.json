@@ -432,6 +432,7 @@
       "name": "OBJwkSetService",
       "type": "CaffeineCachingJwkSetService",
       "config": {
+        "handler": "OBClientHandler",
         "maxCacheEntries": 500,
         "expireAfterWriteDuration": "24 hours"
       }

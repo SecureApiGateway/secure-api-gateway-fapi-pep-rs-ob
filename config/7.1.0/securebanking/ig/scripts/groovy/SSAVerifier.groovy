@@ -58,7 +58,7 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer: " + ssaIssuer + " is not supported")
         }
 
-        def ssaJwksUrl = trustedDirectory.getJwksUri()
+        def ssaJwksUrl = trustedDirectory.getDirectoryJwksUri()
         if (!ssaJwksUrl) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer: " + ssaIssuer + " is not supported")
         }

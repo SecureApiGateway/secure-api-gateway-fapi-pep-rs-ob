@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory
  */
 class ErrorResponseFactory {
 
+    static String INVALID_CLIENT_METADATA_ERROR_CODE = "invalid_client_metadata"
+    static String INVALID_SOFTWARE_STATEMENT_ERROR_CODE = "invalid_software_statement"
+    static String INVALID_REDIRECT_URI_ERROR_CODE = "invalid_redirect_uri"
+
     private final Logger logger = LoggerFactory.getLogger(getClass())
     /**
      * Prefix for log messages created by this factory.
@@ -23,22 +27,22 @@ class ErrorResponseFactory {
     }
 
     def invalidClientMetadataErrorResponse(errorMessage) {
-        return errorResponse(Status.BAD_REQUEST, "invalid_client_metadata", errorMessage)
+        return errorResponse(Status.BAD_REQUEST, INVALID_CLIENT_METADATA_ERROR_CODE, errorMessage)
     }
 
     def invalidSoftwareStatementErrorResponse(errorMessage) {
-        return errorResponse(Status.BAD_REQUEST, "invalid_software_statement", errorMessage)
+        return errorResponse(Status.BAD_REQUEST, INVALID_SOFTWARE_STATEMENT_ERROR_CODE, errorMessage)
     }
 
     def invalidRedirectUriErrorResponse(errorMessage) {
-        return errorResponse(Status.BAD_REQUEST, "invalid_redirect_uri", errorMessage)
+        return errorResponse(Status.BAD_REQUEST, INVALID_REDIRECT_URI_ERROR_CODE, errorMessage)
     }
 
     def errorResponse(httpCode, errorMessage) {
         return errorResponse(httpCode, null, errorMessage)
     }
 
-    def errorResponse(httpCode, errorCode, errorMessage) {
+    Response errorResponse(httpCode, errorCode, errorMessage) {
         def errorMsgJson = new LinkedHashMap()
         if (errorCode) {
             errorMsgJson["error"] = errorCode

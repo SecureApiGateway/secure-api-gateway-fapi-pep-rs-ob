@@ -44,7 +44,7 @@ class TrustedDirectoryServiceStaticTest {
         // Then
         assertThat(directoryConfig).isNotNull();
         assertThat(directoryConfig.getIssuer()).isEqualTo(TrustedDirectorySecureApiGateway.issuer);
-        assertThat(directoryConfig.getJwksUri()).isEqualTo(testDirectoryFQDN);
+        assertThat(directoryConfig.getDirectoryJwksUri()).isEqualTo(testDirectoryFQDN);
         assertThat(directoryConfig.softwareStatementHoldsJwksUri()).isEqualTo(false);
         assertThat(directoryConfig.getSoftwareStatementJwksUriClaimName()).isNull();
         assertThat(directoryConfig.getSoftwareStatementJwksClaimName()).isEqualTo(TrustedDirectorySecureApiGateway.softwareStatementJwksClaimName);

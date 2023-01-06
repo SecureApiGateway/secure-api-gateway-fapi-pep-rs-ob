@@ -64,7 +64,8 @@
               "jwkSetService": "${heap['OBJwkSetService']}",
               "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",
-              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}"
+              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",
+              "trustedDirectoryService": "${heap['TrustedDirectoriesService']}"
             }
           }
         },

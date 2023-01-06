@@ -54,7 +54,7 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
     }
 
     @Override
-    public String getJwksUri() {
+    public String getDirectoryJwksUri() {
         return jwksUri;
     }
 

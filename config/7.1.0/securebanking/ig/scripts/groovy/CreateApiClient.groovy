@@ -152,7 +152,7 @@ def buildApiClientIdmObject(oauth2ClientId, ssaClaims) {
   def clientJwks = attributes.registrationJWTs.registrationJwks
   def apiClientIdmObj = [
           "_id"           : oauth2ClientId,
-          "id"            : ssaClaims.getClaim("software_client_id"),
+          "id"            : ssaClaims.getClaim("software_id"),
           "name"          : ssaClaims.getClaim("software_client_name"),
           "description"   : ssaClaims.getClaim("software_client_description"),
           "ssa"           : attributes.registrationJWTs.ssaStr,

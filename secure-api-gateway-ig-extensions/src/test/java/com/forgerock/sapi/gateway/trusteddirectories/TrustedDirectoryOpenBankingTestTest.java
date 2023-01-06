@@ -26,7 +26,7 @@ class TrustedDirectoryOpenBankingTestTest {
     @Test
     void testGetters(){
         assertThat(trustedDirectory.getIssuer()).isEqualTo(TrustedDirectoryOpenBankingTest.issuer);
-        assertThat(trustedDirectory.getJwksUri()).isEqualTo(TrustedDirectoryOpenBankingTest.jwksUri);
+        assertThat(trustedDirectory.getDirectoryJwksUri()).isEqualTo(TrustedDirectoryOpenBankingTest.jwksUri);
         assertThat(trustedDirectory.softwareStatementHoldsJwksUri()).isTrue();
         assertThat(trustedDirectory.getSoftwareStatementJwksClaimName()).isNull();
         assertThat(trustedDirectory.getSoftwareStatementJwksUriClaimName()).isEqualTo(TrustedDirectoryOpenBankingTest.softwareJwksUriClaimName);

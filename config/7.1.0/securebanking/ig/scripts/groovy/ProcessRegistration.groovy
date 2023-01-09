@@ -171,6 +171,23 @@ switch (method.toUpperCase()) {
         // Update OIDC registration request
         if (trustedDirectory.softwareStatementHoldsJwksUri()) {
             def apiClientOrgJwksUri = ssaClaims.getClaim(trustedDirectory.getSoftwareStatementJwksUriClaimName());
+            if (routeArgObJwksHosts) {
+                // If the JWKS URI host is in our list of private JWKS hosts, then proxy back through IG
+                def jwksUri = null;
+                try {
+                    jwksUri = new URI(apiClientOrgJwksUri)
+                }
+                catch (e) {
+                    return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_jwks_endpoint does not contain a valid URI")
+                }
+                // If the JWKS URI host is in our list of private JWKS hosts, then proxy back through IG
+                if (routeArgObJwksHosts && routeArgObJwksHosts.contains(jwksUri.getHost())) {
+                    def newUri = routeArgProxyBaseUrl + "/" + jwksUri.getHost() + jwksUri.getPath();
+                    logger.debug(SCRIPT_NAME + "Updating private JWKS URI from {} to {}", apiClientOrgJwksUri, newUri);
+                    apiClientOrgJwksUri = newUri
+
+                }
+            }
             logger.debug(SCRIPT_NAME + "Using jwks uri: {}", apiClientOrgJwksUri)
             registrationJwtClaimSet.setClaim("jwks_uri", apiClientOrgJwksUri)
             registrationJWTs["registrationJwksUri"] = apiClientOrgJwksUri

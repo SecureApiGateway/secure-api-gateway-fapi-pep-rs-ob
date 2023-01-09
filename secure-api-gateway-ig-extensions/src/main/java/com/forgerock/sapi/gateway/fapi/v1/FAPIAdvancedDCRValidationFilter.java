@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -47,7 +45,6 @@ import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.Context;
-import org.forgerock.util.Reject;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.forgerock.util.promise.Promises;
@@ -59,6 +56,7 @@ import com.forgerock.sapi.gateway.dcr.ValidationException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.Validator;
 import com.forgerock.sapi.gateway.dcr.ErrorResponseFactory;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
+import com.forgerock.sapi.gateway.mtls.CertificateFromHeaderSupplier;
 
 /**
  * Filter which implements the <a href="https://openid.net/specs/openid-financial-api-part-2-1_0.html">
@@ -337,39 +335,6 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     public List<Validator<JsonValue>> getDefaultRequestObjectValidators() {
         return List.of(this::validateRedirectUris, this::validateResponseTypes, this::validateSigningAlgorithmUsed,
                        this::validateTokenEndpointAuthMethods);
-    }
-
-    /**
-     * Supplier which returns a certificate String as sourced from a Request Header.
-     *
-     * The certificate value is expected to be URL encoded, this supplier will do the URL decode to supply the
-     * certificate String.
-     */
-    public static class CertificateFromHeaderSupplier implements BiFunction<Context, Request, String> {
-
-        private final String certificateHeaderName;
-
-        public CertificateFromHeaderSupplier(String certificateHeaderName) {
-            this.certificateHeaderName = Reject.checkNotBlank(certificateHeaderName);
-        }
-
-        @Override
-        public String apply(Context context, Request request) {
-            final String fapInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
-            final String headerValue = request.getHeaders().getFirst(certificateHeaderName);
-            if (headerValue == null) {
-                LOGGER.debug("({}) No client cert could be found for header: {}", fapInteractionId, certificateHeaderName);
-                return null;
-            }
-            try {
-                final String certPem = URLDecoder.decode(headerValue, StandardCharsets.UTF_8);
-                LOGGER.debug("({}) Found client cert: {}", fapInteractionId, certPem);
-                return certPem;
-            } catch (RuntimeException ex) {
-                LOGGER.debug("(" + fapInteractionId + ") Failed to URL decode cert from header: " + certificateHeaderName, ex);
-                return null;
-            }
-        }
     }
 
     /**

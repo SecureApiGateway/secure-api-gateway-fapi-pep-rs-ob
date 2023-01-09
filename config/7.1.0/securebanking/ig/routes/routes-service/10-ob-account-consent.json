@@ -88,6 +88,7 @@
             }
           }
         },
+        "FetchApiClientResourcesChain",
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",

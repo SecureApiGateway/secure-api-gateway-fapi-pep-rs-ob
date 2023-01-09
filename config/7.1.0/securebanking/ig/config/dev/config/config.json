@@ -129,6 +129,15 @@
             "config": {
               "jwkSetService": "OBJwkSetService"
             }
+          },
+          {
+            "comment": "Validate the MTLS transport cert",
+            "name": "TransportCertValidationFilter",
+            "type": "TransportCertValidationFilter",
+            "config": {
+              "clientTlsCertHeader": "ssl-client-cert",
+              "transportCertValidator": "OBTransportCertValidator"
+            }
           }
         ]
       }
@@ -449,6 +458,13 @@
     {
       "name": "RsaJwtSignatureValidator",
       "type": "RsaJwtSignatureValidator"
+    },
+    {
+      "name": "OBTransportCertValidator",
+      "type": "DefaultTransportCertValidator",
+      "config": {
+        "validKeyUse": "tls"
+      }
     }
   ],
   "monitor": true

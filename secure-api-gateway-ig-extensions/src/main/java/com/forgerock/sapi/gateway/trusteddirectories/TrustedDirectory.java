@@ -41,10 +41,17 @@ public interface TrustedDirectory {
     String getDirectoryJwksUri();
 
     /**
+     * The software statement has a JWKS associated with it which contains the keys belonging to the particular software
+     * statement.
      *
-     * @return true if the software statement contains the full JWKS entry - this is not recommended as it is brittle.
-     * Using a jwks_uri against which Certificates associated with Software Statement can be validated allows for
-     * key rotation
+     * This property indicates whether the JWKS can be located via a URI in the software statement or whether the JWKS
+     * is embedded in the statement.
+     *
+     * The JWKS URI approach is recommended as it allows for key rotation, the JWKS can be updated and changes will be
+     * picked up the next time the URI is queried.
+     *
+     * @return true if the software statement contains the URI of the JWKS
+     *         false if the software statement contains the JWKS embedded within it.
      */
     boolean softwareStatementHoldsJwksUri();
     /**

@@ -103,6 +103,10 @@ switch (method.toUpperCase()) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("token_endpoint_auth_method claim must be one of: " + tokenEndpointAuthMethodsSupported)
         }
 
+        if (tokenEndpointAuthMethod.equals("tls_client_auth") && !registrationJwtClaimSet.getClaim("tls_client_auth_subject_dn")) {
+            return errorResponseFactory.invalidClientMetadataErrorResponse("tls_client_auth_subject_dn must be provided to use tls_client_auth")
+        }
+
         def ssa = registrationJwtClaimSet.getClaim("software_statement", String.class);
         if (!ssa) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("software_statement claim is missing")

@@ -4,7 +4,7 @@
       "allowIgIssuedTestCerts": true
     },
     "oauth2": {
-      "tokenEndpointAuthMethodsSupported": ["private_key_jwt"]
+      "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]
     },
     "urls": {
       "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient"

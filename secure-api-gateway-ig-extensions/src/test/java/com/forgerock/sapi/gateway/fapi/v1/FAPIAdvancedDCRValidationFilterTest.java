@@ -264,17 +264,15 @@ class FAPIAdvancedDCRValidationFilterTest {
         }
 
         @Test
-        void signingAlgorithmFieldsMissing() {
-            // All of these fields must be supplied
+        void signingAlgorithmFieldsMissingAreSkipped() {
             final List<String> signingAlgoFields = List.of("token_endpoint_auth_signing_alg", "id_token_signed_response_alg",
-                    "request_object_signing_alg");
+                                                           "request_object_signing_alg");
 
             // Test submitting requests which each omit one of the fields in turn
             for (String fieldToOmit : signingAlgoFields) {
                 final JsonValue registrationRequest = json(object());
                 signingAlgoFields.stream().filter(field -> !field.equals(fieldToOmit)).forEach(field -> registrationRequest.add(field, "PS256"));
-                runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateSigningAlgorithmUsed, registrationRequest,
-                        ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: " + fieldToOmit);
+                fapiValidationFilter.validateSigningAlgorithmUsed(registrationRequest);
             }
         }
 

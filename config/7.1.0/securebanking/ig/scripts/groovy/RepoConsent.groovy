@@ -36,6 +36,7 @@ def buildPatchRequest(incomingRequest, intentType) {
         ]);
     }
 
+    // Accounts Intent: Update accounts Ids
     if (incomingRequest.accountIds) {
         body.push([
 
@@ -46,46 +47,43 @@ def buildPatchRequest(incomingRequest, intentType) {
         ]);
     }
 
-    // Domestic Payment Intent only
-    /*
-    schemeName: "UK.OBIE.SortCodeAccountNumber",
-            identification: "79126738233670",
-            name: "7b78b560-6057-41c5-bf1f-1ed590b1c30b",
-            secondaryIdentification:
-     */
+    // Payments Intent: Update Debtor account and accountId
     if (incomingRequest.data && incomingRequest.data.debtorAccount) {
-        if(incomingRequest.data.debtorAccount.schemeName) {
-            body.push([
+        if(incomingRequest.data.debtorAccount.accounts[0]) {
+            if(incomingRequest.data.debtorAccount.accounts[0].schemeName) {
+                body.push([
 
-                    "operation": "add",
-                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SchemeName",
-                    "value"    : incomingRequest.data.debtorAccount.schemeName
-            ])
-        }
-        if(incomingRequest.data.debtorAccount.identification) {
-            body.push([
+                        "operation": "add",
+                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SchemeName",
+                        "value"    : incomingRequest.data.debtorAccount.accounts[0].schemeName
+                ])
+            }
+            if(incomingRequest.data.debtorAccount.accounts[0].identification) {
+                body.push([
 
-                    "operation": "add",
-                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Identification",
-                    "value"    : incomingRequest.data.debtorAccount.identification
-            ])
-        }
-        if(incomingRequest.data.debtorAccount.name) {
-            body.push([
+                        "operation": "add",
+                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Identification",
+                        "value"    : incomingRequest.data.debtorAccount.accounts[0].identification
+                ])
+            }
+            if(incomingRequest.data.debtorAccount.accounts[0].name) {
+                body.push([
 
-                    "operation": "add",
-                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Name",
-                    "value"    : incomingRequest.data.debtorAccount.name
-            ])
-        }
-        if(incomingRequest.data.debtorAccount.secondaryIdentification) {
-            body.push([
+                        "operation": "add",
+                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Name",
+                        "value"    : incomingRequest.data.debtorAccount.accounts[0].name
+                ])
+            }
+            if(incomingRequest.data.debtorAccount.accounts[0].secondaryIdentification) {
+                body.push([
 
-                    "operation": "add",
-                    "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SecondaryIdentification",
-                    "value"    : incomingRequest.data.debtorAccount.secondaryIdentification
-            ])
+                        "operation": "add",
+                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SecondaryIdentification",
+                        "value"    : incomingRequest.data.debtorAccount.accounts[0].secondaryIdentification
+                ])
+            }
         }
+
         if(incomingRequest.data.debtorAccount.accountId) {
             body.push([
 
@@ -95,6 +93,8 @@ def buildPatchRequest(incomingRequest, intentType) {
             ])
         }
     }
+    logger.debug(SCRIPT_NAME + "Patch request body:\n" + body + "\n")
+
     return body
 }
 

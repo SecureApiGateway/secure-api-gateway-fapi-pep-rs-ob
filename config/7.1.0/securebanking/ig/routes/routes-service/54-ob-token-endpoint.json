@@ -27,30 +27,6 @@
           }
         },
         {
-          "comment": "Extract client certificate thumbprint for cert bound access tokens",
-          "name": "CertificateThumbprintFilter-1",
-          "type": "CertificateThumbprintFilter",
-          "config": {
-            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnInvalidCnfKeyError.groovy"
-              }
-            }
-          }
-        },
-        {
-          "comment": "Add the extracted cert thumbprint to the token request",
-          "name": "AddCnf",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "AddCnfKey.groovy"
-          }
-        },
-        {
           "comment": "Add gateway access token to request (custom AT modification script checks access token to enforce route via IG)",
           "type": "ClientCredentialsOAuth2ClientFilter",
           "config": {

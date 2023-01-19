@@ -17,12 +17,23 @@ package com.forgerock.sapi.gateway.trusteddirectories;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class TrustedDirectorySecureApiGatewayTest {
 
-    private static final String testDirectoryFQDN = "https://saig.bigbank.com/jwkms/apiclient/jwks";
-    TrustedDirectorySecureApiGateway trustedDirectory = new TrustedDirectorySecureApiGateway(testDirectoryFQDN);
+    private static URL testDirectoryFQDN ;
+
+    private static TrustedDirectorySecureApiGateway trustedDirectory;
+    @BeforeAll
+    static void setUp() throws MalformedURLException {
+        testDirectoryFQDN = new URL("https://saig.bigbank.com/jwkms/apiclient/jwks");
+        trustedDirectory = new TrustedDirectorySecureApiGateway(testDirectoryFQDN);
+    }
 
     @Test
     void checkFieldValues() {

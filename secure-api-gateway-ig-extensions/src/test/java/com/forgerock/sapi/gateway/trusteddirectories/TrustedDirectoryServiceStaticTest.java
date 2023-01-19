@@ -17,15 +17,25 @@ package com.forgerock.sapi.gateway.trusteddirectories;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class TrustedDirectoryServiceStaticTest {
 
+    private static URL testDirectoryFQDN;
+
+    @BeforeAll
+    static void setupAll() throws MalformedURLException {
+        testDirectoryFQDN = new URL("https://sapi.bigbank.com/jwkms/apiclient/jwks");
+    }
+
     @BeforeEach
     void setUp() {
-
     }
 
     @AfterEach
@@ -33,10 +43,9 @@ class TrustedDirectoryServiceStaticTest {
     }
 
     @Test
-    void getTrustedDirectoryConfiguration_IGTestDirectoryEnabled() {
+    void getTrustedDirectoryConfiguration_IGTestDirectoryEnabled() throws MalformedURLException {
         // Given
         Boolean enableIGTestTrustedDirectory = true;
-        String testDirectoryFQDN = "https://sapi.bigbank.com/jwkms/apiclient/jwks";
         TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, testDirectoryFQDN);
         // When
         TrustedDirectory directoryConfig = trustedDirectoryService.getTrustedDirectoryConfiguration(TrustedDirectorySecureApiGateway.issuer);
@@ -56,7 +65,6 @@ class TrustedDirectoryServiceStaticTest {
     void getTrustedDirectoryConfiguration_IGTestDirectoryNotEnabled() {
         // Given
         Boolean enableIGTestTrustedDirectory = false;
-        String testDirectoryFQDN = "https://ig.bigbank.com/jwkms/apiclient/jwks";
         TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, testDirectoryFQDN);
         // When
         TrustedDirectory directoryConfig = trustedDirectoryService.getTrustedDirectoryConfiguration(TrustedDirectorySecureApiGateway.issuer);
@@ -69,7 +77,6 @@ class TrustedDirectoryServiceStaticTest {
     void getTrustedDirectoryConfiguration_getOpenBankingTestTrustedDirectory(){
         // Given
         Boolean enableIGTestTrustedDirectory = false;
-        String testDirectoryFQDN = "https://ig.bigbank.com/jwkms/apiclient/jwks";
         TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, testDirectoryFQDN);
         // When
         TrustedDirectory directoryConfig = trustedDirectoryService.getTrustedDirectoryConfiguration(TrustedDirectoryOpenBankingTest.issuer);

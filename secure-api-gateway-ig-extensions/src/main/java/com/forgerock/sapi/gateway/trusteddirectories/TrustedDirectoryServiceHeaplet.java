@@ -17,6 +17,8 @@ package com.forgerock.sapi.gateway.trusteddirectories;
 
 import static org.forgerock.openig.util.JsonValues.javaDuration;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 
 import org.forgerock.openig.heap.GenericHeaplet;
@@ -33,10 +35,15 @@ public class TrustedDirectoryServiceHeaplet extends GenericHeaplet {
 
     @Override
     public Object create() throws HeapException {
-        return createTrustedDirectoryService();
+        try {
+            return createTrustedDirectoryService();
+        } catch (MalformedURLException e) {
+            logger.info("Failed to create instance of TrustedDirectoryService: {}", e.getMessage(), e);
+            throw new HeapException(e);
+        }
     }
 
-    private Object createTrustedDirectoryService() {
+    private Object createTrustedDirectoryService() throws MalformedURLException {
         final Boolean enableIGTestTrustedDirectory = config.get("enableIGTestTrustedDirectory")
                 .as(evaluatedWithHeapProperties())
                 .defaultTo(DEFAULT_IG_TEST_DIRECTORY_ENABLED)
@@ -49,6 +56,7 @@ public class TrustedDirectoryServiceHeaplet extends GenericHeaplet {
 
         logger.debug("Creating Trusted Directory Service with enableIGTestTrustedDirectory: {}, secureApiGatewayJwksUri: {}",
                 enableIGTestTrustedDirectory, secureApiGatewayJwksUri);
-        return new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, secureApiGatewayJwksUri);
+        URL secureApiGatewayJwksUrl = new URL(secureApiGatewayJwksUri);
+        return new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, secureApiGatewayJwksUrl);
     }
 }

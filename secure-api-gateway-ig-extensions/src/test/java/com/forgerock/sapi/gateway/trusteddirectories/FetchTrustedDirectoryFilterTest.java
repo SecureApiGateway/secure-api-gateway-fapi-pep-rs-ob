@@ -21,6 +21,9 @@ import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.forgerock.http.protocol.Request;
 import org.forgerock.json.JsonValue;
 import org.forgerock.json.jose.jws.JwsHeader;
@@ -32,6 +35,7 @@ import org.forgerock.openig.heap.Name;
 import org.forgerock.services.context.AttributesContext;
 import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +46,14 @@ import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 
 class FetchTrustedDirectoryFilterTest {
 
-    private final TrustedDirectoryService trustedDirectoryService =  new TrustedDirectoryServiceStatic(true, "https://test-bank.com");
+    private final String secureApiGatewayJwksUri = "https://test-bank.com";
+    private TrustedDirectoryService trustedDirectoryService;
+
+    @BeforeEach
+    void setUp() throws MalformedURLException {
+        URL secureApiGatewayJwksUrl = new URL(secureApiGatewayJwksUri);
+        trustedDirectoryService = new TrustedDirectoryServiceStatic(true, secureApiGatewayJwksUrl);
+    }
 
     private static ApiClient createApiClient(String issuer) {
         final JwtClaimsSet ssaClaims = new JwtClaimsSet();

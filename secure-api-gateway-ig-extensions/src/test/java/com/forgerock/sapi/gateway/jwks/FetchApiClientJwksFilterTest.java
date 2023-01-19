@@ -92,7 +92,8 @@ class FetchApiClientJwksFilterTest {
     private void fetchJwkSetFromSoftwareStatement(FetchApiClientJwksFilter filter) throws Exception {
         final JWKSet jwkSet = createJwkSet();
         // SAPI-G directory uses the software statement jwks
-        final TrustedDirectory trustedDirectory = new TrustedDirectorySecureApiGateway("https://blah.com");
+        final URL secureApiGatewayJwksURI = new URL("https://blah.com");
+        final TrustedDirectory trustedDirectory = new TrustedDirectorySecureApiGateway(secureApiGatewayJwksURI);
         final ApiClient apiClient = createApiClientWithSoftwareStatementJwks(jwkSet, trustedDirectory.getSoftwareStatementJwksClaimName());
 
         invokeFilterAndValidateSuccessResponse(jwkSet, apiClient, trustedDirectory, filter);
@@ -187,7 +188,8 @@ class FetchApiClientJwksFilterTest {
         final ReturnsErrorsJwkStore errorsJwkStore = new ReturnsErrorsJwkStore();
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(errorsJwkStore);
         final JWKSet jwkSet = createJwkSet();
-        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway("http://blah") {
+        final URL secureApiGatewayJwksURI = new URL("https://blah.com");
+        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway(secureApiGatewayJwksURI) {
             @Override
             public String getSoftwareStatementJwksClaimName() {
                 return null;
@@ -210,7 +212,8 @@ class FetchApiClientJwksFilterTest {
         final ReturnsErrorsJwkStore errorsJwkStore = new ReturnsErrorsJwkStore();
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(errorsJwkStore);
         final JWKSet jwkSet = createJwkSet();
-        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway("http://blah");
+        final URL secureApiGatewayJwksURI = new URL("https://blah.com");
+        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway(secureApiGatewayJwksURI);
         final ApiClient apiClient = createApiClientWithSoftwareStatementJwks(jwkSet,null);
         final Context context = new AttributesContext(new RootContext());
         addApiClientToContext(context, apiClient);
@@ -227,7 +230,8 @@ class FetchApiClientJwksFilterTest {
     void failsToGetJwksFromSoftwareStatementIfClaimsIsInvalidJwksJson() throws Exception {
         final ReturnsErrorsJwkStore errorsJwkStore = new ReturnsErrorsJwkStore();
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(errorsJwkStore);
-        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway("http://blah");
+        final URL secureApiGatewayJwksURI = new URL("https://blah.com");
+        final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway(secureApiGatewayJwksURI);
         final ApiClient apiClient = new ApiClient();
         final JwtClaimsSet claimsSet = new JwtClaimsSet();
         claimsSet.setClaim(misconfiguredDirectory.getSoftwareStatementJwksClaimName(), json(object(field("keys", "should be a list"))));

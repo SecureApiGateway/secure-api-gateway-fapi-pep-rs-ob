@@ -67,7 +67,7 @@ switch(method.toUpperCase()) {
 
         Request jwksRequest = new Request()
         jwksRequest.setMethod('GET')
-        jwksRequest.setUri(ssaJwksUrl)
+        jwksRequest.setUri(ssaJwksUrl.toString())
         return http.send(jwksRequest).thenAsync(jwksResponse -> {
           jwksRequest.close()
           logger.debug(SCRIPT_NAME + "Back from JWKS URI")

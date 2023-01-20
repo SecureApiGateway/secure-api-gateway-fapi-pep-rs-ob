@@ -385,9 +385,9 @@
         "keystore": {
           "type": "KeyStore",
           "config": {
-            "url": "file://&{ig.instance.dir}/secrets/trust.p12",
+            "url": "file://&{ig.instance.dir}/secrets/igtruststore",
             "type": "PKCS12",
-            "passwordSecretId": "ca.keystore.storepass",
+            "passwordSecretId": "ig.truststore.password",
             "secretsProvider": "SystemAndEnvSecretStore-IAM"
           }
         }

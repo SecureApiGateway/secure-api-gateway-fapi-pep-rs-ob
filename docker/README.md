@@ -1,37 +1,40 @@
-# Docker Images for the ForgeRock Platform
+# Secure API Gateway IG Docker Image
+The Secure API Gateway Docker image extends the IG base image, adding Secure API Gateway code and config.
 
-This directory contains Dockerfiles used to build and deploy the ForgeRock platform.
+## Building the image
+The [Makefile](../Makefile) is used to build the image
 
-There are Dockerfiles that are specific to a release (under `7.1.0` )
-as well as Dockerfiles that are common across releases.
+The `tag` argument can be supplied to tag the image, this is defaulted to latest. 
 
-It is important to understand that many of the Dockerfiles do not contain the required configuration files needed to run the platform. The `bin/config.sh` script must be used to initialize the configuration. See the top level [README](../README.md).
+Example command:
+```
+make build-docker tag=my-new-image
+```
 
-## Common Docker Images
+## Docker image contents
+- IG configuration
+- IG routes
+- Extension groovy scripts
+- Java libraries required by the groovy scripts and routes
+  - [secure-api-gateway-ig-extensions](../secure-api-gateway-ig-extensions) jar
+  - Other libs found in the config dir
+- Helper bash scripts
+  - [import-pem-certs.sh](7.1.0/ig/bin/import-pem-certs.sh) used to import PEM certificates into the truststore
 
-* `java-11`: The foundational Java 11 image used to build ForgeRock DS, IDM and IG.
-* `cli-tools`: Wraps up cluster provisiong tools in a container.
-* `forgeops-secrets`: Docker image that generates random secrets for the platform.
-* `gatling`: Gatling image used to benchmark and exercise the platform.
+### import-pem-certs.sh
 
+This script is used to import PEM certificates into the Java truststore.
 
-Dockerfiles that will soon be deprecated as they are no longer required by kustomize, include:
+This is required if IG needs to make TLS connections to resources that are not provided by commonly trusted Certificate
+Authorities. For example, the Pre-Production Open Banking directory hosts its own Certificate Authority, which we need
+to trust in order to make TLS calls to it.
 
-* `util`:  Used in init containers to check for DS status.
-* `git`: Used to git clone configuration at runtime.
+The script can be configured using the following environment variables:
 
-## Dockerfiles for Release 7.1.0
+| Environment Variable  | Purpose                                                                                                                                                              | Default                                                                 |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| IG_PEM_TRUSTSTORE     | Path to a PEM file representing a truststore. The PEM can contain 1 or more X509 certificates, each of which will get added to the truststore created by this script | No default, if not supplied then the script exits with an error code -1 |
+| TRUSTSTORE_PATH       | Path where the truststore created by this script is output                                                                                                           | /home/forgerock/igtruststore                                            |
+| IG_DEFAULT_TRUSTSTORE | The default truststore which we want to extend. This truststore must already exist in the image. Typically, this will be the default JVM truststore                  | $JAVA_HOME/lib/security/cacerts                                         |
+| TRUSTSTORE_PASSWORD   | Password for the IG_DEFAULT_TRUSTSTORE and for the new truststore that is output                                                                                     | changeit                                                                |
 
-For the 7.x release, the base Dockerfiles for ForgeRock AM, IDM, DS and IG are built upstream in their respective product repositories. These images are built
-and pushed  to `gcr.io/forgerock-io/`.  The source for the Dockerfiles can be
-found in the respective product source code repository. In general, these base images have
-the product binary laid down and are "ready to run", but do not contain any configuration.
-
-The Dockerfiles in the [docker/7.1.0](7.1.0/) directory are the "child" images that derive from the base
-image and overlay any of your customizations and configuration files. These Dockerfiles
-are built by skaffold and pushed to your Kubernetes cluster.
-
-## See Also
-
-* [README.md](../README.md)
-* [Directory Server Image customization](7.1.0/ds/README-DS.md)

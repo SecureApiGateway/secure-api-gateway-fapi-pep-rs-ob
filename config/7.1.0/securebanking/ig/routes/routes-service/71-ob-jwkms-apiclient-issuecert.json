@@ -11,11 +11,11 @@
       "type": "application/x-groovy",
       "file": "JwkmsIssueCert.groovy",
       "args": {
-        "routeArgKeystoreFile": "&{ig.instance.dir}&{ca.keystore.path}",
-        "routeArgKeystoreType": "&{ca.keystore.type}",
-        "routeArgKeystorePass": "&{ca.keystore.storepass}",
-        "routeArgKeyPass": "&{ca.keystore.keypass}",
-        "routeArgKeyAlias": "&{ca.keystore.alias}",
+        "routeArgKeystoreFile": "&{ig.instance.dir}&{ig.ca.keystore.path}",
+        "routeArgKeystoreType": "&{ig.ca.keystore.type}",
+        "routeArgKeystorePass": "&{ig.ca.keystore.storepass}",
+        "routeArgKeyPass": "&{ig.ca.keystore.keypass}",
+        "routeArgKeyAlias": "&{ig.ca.keystore.alias}",
         "routeArgValidityDays": 365,
         "routeArgKeySize": 2048,
         "routeArgSigningAlg": "SHA256withRSA"

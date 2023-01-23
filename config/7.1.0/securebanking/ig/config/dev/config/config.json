@@ -274,14 +274,14 @@
             "name":"KeyStoreSecretStore-ASPSP",
             "type": "KeyStoreSecretStore",
             "config": {
-              "file": "&{ig.instance.dir}&{aspsp.keystore.path}",
+              "file": "&{ig.instance.dir}&{ig.aspsp.keystore.path}",
               "storeType": "PKCS12",
-              "storePassword": "aspsp.keystore.password",
-              "keyEntryPassword": "aspsp.keystore.password",
+              "storePassword": "ig.aspsp.keystore.password",
+              "keyEntryPassword": "ig.aspsp.keystore.password",
               "secretsProvider": "SystemAndEnvSecretStore-IAM",
               "mappings": [{
-                "secretId": "&{aspsp.jwtsigner.alias}",
-                "aliases": [ "&{aspsp.jwtsigner.alias}" ]
+                "secretId": "&{ig.aspsp.jwtsigner.alias}",
+                "aliases": [ "&{ig.aspsp.jwtsigner.alias}" ]
               }]
             }
           }
@@ -426,10 +426,10 @@
       "name":"KeyStoreSecretStore-TA",
       "type": "KeyStoreSecretStore",
       "config": {
-        "file": "&{ig.instance.dir}&{test.directory.signing.key.path}",
+        "file": "&{ig.instance.dir}&{ig.test.directory.signing.key.path}",
         "storeType": "PKCS12",
-        "storePassword": "ca.keystore.storepass",
-        "keyEntryPassword": "ca.keystore.storepass",
+        "storePassword": "ig.ca.keystore.storepass",
+        "keyEntryPassword": "ig.ca.keystore.storepass",
         "secretsProvider": "SystemAndEnvSecretStore-IAM",
         "mappings": [{
           "secretId": "jwt.signer",

@@ -196,8 +196,6 @@ init_config()
     cp -r "${PROFILE_ROOT}/$1/lib" "$DOCKER_ROOT/$1/"
     echo "copy ${PROFILE_ROOT}/$1/scripts to $DOCKER_ROOT/$1/"
     cp -r "${PROFILE_ROOT}/$1/scripts" "$DOCKER_ROOT/$1/"
-    echo "copy ${PROFILE_ROOT}/$1/secrets to $DOCKER_ROOT/$1/"
-    cp -r "${PROFILE_ROOT}/$1/secrets" "$DOCKER_ROOT/$1/"
     echo "copy ${PROFILE_ROOT}/$1/config/$_arg_environment/config to $DOCKER_ROOT/$1/"
     cp -r "${PROFILE_ROOT}/$1/config/$_arg_environment/config" "$DOCKER_ROOT/$1/"
     jq --arg mode "$(echo $_arg_ig_mode | tr '[:lower:]' '[:upper:]')" '.mode = $mode' "$DOCKER_ROOT/$1/config/"admin.json > "$DOCKER_ROOT/$1/config/"admin.json.tmp

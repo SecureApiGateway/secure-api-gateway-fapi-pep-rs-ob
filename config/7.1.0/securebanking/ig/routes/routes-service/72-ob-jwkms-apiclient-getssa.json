@@ -11,18 +11,6 @@
         "format": "PLAIN",
         "algorithm": "AES"
       }
-    },
-    {
-      "name": "SystemAndEnvSecretStore-SSA",
-      "type": "SystemAndEnvSecretStore",
-      "config": {
-        "mappings": [
-          {
-            "secretId": "ig.ssa.secret",
-            "format": "SecretKeyPropertyFormat-SSA"
-          }
-        ]
-      }
     }
   ],
   "handler": {

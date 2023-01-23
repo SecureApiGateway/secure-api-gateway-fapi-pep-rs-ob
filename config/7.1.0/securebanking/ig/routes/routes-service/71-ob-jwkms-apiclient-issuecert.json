@@ -18,8 +18,7 @@
         "routeArgKeyAlias": "&{ca.keystore.alias}",
         "routeArgValidityDays": 365,
         "routeArgKeySize": 2048,
-        "routeArgSigningAlg": "SHA256withRSA",
-        "routeArgEncryptionKey": "&{ca.kek}"
+        "routeArgSigningAlg": "SHA256withRSA"
       }
     }
   }

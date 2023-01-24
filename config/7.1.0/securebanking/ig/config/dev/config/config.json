@@ -1,7 +1,7 @@
 {
   "properties": {
     "security": {
-      "allowIgIssuedTestCerts": true
+      "enableTestTrustedDirectory": {"$bool": "&{ig.test.directory.enabled|true}"}
     },
     "oauth2": {
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]
@@ -451,7 +451,7 @@
       "type": "TrustedDirectoriesService",
       "comment": "Used to obtain meta information about a trusted directory by look up using the 'iss' field value",
       "config": {
-        "enableIGTestTrustedDirectory": true,
+        "enableIGTestTrustedDirectory": "${security.enableTestTrustedDirectory}",
         "SecureApiGatewayJwksUri": "https://&{ig.fqdn}/jwkms/testdirectory/jwks"
       }
     },

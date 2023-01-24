@@ -1,7 +1,7 @@
 {
   "properties": {
     "security": {
-      "allowIgIssuedTestCerts": false
+      "enableTestTrustedDirectory": false
     },
     "oauth2": {
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]

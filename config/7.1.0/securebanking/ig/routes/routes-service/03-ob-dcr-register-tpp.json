@@ -62,7 +62,7 @@
               ],
               "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",
-              "allowIgIssuedTestCerts": "${security.allowIgIssuedTestCerts}",
+              "allowIgIssuedTestCerts": "${security.enableTestTrustedDirectory}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",
               "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",
               "trustedDirectoryService": "${heap['TrustedDirectoriesService']}"

@@ -17,8 +17,8 @@
             "args": {
               "routeArgHeaderName": "x-jws-signature",
               "routeArgAlgorithm": "PS256",
-              "routeArgSecretId": "&{ig.aspsp.jwtsigner.alias}",
-              "routeArgKid": "&{ig.aspsp.jwtsigner.kid}",
+              "routeArgSecretId": "&{ig.ob.aspsp.jwtsigner.alias}",
+              "routeArgKid": "&{ig.ob.aspsp.jwtsigner.kid}",
               "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
               "routeArgTrustedAnchor": "openbanking.org.uk"
             }

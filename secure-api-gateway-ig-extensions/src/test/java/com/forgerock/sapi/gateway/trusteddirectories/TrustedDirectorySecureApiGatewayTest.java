@@ -31,7 +31,7 @@ class TrustedDirectorySecureApiGatewayTest {
     private static TrustedDirectorySecureApiGateway trustedDirectory;
     @BeforeAll
     static void setUp() throws MalformedURLException {
-        testDirectoryFQDN = new URL("https://saig.bigbank.com/jwkms/apiclient/jwks");
+        testDirectoryFQDN = new URL("https://saig.bigbank.com/jwkms/testdirectory/jwks");
         trustedDirectory = new TrustedDirectorySecureApiGateway(testDirectoryFQDN);
     }
 

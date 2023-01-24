@@ -31,7 +31,7 @@ class TrustedDirectoryServiceStaticTest {
 
     @BeforeAll
     static void setupAll() throws MalformedURLException {
-        testDirectoryFQDN = new URL("https://sapi.bigbank.com/jwkms/apiclient/jwks");
+        testDirectoryFQDN = new URL("https://sapi.bigbank.com/jwkms/testdirectory/jwks");
     }
 
     @BeforeEach

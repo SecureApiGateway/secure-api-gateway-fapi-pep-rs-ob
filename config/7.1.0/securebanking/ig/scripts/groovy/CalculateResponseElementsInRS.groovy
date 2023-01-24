@@ -22,6 +22,9 @@ switch(method.toUpperCase()) {
         RSRequest.setUri(requestURI)
         RSRequest.setMethod('POST')
         RSRequest.setEntity(request.entity.getJson())
+        if (request.headers.get("x-fapi-financial-id") != null) {
+            RSRequest.putHeaders(request.headers.get("x-fapi-financial-id"))
+        }
         logger.debug(SCRIPT_NAME + "Entity to be send to RS Calculate endpoint " + request.entity.getJson())
 
         return http.send(RSRequest).thenAsync(RSResponse -> {

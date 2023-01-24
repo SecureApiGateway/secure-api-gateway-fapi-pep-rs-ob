@@ -1,3 +1,4 @@
+import java.net.URLEncoder
 // Start script processing area
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
@@ -13,7 +14,7 @@ switch(method.toUpperCase()) {
         def debtorAccount = request.entity.getJson().Data.Initiation.DebtorAccount
         if(debtorAccount !=null){
             def requestURI = routeArgRsBaseURI + "/backoffice/accounts/search/findByAccountIdentifiers" +
-                    "?name=" + debtorAccount.Name + "&identification=" + debtorAccount.Identification +
+                    "?name=" + URLEncoder.encode(debtorAccount.Name.toString(), "UTF-8") + "&identification=" + debtorAccount.Identification +
                     "&schemeName=" + debtorAccount.SchemeName
 
             logger.debug(SCRIPT_NAME + " findByAccountIdentifiers raw request uri: " + requestURI)

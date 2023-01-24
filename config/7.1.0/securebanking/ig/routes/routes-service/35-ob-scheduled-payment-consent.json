@@ -134,15 +134,30 @@
           }
         },
         {
+          "comment": "Validate debtor account in RS",
+          "other": "ValidateDebtorAccountInRS",
+          "name": "ValidateDebtorAccountInRS",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ValidateDebtorAccountInRS.groovy",
+            "clientHandler": "ForgeRockClientHandler",
+            "args": {
+              "routeArgRsBaseURI": "https://&{rs.fqdn}"
+            }
+          }
+        },
+        {
           "comment": "Calculate response elements in RS",
           "name": "CalculateResponseElementsInRS",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "CalculateResponseElementsInRS.groovy",
+            "clientHandler": "ForgeRockClientHandler",
             "args": {
               "routeArgRsBaseURI": "https://&{rs.fqdn}",
-              "routeArgIntentIdQueryParameter": "intent",
+              "routeArgIntentQueryParameter": "intent",
               "routeArgVersionQueryParameter": "version",
               "routeArgIntentType": "PDSC_"
             }

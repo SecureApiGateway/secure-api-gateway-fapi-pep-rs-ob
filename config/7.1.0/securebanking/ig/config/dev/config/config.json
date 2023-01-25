@@ -423,17 +423,17 @@
       }
     },
     {
-      "name":"KeyStoreSecretStore-TA",
+      "name":"TestDirectorySigningKeyStore",
       "type": "KeyStoreSecretStore",
       "config": {
-        "file": "&{ig.instance.dir}&{ig.test.directory.signing.key.path}",
+        "file": "&{ig.instance.dir}&{ig.test.directory.signing.keystore.path}",
         "storeType": "PKCS12",
-        "storePassword": "ig.test.directory.ca.keystore.storepass",
-        "keyEntryPassword": "ig.test.directory.ca.keystore.storepass",
+        "storePassword": "ig.test.directory.signing.keystore.storepass",
+        "keyEntryPassword": "ig.test.directory.signing.keystore.storepass",
         "secretsProvider": "SystemAndEnvSecretStore-IAM",
         "mappings": [{
           "secretId": "jwt.signer",
-          "aliases": [ "jwt-signer" ]
+          "aliases": [ "&{ig.test.directory.signing.keystore.alias}" ]
         }]
       }
     },

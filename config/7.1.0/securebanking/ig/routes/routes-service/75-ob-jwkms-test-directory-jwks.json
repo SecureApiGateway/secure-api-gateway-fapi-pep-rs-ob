@@ -7,7 +7,7 @@
     "name": "JwkSetHandler-TA",
     "type": "JwkSetHandler",
     "config": {
-      "secretsProvider": "KeyStoreSecretStore-TA",
+      "secretsProvider": "TestDirectorySigningKeyStore",
       "purposes": [{
         "secretId": "jwt.signer",
         "keyUsage": "SIGN"

@@ -274,14 +274,14 @@
             "name":"KeyStoreSecretStore-ASPSP",
             "type": "KeyStoreSecretStore",
             "config": {
-              "file": "&{ig.instance.dir}&{ig.ob.aspsp.keystore.path}",
-              "storeType": "PKCS12",
-              "storePassword": "ig.ob.aspsp.keystore.password",
-              "keyEntryPassword": "ig.ob.aspsp.keystore.password",
+              "file": "&{ig.instance.dir}&{ig.ob.aspsp.signing.keystore.path}",
+              "storeType": "&{ig.ob.aspsp.signing.keystore.type}",
+              "storePassword": "ig.ob.aspsp.signing.keystore.storepass",
+              "keyEntryPassword": "ig.ob.aspsp.signing.keystore.keypass",
               "secretsProvider": "SystemAndEnvSecretStore-IAM",
               "mappings": [{
-                "secretId": "&{ig.ob.aspsp.jwtsigner.alias}",
-                "aliases": [ "&{ig.ob.aspsp.jwtsigner.alias}" ]
+                "secretId": "jwt.signer",
+                "aliases": [ "&{ig.ob.aspsp.signing.keystore.alias}" ]
               }]
             }
           }

@@ -3,28 +3,6 @@
   "name": "70 - OB JWKMS",
   "auditService": "AuditService-OB-Route",
   "condition": "${matches(request.uri.path, '^/jwkms/rcs/signresponse')}",
-  "heap": [
-    {
-      "name": "SecretKeyPropertyFormat-RCS",
-      "type": "SecretKeyPropertyFormat",
-      "config": {
-        "format": "PLAIN",
-        "algorithm": "AES"
-      }
-    },
-    {
-      "name": "SystemAndEnvSecretStore-RCS",
-      "type": "SystemAndEnvSecretStore",
-      "config": {
-        "mappings": [
-          {
-            "secretId": "ig.rcs.secret",
-            "format": "SecretKeyPropertyFormat-RCS"
-          }
-        ]
-      }
-    }
-  ],
   "handler": {
     "type": "Chain",
     "config": {

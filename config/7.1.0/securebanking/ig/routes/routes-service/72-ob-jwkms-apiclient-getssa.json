@@ -3,16 +3,6 @@
   "name": "72 - API client onboarding - generate test SSA",
   "auditService": "AuditService-OB-Route",
   "condition": "${matches(request.uri.path, '^/jwkms/apiclient/getssa')}",
-  "heap": [
-    {
-      "name": "SecretKeyPropertyFormat-SSA",
-      "type": "SecretKeyPropertyFormat",
-      "config": {
-        "format": "PLAIN",
-        "algorithm": "AES"
-      }
-    }
-  ],
   "handler": {
     "type": "Chain",
     "config": {

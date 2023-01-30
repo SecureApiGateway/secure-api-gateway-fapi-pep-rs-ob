@@ -125,6 +125,15 @@
           }
         },
         {
+          "comment": "Check VRPType",
+          "name": "VRPTypeVerifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "VRPTypeVerifier.groovy"
+          }
+        },
+        {
           "comment": "Validate debtor account in RS",
           "other": "ValidateDebtorAccountInRS",
           "name": "ValidateDebtorAccountInRS",

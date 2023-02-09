@@ -211,6 +211,24 @@
         "handler": "ReverseProxyHandler"
       }
     },
+
+    {
+      "name": "RcsReverseProxyHandler",
+      "comment": "ReverseProxyHandler for calls to the RCS",
+      "type": "Chain",
+      "config": {
+        "filters": [
+          "TransactionIdOutboundFilter"
+        ],
+        "handler": {
+          "name": "RcsReverseProxyHandlerInner",
+          "type": "ReverseProxyHandler",
+          "config": {
+            "vertx": "${vertxConfig}"
+          }
+        }
+      }
+    },
     {
       "name" : "AmService-OBIE",
       "type" : "AmService",

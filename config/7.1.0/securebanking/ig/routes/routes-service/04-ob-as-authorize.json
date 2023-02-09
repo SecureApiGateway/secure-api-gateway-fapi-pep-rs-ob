@@ -17,7 +17,9 @@
             "messageType": "REQUEST",
             "remove": [
               "host",
-              "X-Forwarded-Host"
+              "X-Forwarded-Host",
+              "origin",
+              "referer"
             ],
             "add": {
               "X-Forwarded-Host": [

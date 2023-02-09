@@ -1,0 +1,62 @@
+{
+  "comment": "PSU access to RCS UI, ensure PSU is authenticated - this route matches the UI assets and has capturing turned off",
+  "name": "82 - RCS UI Access assets",
+  "auditService": "AuditService-OB-Route",
+  "condition": "${matches(request.uri.path, '^/rcs/ui/')}",
+  "baseURI": "http://&{rcs.ui.internal.svc}:8080",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "name": "SingleSignOnFilter",
+          "type": "SingleSignOnFilter",
+          "config": {
+            "amService": "AmService-OBIE"
+          }
+        },
+        {
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rcs/ui/": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-RemoveHeaders",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "X-Scheme",
+              "X-Forwarded-Scheme",
+              "X-Forwarded-Proto",
+              "upgrade-insecure-requests",
+              "ssl-client-verify",
+              "referer"
+            ]
+          }
+        }
+      ],
+      "handler": "RcsReverseProxyHandler"
+    }
+  }
+}

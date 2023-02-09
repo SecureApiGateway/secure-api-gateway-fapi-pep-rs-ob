@@ -51,6 +51,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.forgerock.openig</groupId>
+            <artifactId>openig-openam</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>9.26</version>

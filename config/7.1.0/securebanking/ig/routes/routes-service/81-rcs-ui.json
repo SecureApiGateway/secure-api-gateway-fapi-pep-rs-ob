@@ -1,0 +1,82 @@
+{
+  "comment": "PSU access to RCS UI, ensure PSU is authenticated",
+  "name": "81 - RCS UI Access",
+  "auditService": "AuditService-OB-Route",
+  "condition": "${matches(request.uri.path, '^/rcs/ui/consent')}",
+  "baseURI": "http://&{rcs.ui.internal.svc}:8080",
+  "capture": [
+    "response",
+    "request"
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "name": "SingleSignOnFilter",
+          "type": "SingleSignOnFilter",
+          "config": {
+            "amService": "AmService-OBIE"
+          }
+        },
+        {
+          "name": "ConsentRequestJwtValidationFilter",
+          "type": "IdTokenValidationFilter",
+          "comment": "IdTokenValidationFilter is an extension of JwtValidationFilter which, in addition to signature validation, validates to the following claims: aud, iss, exp, iat",
+          "config": {
+            "idToken": "${request.queryParams.getFirst('consent_request')}",
+            "verificationSecretId": "any.value.in.regex.format",
+            "secretsProvider": "SecretsProvider-AmJWK",
+            "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+            "audience": "&{rcs.consent.response.jwt.issuer}"
+          }
+        },
+        {
+          "name": "ConsentRequestAccessAuthorisationFilter",
+          "type": "ConsentRequestAccessAuthorisationFilter"
+        },
+        {
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rcs/ui/consent": "/consent"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-RemoveHeaders",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "X-Scheme",
+              "X-Forwarded-Scheme",
+              "X-Forwarded-Proto",
+              "upgrade-insecure-requests",
+              "ssl-client-verify",
+              "referer"
+            ]
+          }
+        }
+      ],
+      "handler": "RcsReverseProxyHandler"
+    }
+  }
+}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr;
+package com.forgerock.sapi.gateway.dcr.idm;
 
 import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataAllFields;
 import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataRequiredFieldsOnly;
@@ -54,7 +54,9 @@ import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.FetchApiClientFilter.Heaplet;
+import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.Heaplet;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**
  * Unit tests for {@link FetchApiClientFilter}.

@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr;
+package com.forgerock.sapi.gateway.common.jwt;
 
 /**
- * Validator used to validate objects as part of Dynamic Client Registration.
- *
- * @param <T> the type of the object which can be validated
+ * Exception thrown when issues occur processing Jwts
  */
-@FunctionalInterface
-public interface Validator<T> {
+public class JwtException extends Exception {
 
-    /**
-     * Method which applies validation rules to an object.
-     * <p>
-     * If validation passes then the method will return as normal, if validation fails then a ValidationException
-     * must be thrown.
-     *
-     * @param t the object to validate
-     * @throws ValidationException must be thrown if validation fails
-     */
-    void validate(T t) throws ValidationException;
+    public JwtException(String message) {
+        super(message);
+    }
 
+    public JwtException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public JwtException(Throwable cause) {
+        super(cause);
+    }
 }

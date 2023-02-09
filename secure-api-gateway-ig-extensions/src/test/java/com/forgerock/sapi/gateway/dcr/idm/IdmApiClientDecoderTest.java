@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
 import org.forgerock.json.JsonValue;
 import org.forgerock.json.JsonValueException;
 import org.forgerock.json.jose.common.JwtReconstruction;
@@ -36,7 +35,7 @@ import org.forgerock.json.jose.jws.handlers.SigningHandler;
 import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.ApiClient;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 public class IdmApiClientDecoderTest {
 

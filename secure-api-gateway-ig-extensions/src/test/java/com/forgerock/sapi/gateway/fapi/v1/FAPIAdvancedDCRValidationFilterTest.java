@@ -58,9 +58,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.ValidationException;
-import com.forgerock.sapi.gateway.dcr.ValidationException.ErrorCode;
-import com.forgerock.sapi.gateway.dcr.Validator;
+import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
+import com.forgerock.sapi.gateway.dcr.common.Validator;
+import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter.Heaplet;
 import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 import com.nimbusds.jose.JOSEException;
@@ -158,7 +158,7 @@ class FAPIAdvancedDCRValidationFilterTest {
         }
     }
 
-    private void validateErrorResponse(Response response, ErrorCode expectedErrorCode, String expectedErrorDescription) {
+    private void validateErrorResponse(Response response, DCRErrorCode expectedErrorCode, String expectedErrorDescription) {
         assertEquals(Status.BAD_REQUEST, response.getStatus());
         assertEquals("application/json; charset=UTF-8", response.getHeaders().getFirst(ContentTypeHeader.class));
         try {
@@ -194,7 +194,7 @@ class FAPIAdvancedDCRValidationFilterTest {
     class RegistrationRequestObjectFieldValidatorTests {
 
         private <T> void runValidationAndVerifyExceptionThrown(Validator<T> validator, T requestObject,
-                ErrorCode expectedErrorCode, String expectedErrorMessage) {
+                DCRErrorCode expectedErrorCode, String expectedErrorMessage) {
             final ValidationException validationException = Assertions.assertThrows(ValidationException.class,
                     () -> validator.validate(requestObject));
             assertEquals(expectedErrorCode, validationException.getErrorCode(), "errorCode field");
@@ -206,14 +206,14 @@ class FAPIAdvancedDCRValidationFilterTest {
         void redirectUrisFieldMissing() {
             final JsonValue missingField = json(object());
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateRedirectUris, missingField,
-                    ErrorCode.INVALID_REDIRECT_URI, "request object must contain redirect_uris field");
+                    DCRErrorCode.INVALID_REDIRECT_URI, "request object must contain redirect_uris field");
         }
 
         @Test
         void redirectUrisArrayEmpty() {
             final JsonValue emptyArray = json(object(field("redirect_uris", array())));
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateRedirectUris, emptyArray,
-                    ErrorCode.INVALID_REDIRECT_URI, "redirect_uris array must not be empty");
+                    DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uris array must not be empty");
         }
 
         @Test
@@ -221,14 +221,14 @@ class FAPIAdvancedDCRValidationFilterTest {
             final JsonValue nonHttpsRedirect = json(object(field("redirect_uris",
                     array("https://www.google.com", "http://www.google.co.uk"))));
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateRedirectUris, nonHttpsRedirect,
-                    ErrorCode.INVALID_REDIRECT_URI, "redirect_uris must use https scheme");
+                    DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uris must use https scheme");
         }
 
         @Test
         void redirectUrisMalformedUri() {
             final JsonValue nonHttpsRedirect = json(object(field("redirect_uris", array("https://www.google.com", "123:@///324dfs+w34r"))));
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateRedirectUris, nonHttpsRedirect,
-                    ErrorCode.INVALID_REDIRECT_URI, "redirect_uri: 123:@///324dfs+w34r is not a valid URI");
+                    DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uri: 123:@///324dfs+w34r is not a valid URI");
         }
 
         @Test
@@ -241,7 +241,7 @@ class FAPIAdvancedDCRValidationFilterTest {
         void tokenEndpointAuthMethodFieldMissing() {
             final JsonValue missingField = json(object());
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateTokenEndpointAuthMethods, missingField,
-                    ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: token_endpoint_auth_method");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: token_endpoint_auth_method");
         }
 
         @Test
@@ -250,7 +250,7 @@ class FAPIAdvancedDCRValidationFilterTest {
             for (String invalidAuthMethod : invalidAuthMethods) {
                 final JsonValue invalidAuthMethodJson = json(object(field("token_endpoint_auth_method", invalidAuthMethod)));
                 runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateTokenEndpointAuthMethods, invalidAuthMethodJson,
-                        ErrorCode.INVALID_CLIENT_METADATA, "token_endpoint_auth_method not supported, must be one of: [private_key_jwt, self_signed_tls_client_auth, tls_client_auth]");
+                        DCRErrorCode.INVALID_CLIENT_METADATA, "token_endpoint_auth_method not supported, must be one of: [private_key_jwt, self_signed_tls_client_auth, tls_client_auth]");
             }
         }
 
@@ -287,7 +287,7 @@ class FAPIAdvancedDCRValidationFilterTest {
                 signingAlgoFields.stream().filter(field -> !field.equals(invalidAlgoField)).forEach(field -> registrationRequest.add(field, "PS256"));
                 registrationRequest.add(invalidAlgoField, "RS256");
                 runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateSigningAlgorithmUsed, registrationRequest,
-                        ErrorCode.INVALID_CLIENT_METADATA, "request object field: " + invalidAlgoField + ", must be one of: [ES256, PS256]");
+                        DCRErrorCode.INVALID_CLIENT_METADATA, "request object field: " + invalidAlgoField + ", must be one of: [ES256, PS256]");
             }
         }
 
@@ -301,13 +301,13 @@ class FAPIAdvancedDCRValidationFilterTest {
         @Test
         void responseTypeFieldMissing() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("blah", "blah"))),
-                    ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_types");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_types");
         }
 
         @Test
         void responseTypesInvalid() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("blah")))),
-                    ErrorCode.INVALID_CLIENT_METADATA, "response_types not supported, must be one of: [[code], [code id_token]]");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "response_types not supported, must be one of: [[code], [code id_token]]");
         }
 
         @Test
@@ -318,14 +318,14 @@ class FAPIAdvancedDCRValidationFilterTest {
         @Test
         void responseTypesCodeMissingResponseMode() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("code")))),
-                    ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_mode when response_types is: [code]");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_mode when response_types is: [code]");
         }
 
         @Test
         void responseTypesCodeInvalidResponseMode() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("code")),
                             field("response_mode", "blah"))),
-                    ErrorCode.INVALID_CLIENT_METADATA, "response_mode not supported, must be one of: [jwt]");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "response_mode not supported, must be one of: [jwt]");
         }
 
         @Test
@@ -338,14 +338,14 @@ class FAPIAdvancedDCRValidationFilterTest {
         void responseTypesCodeIdTokenMissingScopeField() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes,
                     json(object(field("response_types", array("code id_token")))),
-                    ErrorCode.INVALID_CLIENT_METADATA, "request must contain field: scope");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "request must contain field: scope");
         }
 
         @Test
         void responseTypesCodeIdTokenNotRequestingOpenIdScope() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes,
                     json(object(field("response_types", array("code id_token")), field("scope", "accounts payments"))),
-                    ErrorCode.INVALID_CLIENT_METADATA,
+                    DCRErrorCode.INVALID_CLIENT_METADATA,
                     "request object must include openid as one of the requested scopes when response_types is: [code id_token]");
         }
     }
@@ -400,7 +400,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA,
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA,
                     "token_endpoint_auth_method not supported, must be one of: " +
                             "[private_key_jwt, self_signed_tls_client_auth, tls_client_auth]");
         }
@@ -418,7 +418,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
         }
 
         @Test
@@ -436,7 +436,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
         }
 
         @Test
@@ -453,7 +453,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid");
         }
 
         @Test
@@ -467,7 +467,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA, "registration request entity is missing or malformed");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "registration request entity is missing or malformed");
         }
 
         @Test
@@ -484,7 +484,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, ErrorCode.INVALID_CLIENT_METADATA, "DCR request JWT signed must be signed with one of: [ES256, PS256]");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "DCR request JWT signed must be signed with one of: [ES256, PS256]");
         }
 
         @Test

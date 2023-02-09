@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr;
+package com.forgerock.sapi.gateway.dcr.idm;
 
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
@@ -39,7 +39,7 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 /**

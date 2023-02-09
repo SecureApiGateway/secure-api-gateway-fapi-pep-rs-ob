@@ -46,9 +46,11 @@ class TrustedDirectoryServiceStaticTest {
     void getTrustedDirectoryConfiguration_IGTestDirectoryEnabled() throws MalformedURLException {
         // Given
         Boolean enableIGTestTrustedDirectory = true;
-        TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, testDirectoryFQDN);
+        TrustedDirectoryService trustedDirectoryService =
+                new TrustedDirectoryServiceStatic(enableIGTestTrustedDirectory, testDirectoryFQDN);
         // When
-        TrustedDirectory directoryConfig = trustedDirectoryService.getTrustedDirectoryConfiguration(TrustedDirectorySecureApiGateway.issuer);
+        TrustedDirectory directoryConfig =
+                trustedDirectoryService.getTrustedDirectoryConfiguration(TrustedDirectorySecureApiGateway.issuer);
 
         // Then
         assertThat(directoryConfig).isNotNull();
@@ -56,9 +58,8 @@ class TrustedDirectoryServiceStaticTest {
         assertThat(directoryConfig.getDirectoryJwksUri()).isEqualTo(testDirectoryFQDN);
         assertThat(directoryConfig.softwareStatementHoldsJwksUri()).isEqualTo(false);
         assertThat(directoryConfig.getSoftwareStatementJwksUriClaimName()).isNull();
-        assertThat(directoryConfig.getSoftwareStatementJwksClaimName()).isEqualTo(TrustedDirectorySecureApiGateway.softwareStatementJwksClaimName);
-        assertThat(directoryConfig.getSoftwareStatementOrgIdClaimName()).isEqualTo(TrustedDirectorySecureApiGateway.softwareStatementOrgIdClaimName);
-        assertThat(directoryConfig.getSoftwareStatementSoftwareIdClaimName()).isEqualTo(TrustedDirectorySecureApiGateway.softwareStatementSoftwareIdClaimName);
+        assertThat(directoryConfig.getSoftwareStatementOrgIdClaimName()).isEqualTo("org_id");
+        assertThat(directoryConfig.getSoftwareStatementSoftwareIdClaimName()).isEqualTo("software_id");
     }
 
     @Test

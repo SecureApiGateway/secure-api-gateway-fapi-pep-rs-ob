@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +35,6 @@ import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
-import org.forgerock.json.jose.exceptions.FailedToLoadJWKException;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.json.jose.jws.JwsHeader;
 import org.forgerock.json.jose.jws.SignedJwt;
@@ -47,15 +47,14 @@ import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
-import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.ApiClient;
-import com.forgerock.sapi.gateway.dcr.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter.Heaplet;
-import com.forgerock.sapi.gateway.jwks.cache.BaseCachingJwkSetServiceTest.BaseCachingTestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.BaseCachingJwkSetServiceTest.ReturnsErrorsJwkStore;
+import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryOpenBankingTest;
@@ -68,7 +67,7 @@ class FetchApiClientJwksFilterTest {
     void fetchJwkSetFromJwksUri() throws Exception {
         final JWKSet jwkSet = createJwkSet();
         final URL jwksUri = new URL("https://directory.com/jwks/12345");
-        final MockJwkSetService jwkSetService = new MockJwkSetService(jwkSet, jwksUri);
+        final MockJwkSetService jwkSetService = new MockJwkSetService(Map.of(jwksUri, jwkSet));
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(jwkSetService);
 
         fetchJwkSetFromJwksUri(jwkSet, jwksUri, filter);
@@ -262,7 +261,7 @@ class FetchApiClientJwksFilterTest {
         void successfullyCreatesFilter() throws Exception {
             final JWKSet jwkSet = createJwkSet();
             final URL jwksUri = new URL("https://directory.com/jwks/12345");
-            final MockJwkSetService jwkSetService = new MockJwkSetService(jwkSet, jwksUri);
+            final MockJwkSetService jwkSetService = new MockJwkSetService(Map.of(jwksUri, jwkSet));
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             heap.put("JwkSetService", jwkSetService);
@@ -271,29 +270,6 @@ class FetchApiClientJwksFilterTest {
             final FetchApiClientJwksFilter filter = (FetchApiClientJwksFilter) new Heaplet().create(Name.of("test"), config, heap);
             fetchJwkSetFromJwksUri(jwkSet, jwksUri, filter);
             fetchJwkSetFromSoftwareStatement(filter);
-        }
-    }
-
-    /**
-     * JwkSetService impl which returns a pre-canned JWKSet for an expectedJwkStoreUrl.
-     * Returns an error if getJwkSet is called with a different url, or i getJwk is called.
-     */
-    private static class MockJwkSetService extends BaseCachingTestJwkSetService {
-        private final JWKSet jwkSet;
-        private final URL expectedJwkStoreUrl;
-
-        private MockJwkSetService(JWKSet jwkSet, URL expectedJwkStoreUrl) {
-            this.jwkSet = jwkSet;
-            this.expectedJwkStoreUrl = expectedJwkStoreUrl;
-        }
-
-        @Override
-        public Promise<JWKSet, FailedToLoadJWKException> getJwkSet(URL jwkStoreUrl) {
-            if (jwkStoreUrl.equals(expectedJwkStoreUrl)) {
-                return Promises.newResultPromise(jwkSet);
-            }
-            return Promises.newExceptionPromise(new FailedToLoadJWKException("actual jwkStoreUrl: " + jwkStoreUrl
-                    + ", does not match expected: " + expectedJwkStoreUrl));
         }
     }
 

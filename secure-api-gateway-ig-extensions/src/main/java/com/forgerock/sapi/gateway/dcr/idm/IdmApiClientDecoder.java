@@ -22,8 +22,8 @@ import org.forgerock.json.JsonValueException;
 import org.forgerock.json.jose.common.JwtReconstruction;
 import org.forgerock.json.jose.jws.SignedJwt;
 
-import com.forgerock.sapi.gateway.dcr.ApiClient;
-import com.forgerock.sapi.gateway.dcr.ApiClientOrganisation;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.models.ApiClientOrganisation;
 
 /**
  * Decodes an {@link ApiClient} from a {@link JsonValue} returned by IDM

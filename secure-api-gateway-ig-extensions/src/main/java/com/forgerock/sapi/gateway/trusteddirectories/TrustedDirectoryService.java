@@ -17,5 +17,12 @@ package com.forgerock.sapi.gateway.trusteddirectories;
 
 public interface TrustedDirectoryService {
 
+    /**
+     *
+     * @param issuer - the value of the 'iss' field that is used by the Trusted Directory in Software Statement
+     *               Assertions. For the Open Banking Directories for example, this will be "OpenBanking Ltd"
+     * @return The {@code TrustedDirectory} associated with the issuer or null if no value is held for the provided
+     * issuer
+     */
     TrustedDirectory getTrustedDirectoryConfiguration(String issuer);
 }

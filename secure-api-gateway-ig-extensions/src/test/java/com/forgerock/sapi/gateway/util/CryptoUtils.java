@@ -25,11 +25,14 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -44,20 +47,43 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemObjectGenerator;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.forgerock.json.jose.common.JwtReconstruction;
 import org.forgerock.json.jose.jwk.JWKSet;
+import org.forgerock.json.jose.jwk.RsaJWK;
+import org.forgerock.json.jose.jws.SignedJwt;
 import org.forgerock.util.Pair;
 
+import com.forgerock.sapi.gateway.jwks.RestJwkSetServiceTest;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.RSAKey.Builder;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
 /**
  * Collection of util methods to aid in the generation of crypto relaeted objects such as: KeyPair, X509Certificate,
  * JWK and JWKSet objects
  */
 public class CryptoUtils {
+
+    private static final RSASSASigner ssaSigner;
+
+    static {
+        KeyPairGenerator generator = null;
+        try {
+            generator = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        generator.initialize(2048);
+        KeyPair pair = generator.generateKeyPair();
+        ssaSigner =  new RSASSASigner(pair.getPrivate());
+    }
 
     /**
      * Generate a random RSA KeyPair
@@ -157,5 +183,56 @@ public class CryptoUtils {
         jwkBuilder.keyUse(keyUse);
         final RSAKey jwk = jwkBuilder.build();
         return jwk;
+    }
+
+    /**
+     * Uses nimbusds to create a SignedJWT and returns JWS object in its compact format consisting of
+     * Base64URL-encoded parts delimited by period ('.') characters.
+     *
+     * @param claims      The claims to include in the signed jwt
+     * @param signingAlgo the algorithm to use for signing
+     * @return the jws in its compact form consisting of Base64URL-encoded parts delimited by period ('.') characters.
+     */
+    public static String createEncodedJwtString(Map<String, Object> claims, JWSAlgorithm signingAlgo) {
+        try {
+            JWSHeader.Builder builder = new JWSHeader.Builder(signingAlgo);
+            builder.keyID(UUID.randomUUID().toString());
+            JWSHeader jwsHeader = builder.build();
+
+            final SignedJWT signedJWT = new SignedJWT(jwsHeader, JWTClaimsSet.parse(claims));
+            signedJWT.sign(ssaSigner);
+            return signedJWT.serialize();
+        } catch (ParseException | JOSEException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * JWT signer which uses generated test RSA private key
+     */
+    public static RSASSASigner createRSASSASigner() throws NoSuchAlgorithmException {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        KeyPair pair = generator.generateKeyPair();
+        return new RSASSASigner(pair.getPrivate());
+    }
+
+    /**
+     * Create a JWK that can be used to create a JWKSet
+     * @param keyId the id of the key to create
+     * @return a JWK entry
+     */
+    public static org.forgerock.json.jose.jwk.JWK createJWK(String keyId) {
+        return RsaJWK.builder("modulusValue", "exponentValue").keyId(keyId).build();
+    }
+
+    public static JWKSet createJwkSet(){
+        return new JWKSet(List.of(RestJwkSetServiceTest.createJWK(UUID.randomUUID().toString()),
+                RestJwkSetServiceTest.createJWK(UUID.randomUUID().toString())));
+    }
+
+    public static SignedJwt createSignedJwt(Map<String, Object> claims, JWSAlgorithm signingAlgo) {
+        String encodedJwsString = createEncodedJwtString(claims, signingAlgo);
+        return new JwtReconstruction().reconstructJwt(encodedJwsString, SignedJwt.class);
     }
 }

@@ -51,10 +51,10 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.ValidationException;
-import com.forgerock.sapi.gateway.dcr.ValidationException.ErrorCode;
-import com.forgerock.sapi.gateway.dcr.Validator;
-import com.forgerock.sapi.gateway.dcr.ErrorResponseFactory;
+import com.forgerock.sapi.gateway.dcr.common.ErrorResponseFactory;
+import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
+import com.forgerock.sapi.gateway.dcr.common.Validator;
+import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.mtls.CertificateFromHeaderSupplier;
 
@@ -192,7 +192,7 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
 
             final JsonValue registrationRequestObject = registrationRequestObjectSupplier.apply(context, request);
             if (registrationRequestObject == null) {
-                throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "registration request entity is missing or malformed");
+                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "registration request entity is missing or malformed");
             }
             validateRegistrationRequestObject(registrationRequestObject);
         } catch (ValidationException ve) {
@@ -215,20 +215,20 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     void validateRedirectUris(JsonValue registrationObject) {
         final List<String> redirectUris = registrationObject.get("redirect_uris").asList(String.class);
         if (redirectUris == null) {
-            throw new ValidationException(ErrorCode.INVALID_REDIRECT_URI, "request object must contain redirect_uris field");
+            throw new ValidationException(DCRErrorCode.INVALID_REDIRECT_URI, "request object must contain redirect_uris field");
         }
         if (redirectUris.isEmpty()) {
-            throw new ValidationException(ErrorCode.INVALID_REDIRECT_URI, "redirect_uris array must not be empty");
+            throw new ValidationException(DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uris array must not be empty");
         }
         for (String uriString : redirectUris) {
             final URI redirectUri;
             try {
                 redirectUri = new URI(uriString);
             } catch (URISyntaxException ex) {
-                throw new ValidationException(ErrorCode.INVALID_REDIRECT_URI, "redirect_uri: " + uriString + " is not a valid URI");
+                throw new ValidationException(DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uri: " + uriString + " is not a valid URI");
             }
             if (!"https".equals(redirectUri.getScheme())) {
-                throw new ValidationException(ErrorCode.INVALID_REDIRECT_URI, "redirect_uris must use https scheme");
+                throw new ValidationException(DCRErrorCode.INVALID_REDIRECT_URI, "redirect_uris must use https scheme");
             }
         }
     }
@@ -236,14 +236,14 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     void validateResponseTypes(JsonValue registrationObject) {
         final List<String> responseTypes = registrationObject.get("response_types").asList(String.class);
         if (responseTypes == null || responseTypes.isEmpty()) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_types");
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_types");
         }
         if (responseTypes.equals(RESPONSE_TYPE_CODE)) {
             validateResponseTypeCode(registrationObject);
         } else if (responseTypes.equals(RESPONSE_TYPE_CODE_ID_TOKEN)) {
             validateResponseTypeCodeIdToken(registrationObject);
         } else {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "response_types not supported, must be one of: "
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "response_types not supported, must be one of: "
                     + List.of(RESPONSE_TYPE_CODE, RESPONSE_TYPE_CODE_ID_TOKEN));
         }
     }
@@ -251,12 +251,12 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     private void validateResponseTypeCode(JsonValue registrationObject) {
         final String responseMode = registrationObject.get("response_mode").asString();
         if (responseMode == null) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA,
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA,
                     "request object must contain field: response_mode when response_types is: " + RESPONSE_TYPE_CODE);
         }
         final List<String> validResponseModesForResponseTypeCode = List.of("jwt");
         if (!validResponseModesForResponseTypeCode.contains(responseMode)) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "response_mode not supported, must be one of: "
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "response_mode not supported, must be one of: "
                     + validResponseModesForResponseTypeCode);
         }
     }
@@ -264,11 +264,11 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     private void validateResponseTypeCodeIdToken(JsonValue registrationObject) {
         final String scopeClaim = registrationObject.get("scope").asString();
         if (scopeClaim == null) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "request must contain field: scope");
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "request must contain field: scope");
         }
         final List<String> scopes = Arrays.asList(scopeClaim.split(" "));
         if (!scopes.contains("openid")) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA,
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA,
                     "request object must include openid as one of the requested scopes when response_types is: " + RESPONSE_TYPE_CODE_ID_TOKEN);
         }
     }
@@ -276,10 +276,10 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     void validateTokenEndpointAuthMethods(JsonValue registrationObject) {
         final String tokenEndpointAuthMethod = registrationObject.get("token_endpoint_auth_method").asString();
         if (tokenEndpointAuthMethod == null) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: token_endpoint_auth_method");
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: token_endpoint_auth_method");
         }
         if (!supportedTokenEndpointAuthMethods.contains(tokenEndpointAuthMethod)) {
-            throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "token_endpoint_auth_method not supported, must be one of: "
+            throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "token_endpoint_auth_method not supported, must be one of: "
                     + supportedTokenEndpointAuthMethods.stream().sorted().collect(Collectors.toList()));
         }
     }
@@ -295,7 +295,7 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
         for (String signingFieldName : registrationObjectSigningFieldNames) {
             final String signingAlg = registrationObject.get(signingFieldName).asString();
             if (signingAlg != null && !supportedSigningAlgorithms.contains(signingAlg)) {
-                throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "request object field: " + signingFieldName
+                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "request object field: " + signingFieldName
                         + ", must be one of: " + supportedSigningAlgorithms);
             }
         }
@@ -348,14 +348,14 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
         @Override
         public void validate(String certPem) {
             if (certPem == null) {
-                throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
+                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
             }
             final InputStream certStream = new ByteArrayInputStream(certPem.getBytes());
             try {
                 final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 final Certificate certificate = certificateFactory.generateCertificate(certStream);
             } catch (CertificateException e) {
-                throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid", e);
+                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid", e);
             }
         }
     }
@@ -385,7 +385,7 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
                 final JwsAlgorithm signingAlgo = registrationRequestJwt.getHeader().getAlgorithm();
                 // This validation is being done here as outside the supplier we are not aware that a JWT existed
                 if (signingAlgo == null || !supportedSigningAlgorithms.contains(signingAlgo.getJwaAlgorithmName())) {
-                    throw new ValidationException(ErrorCode.INVALID_CLIENT_METADATA,
+                    throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA,
                             "DCR request JWT signed must be signed with one of: " + supportedSigningAlgorithms);
                 }
                 final JwtClaimsSet claimsSet = registrationRequestJwt.getClaimsSet();

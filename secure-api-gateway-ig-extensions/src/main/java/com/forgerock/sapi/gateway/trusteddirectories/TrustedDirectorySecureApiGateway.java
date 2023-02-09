@@ -38,18 +38,18 @@ public class TrustedDirectorySecureApiGateway implements TrustedDirectory {
 
     final static boolean softwareStatementHoldsJwksUri = false;
 
-    final static String softwareStatementJwksClaimName = "software_jwks";
+    private final static String softwareStatementJwksClaimName = "software_jwks";
 
     /*
      * The name of the claim in the Open Banking Test Directory issued software statement that holds a uid for the
      * organisation
      */
-    final static String softwareStatementOrgIdClaimName = "org_id";
+    private final static String softwareStatementOrgIdClaimName = "org_id";
     /*
      * The name of the claim in the Open Banking Test Directory issued software statement that holds a uid for the
      * software statement
      */
-    final static String softwareStatementSoftwareIdClaimName = "software_id";
+    private final static String softwareStatementSoftwareIdClaimName = "software_id";
 
     /**
      * Constructor

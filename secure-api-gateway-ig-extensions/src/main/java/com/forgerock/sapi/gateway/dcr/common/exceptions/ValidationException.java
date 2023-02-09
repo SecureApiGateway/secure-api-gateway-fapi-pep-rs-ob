@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr;
+package com.forgerock.sapi.gateway.dcr.common.exceptions;
 
 import org.forgerock.util.Reject;
+
+import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 
 /**
  * Exception for modelling DCR Validation Errors.
@@ -25,37 +27,21 @@ import org.forgerock.util.Reject;
  */
 public class ValidationException extends RuntimeException {
 
-    public enum ErrorCode {
-        INVALID_REDIRECT_URI("invalid_redirect_uri"),
-        INVALID_CLIENT_METADATA("invalid_client_metadata"),
-        INVALID_SOFTWARE_STATEMENT("invalid_software_statement"),
-        UNAPPROVED_SOFTWARE_STATEMENT("unapproved_software_statement");
 
-        private final String code;
-
-        ErrorCode(String code) {
-            this.code = code;
-        }
-
-        public String getCode() {
-            return code;
-        }
-    }
-
-    private final ErrorCode errorCode;
+    private final DCRErrorCode errorCode;
     private final String errorDescription;
 
-    public ValidationException(ErrorCode errorCode, String errorMessage) {
+    public ValidationException(DCRErrorCode errorCode, String errorMessage) {
         this(errorCode, errorMessage, null);
     }
 
-    public ValidationException(ErrorCode errorCode, String errorMessage, Throwable cause) {
-        super((errorCode != null ? errorCode.code : "") + " " + errorMessage, cause);
+    public ValidationException(DCRErrorCode errorCode, String errorMessage, Throwable cause) {
+        super((errorCode != null ? errorCode.getCode() : "") + " " + errorMessage, cause);
         this.errorCode = Reject.checkNotNull(errorCode, "errorCode must be supplied");
         this.errorDescription = Reject.checkNotBlank(errorMessage, "errorMessage must be supplied");
     }
 
-    public ErrorCode getErrorCode() {
+    public DCRErrorCode getErrorCode() {
         return errorCode;
     }
 

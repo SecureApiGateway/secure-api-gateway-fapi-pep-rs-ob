@@ -1,0 +1,70 @@
+{
+  "comment": "PSU access to RCS API (called from the UI via the browser), ensures that the PSU is authorized to access the consent",
+  "name": "83 - RCS API Access",
+  "auditService": "AuditService-OB-Route",
+  "condition": "${matches(request.uri.path, '^/rcs/api/')}",
+  "baseURI": "http://&{rcs.api.internal.svc}:8080",
+  "capture": [
+    "response",
+    "request"
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "name": "SingleSignOnFilter",
+          "type": "SingleSignOnFilter",
+          "config": {
+            "amService": "AmService-OBIE"
+          }
+        },
+        {
+          "name": "RcsApiConsentRequestJwtResolver",
+          "type": "ScriptableFilter",
+          "comment": "Resolves the location of the consent request JWT and adds it to the attributes context for ConsentRequestJwtValidationFilter to validate",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "RcsApiConsentRequestJwtResolver.groovy"
+          }
+        },
+        {
+          "name": "ConsentRequestJwtValidationFilter",
+          "type": "IdTokenValidationFilter",
+          "comment": "IdTokenValidationFilter is an extension of JwtValidationFilter which, in addition to signature validation, validates the following claims: aud, iss, exp, iat",
+          "config": {
+            "idToken": "${attributes.consentRequestJwt}",
+            "verificationSecretId": "any.value.in.regex.format",
+            "secretsProvider": "SecretsProvider-AmJWK",
+            "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+            "audience": "&{rcs.consent.response.jwt.issuer}"
+          }
+        },
+        {
+          "name": "ConsentRequestAccessAuthorisationFilter",
+          "type": "ConsentRequestAccessAuthorisationFilter"
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-RemoveHeaders",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "X-Scheme",
+              "X-Forwarded-Scheme",
+              "X-Forwarded-Proto",
+              "upgrade-insecure-requests",
+              "ssl-client-verify",
+              "referer"
+            ]
+          }
+        }
+      ],
+      "handler": "RcsReverseProxyHandler"
+    }
+  }
+}

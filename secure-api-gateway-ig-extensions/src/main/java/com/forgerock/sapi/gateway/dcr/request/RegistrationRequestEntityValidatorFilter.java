@@ -19,6 +19,7 @@ package com.forgerock.sapi.gateway.dcr.request;
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
 import java.util.List;
+import java.util.Set;
 
 import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
@@ -58,8 +59,8 @@ public class RegistrationRequestEntityValidatorFilter implements Filter {
     private final RegistrationRequestEntitySupplier registrationEntitySupplier;
     private final RegistrationRequest.Builder registrationRequestBuilder;
     private final ResponseFactory responseFactory;
-
     private final List<String> RESPONSE_MEDIA_TYPES = List.of(HttpMediaTypes.APPLICATION_JSON);
+    private static final Set<String> VALIDATABLE_HTTP_REQUEST_METHODS = Set.of("POST", "PUT");
 
     /**
      * Constructor
@@ -83,6 +84,9 @@ public class RegistrationRequestEntityValidatorFilter implements Filter {
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
         final String transactionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
+        if (!VALIDATABLE_HTTP_REQUEST_METHODS.contains(request.getMethod())) {
+            return next.handle(context, request);
+        }
         log.debug("({}) Running RegistrationRequestEntityValidatorFilter", transactionId);
         try {
             String b64EncodedRegistrationRequestEntity = this.registrationEntitySupplier.apply(context, request);

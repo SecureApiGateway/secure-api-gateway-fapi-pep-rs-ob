@@ -62,8 +62,6 @@ class RegistrationRequestEntityValidatorFilterTest {
     private RegistrationRequestEntityValidatorFilter filter;
     private final RegistrationRequestEntitySupplier reqRequestSupplier = mock(RegistrationRequestEntitySupplier.class);
     private final AcceptHeaderSupplier acceptHeaderSupplier = mock(AcceptHeaderSupplier.class);
-    private static TrustedDirectoryService trustedDirectoryService;
-    private static SoftwareStatement.Builder softwareStatementBuilder;
     private static RegistrationRequest.Builder registrationRequestBuilder ;
     private static final JwtDecoder jwtDecoder = new JwtDecoder();
     private final ResponseFactory responseFactory = mock(ResponseFactory.class);
@@ -71,8 +69,8 @@ class RegistrationRequestEntityValidatorFilterTest {
 
     @BeforeAll
     static void setupClass() throws MalformedURLException {
-        trustedDirectoryService =  new TrustedDirectoryServiceStatic(true, new URL("https://jwks.com"));
-        softwareStatementBuilder = new SoftwareStatement.Builder(trustedDirectoryService, jwtDecoder);
+        TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(true, new URL("https://jwks.com"));
+        SoftwareStatement.Builder softwareStatementBuilder = new SoftwareStatement.Builder(trustedDirectoryService, jwtDecoder);
         registrationRequestBuilder = new RegistrationRequest.Builder(softwareStatementBuilder, jwtDecoder);
     }
 
@@ -94,6 +92,7 @@ class RegistrationRequestEntityValidatorFilterTest {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
+        request.setMethod("POST");
         Map<String, Object> ssaClaims = Map.of("iss", "test-publisher", "software_jwks", getJwkSetObject(),
                 "org_id", "Acme Inc", "software_id", "Acme Banking App");
         // When
@@ -115,6 +114,7 @@ class RegistrationRequestEntityValidatorFilterTest {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
+        request.setMethod("POST");
         Map<String, Object> ssaClaims = Map.of("iss", "invalid_isser", "software_jwks_endpoint", "https://jwks.com",
                 "org_id", "Acme Inc", "software_id", "Acme Banking App");
         // When
@@ -143,6 +143,7 @@ class RegistrationRequestEntityValidatorFilterTest {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
+        request.setMethod("POST");
         Map<String, Object> ssaClaims = Map.of("iss", "OpenBanking Ltd", "software_jwks_endpoint", "https://jwks.com",
                 "org_id", "Acme Inc", "software_id", "Acme Banking App");
 

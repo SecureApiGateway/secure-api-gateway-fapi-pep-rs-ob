@@ -2,7 +2,7 @@
   "comment": "Handle Open Banking Domestic Payment request",
   "name": "32 - Open Banking Domestic Payment Submission",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payments$')}",
   "capture": [
     "response",

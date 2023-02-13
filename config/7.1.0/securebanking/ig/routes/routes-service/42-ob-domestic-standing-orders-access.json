@@ -2,7 +2,7 @@
   "comment": "Handle Open Banking Domestic Standing Orders request",
   "name": "42 - Open Banking Domestic Standing Orders Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-orders')}",
   "capture": [
     "response",

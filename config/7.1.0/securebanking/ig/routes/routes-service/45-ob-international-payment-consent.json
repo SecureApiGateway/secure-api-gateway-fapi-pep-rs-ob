@@ -134,7 +134,7 @@
             "file": "ValidateDebtorAccountInRS.groovy",
             "clientHandler": "ForgeRockClientHandler",
             "args": {
-              "routeArgRsBaseURI": "https://&{rs.fqdn}"
+              "routeArgRsBaseURI": "${urls.rsBaseUri}"
             }
           }
         },
@@ -147,7 +147,7 @@
             "file": "CalculateResponseElementsInRS.groovy",
             "clientHandler": "ForgeRockClientHandler",
             "args": {
-              "routeArgRsBaseURI": "https://&{rs.fqdn}",
+              "routeArgRsBaseURI": "${urls.rsBaseUri}",
               "routeArgIntentQueryParameter": "intent",
               "routeArgVersionQueryParameter": "version",
               "routeArgIntentType": "PIC_"

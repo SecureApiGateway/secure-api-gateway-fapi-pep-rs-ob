@@ -7,7 +7,8 @@
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]
     },
     "urls": {
-      "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient"
+      "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+      "rsBaseUri": "http://&{rs.internal.svc}:8080"
     },
     "vertxConfig": {
       "maxHeaderSize": 16384,

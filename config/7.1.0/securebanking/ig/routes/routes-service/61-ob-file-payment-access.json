@@ -2,7 +2,7 @@
   "comment": "Handle Open Banking File Payments Access",
   "name": "61 - Open Banking File Payments Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payments')}",
   "capture": [
     "response",

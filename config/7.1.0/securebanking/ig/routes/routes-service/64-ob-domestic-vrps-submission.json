@@ -2,7 +2,7 @@
   "comment": "Handle Open Banking International Payment request",
   "name": "64 - Open Banking Domestic VRPS Submission",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrps$')}",
   "capture": [
     "response",

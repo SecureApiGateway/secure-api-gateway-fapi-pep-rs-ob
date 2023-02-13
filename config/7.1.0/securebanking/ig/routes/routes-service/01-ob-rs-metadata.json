@@ -2,7 +2,7 @@
   "comment": "Return Open Banking endpoints supported by Resource Server",
   "name": "01 - Open Banking RS Metadata",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {
     "type": "Chain",
@@ -44,9 +44,6 @@
             "add": {
               "X-Forwarded-Host": [
                 "&{ig.fqdn}"
-              ],
-              "X-Host": [
-                "&{rs.fqdn}"
               ]
             }
           }
@@ -57,7 +54,11 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessRs.groovy"
+            "file": "ProcessRs.groovy",
+            "args": {
+              "rsResponsePathToReplace": "&{ig.fqdn}",
+              "igPathReplacement": "&{ig.fqdn}/rs"
+            }
           }
         }
       ],

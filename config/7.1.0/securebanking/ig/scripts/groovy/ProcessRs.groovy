@@ -7,10 +7,8 @@ SCRIPT_NAME = "[ProcessRs] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 next.handle(context, request).thenOnResult(response -> {
-    response.entity = response.entity.getString().replace('http://rs', 'https://' + request.getHeaders().getFirst('Host') + '/rs');
-
-    //Replace the open banking domain with the IG domain
-    response.entity = response.entity.getString().replace(request.getHeaders().getFirst('X-Host'), request.getHeaders().getFirst('X-Forwarded-Host') + "/rs");
+    // Replace the configurable rsResponsePathToReplace with the igPathReplacement, this makes the API path externally callable.
+    response.entity = response.entity.getString().replace(rsResponsePathToReplace, igPathReplacement)
 
     try {
         JsonValue newEntity = response.entity.getJson();

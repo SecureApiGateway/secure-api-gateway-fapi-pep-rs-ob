@@ -131,7 +131,7 @@
             "type": "application/x-groovy",
             "file": "ValidateFileConsent.groovy",
             "args": {
-              "routeArgRsBaseURI": "https://&{rs.fqdn}",
+              "routeArgRsBaseURI": "${urls.rsBaseUri}",
               "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
               "routeArgObjDomesticPaymentConsent": "filePaymentsIntent",
               "routeArgObIntentObjectType": "OBWriteFileConsentResponse4",
@@ -149,7 +149,7 @@
             "file": "PatchFileConsent.groovy",
             "clientHandler": "IDMClientHandler",
             "args": {
-              "routeArgRsBaseURI": "https://&{rs.fqdn}",
+              "routeArgRsBaseURI": "${urls.rsBaseUri}",
               "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
               "routeArgObjDomesticPaymentConsent": "filePaymentsIntent",
               "routeArgObIntentObjectType": "OBWriteFileConsentResponse4",

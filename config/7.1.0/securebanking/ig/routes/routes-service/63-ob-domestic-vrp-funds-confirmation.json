@@ -1,7 +1,7 @@
 {
   "name": "63 - Open Banking RS Domestic VRP Funds Confirmation",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrp-consents/.*/funds-confirmation$')}",
   "capture": [
     "response",

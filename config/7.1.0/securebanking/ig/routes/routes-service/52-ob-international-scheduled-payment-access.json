@@ -2,7 +2,7 @@
   "comment": "Handle Open Banking International Scheduled Payment request",
   "name": "52 - Open Banking International Scheduled Payment Access",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{rs.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-scheduled-payments')}",
   "capture": [
     "response",

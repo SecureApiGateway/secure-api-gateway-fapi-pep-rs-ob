@@ -49,19 +49,41 @@ switch (method.toUpperCase()) {
         request.setEntity(idmIntent)
         request.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent
         request.uri.query = "action=create";
-        break
+        return next.handle(context, request).then(this.&extractOBIntentObjectFromIdmResponse)
 
     case "GET":
         def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
-        request.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent + "/" + consentId
-        request.uri.query = "_fields=OBIntentObject"
-        break
+        return getIdmConsent(request, consentId, apiClientId)
 
     default:
         logger.debug(SCRIPT_NAME + "Method not supported")
         return new Response(Status.METHOD_NOT_ALLOWED);
 }
-return next.handle(context, request).then(this.&extractOBIntentObjectFromIdmResponse)
+
+private Promise<Response, NeverThrowsException> getIdmConsent(originalRequest, consentId, oauth2ClientId) {
+    // Query IDM for a consent with the matching id
+    var getRequest = new Request(originalRequest)
+    getRequest.method = "GET"
+    getRequest.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent + "/" + consentId
+    getRequest.uri.query = "_fields=OBIntentObject,apiClient/oauth2ClientId"
+    return next.handle(context, getRequest)
+            .then(response -> performAccessAuthorisationCheck(response, oauth2ClientId))
+            .then(this.&extractOBIntentObjectFromIdmResponse)
+}
+
+/**
+ * Verify that the TPP is allowed to access the consent by checking the TPP's oauth2ClientId (extracted from the access_token)
+ * is the same as the oauth2ClientId used to create the consent
+ */
+private Response performAccessAuthorisationCheck(response, oauth2ClientId) {
+    if (response.status.isSuccessful()) {
+        if (response.entity.getJson().get("apiClient").get("oauth2ClientId") != oauth2ClientId) {
+            logger.debug(SCRIPT_NAME + "TPP not authorised to access consent")
+            return new Response(Status.FORBIDDEN)
+        }
+    }
+    return response
+}
 
 /**
  * Responses from IDM will always contain the "OBIntentObject" as a top level field (even if we filter).

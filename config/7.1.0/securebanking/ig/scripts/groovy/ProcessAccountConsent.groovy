@@ -1,6 +1,7 @@
 import org.forgerock.http.protocol.*
 import java.text.SimpleDateFormat
 import java.util.UUID
+import static org.forgerock.util.promise.Promises.newResultPromise
 
 /*
  * Script to prepare account access consent
@@ -41,34 +42,64 @@ switch(method.toUpperCase()) {
         request.setEntity(idmIntent)
         request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent
         request.uri.query = "action=create";
-        break
+        return next.handle(context, request).then(this.&extractOBIntentObjectFromIdmResponse)
 
     case "DELETE":
-        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
-        request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
-        return next.handle(context, request).then(response -> {
-            if (response.status.isSuccessful()) {
-                // OB spec expects HTTP 204 No Content response
-                return new Response(Status.NO_CONTENT)
+        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1)
+        // Do a get first to check that the TPP is authorised to access the consent
+        return getIdmConsent(request, consentId, oauth2ClientId).thenAsync(getResponse -> {
+            // If the GET fails (consent does not exist or TPP not authorised), then exit early
+            if (!getResponse.status.isSuccessful()) {
+                return newResultPromise(getResponse)
             }
-            return response
+            // Do the delete
+            var deleteRequest = new Request(request)
+            deleteRequest.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
+            return next.handle(context, deleteRequest).then(deleteResponse -> {
+                if (deleteResponse.status.isSuccessful()) {
+                    // OB spec expects HTTP 204 No Content response
+                    return new Response(Status.NO_CONTENT)
+                }
+                return deleteResponse
+            })
         })
 
     case "GET":
-        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
-        // Query IDM for a consent with the matching id, only return the OBIntentObject field
-        request.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
-        request.uri.query = "_fields=OBIntentObject"
-        break
+        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1)
+        return getIdmConsent(request, consentId, oauth2ClientId)
 
     default:
         logger.debug(SCRIPT_NAME + "Method not supported: " + method)
         return new Response(Status.METHOD_NOT_ALLOWED);
 }
-return next.handle(context, request).then(this.&extractOBIntentObjectFromIdmResponse)
+
+private Promise<Response, NeverThrowsException> getIdmConsent(originalRequest, consentId, oauth2ClientId) {
+    // Query IDM for a consent with the matching id
+    var getRequest = new Request(originalRequest)
+    getRequest.method = "GET"
+    getRequest.uri.path = "/openidm/managed/" + routeArgObjAccountAccessConsent + "/" + consentId
+    getRequest.uri.query = "_fields=OBIntentObject,apiClient/oauth2ClientId"
+    return next.handle(context, getRequest)
+               .then(response -> performAccessAuthorisationCheck(response, oauth2ClientId))
+               .then(this.&extractOBIntentObjectFromIdmResponse)
+}
 
 /**
- * Responses from IDM will always contain the "OBIntentObject" as a top level field (even if we filter).
+ * Verify that the TPP is allowed to access the consent by checking the TPP's oauth2ClientId (extracted from the access_token)
+ * is the same as the oauth2ClientId used to create the consent
+ */
+private Response performAccessAuthorisationCheck(response, oauth2ClientId) {
+    if (response.status.isSuccessful()) {
+        if (response.entity.getJson().get("apiClient").get("oauth2ClientId") != oauth2ClientId) {
+            logger.debug(SCRIPT_NAME + "TPP not authorised to access consent")
+            return new Response(Status.FORBIDDEN)
+        }
+    }
+    return response
+}
+
+/**
+ * Responses from IDM will contain the "OBIntentObject" as a top level field.
  * We want to send only the contents of the OBIntentObject as the response to the client i.e. a valid Open Banking API response
  */
 private Response extractOBIntentObjectFromIdmResponse(response) {

@@ -1,24 +1,33 @@
-import org.forgerock.http.protocol.*
-import org.forgerock.json.jose.*
 import groovy.json.JsonOutput
+
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 // Start script processing area
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
-if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
+if (fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
 SCRIPT_NAME = "[PatchFileConsent] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
+
+String fileIdempotencyKeyHeaderValue = request.getHeaders().getFirst("x-idempotency-key")
+// calculate the expired time for idempotency key (current date time + 24 hours)
+Instant fileIdempotencyKeyExpiredTime = Instant.now().plus(24, ChronoUnit.HOURS)
 
 def splitUri = request.uri.path.split("/")
 def consentId = splitUri[6]
 
-def requestUri = routeArgIdmBaseUri + "/openidm/managed/filePaymentsIntent/" + consentId + "?_fields=_id,FileContent,OBIntentObject/Data/Status";
+def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjIntent + "/" + consentId + "?_fields=_id,FileContent,OBIntentObject/Data/Status"
 logger.debug(SCRIPT_NAME + "The request uri is " + requestUri)
 
 Request patchRequest = new Request();
 patchRequest.setMethod('POST');
 patchRequest.setUri(requestUri + "&_action=patch");
 patchRequest.getHeaders().add("Content-Type", "application/json");
-patchRequest.setEntity(JsonOutput.toJson(buildPatchRequest(request.entity.getString())))
+patchRequest.setEntity(
+        JsonOutput.toJson(
+                buildPatchRequest(request.entity.getString(), fileIdempotencyKeyHeaderValue, fileIdempotencyKeyExpiredTime)
+        )
+)
 
 http.send(patchRequest).thenAsync(patchResponse -> {
     def responseStatus = patchResponse.getStatus();
@@ -35,20 +44,32 @@ http.send(patchRequest).thenAsync(patchResponse -> {
 
 // Start method declaration area
 
-def buildPatchRequest(String fileContent) {
+static def buildPatchRequest(String fileContent, String idempotencyKeyFileHeaderValue, Instant idempotencyKeyExpiredDateTime) {
     def body = [];
 
     body.push([
             "operation": "replace",
             "field"    : "FileContent",
             "value"    : fileContent
-    ]);
+    ])
 
     body.push([
             "operation": "replace",
             "field"    : "OBIntentObject/Data/Status",
             "value"    : "AwaitingAuthorisation"
-    ]);
+    ])
+
+    body.push([
+            "operation": "replace",
+            "field"    : "FileIdempotencyKey",
+            "value"    : idempotencyKeyFileHeaderValue
+    ])
+
+    body.push([
+            "operation": "replace",
+            "field"    : "FileIdempotencyKeyExpirationTime",
+            "value"    : idempotencyKeyExpiredDateTime.getEpochSecond()
+    ])
 
     return body
 }

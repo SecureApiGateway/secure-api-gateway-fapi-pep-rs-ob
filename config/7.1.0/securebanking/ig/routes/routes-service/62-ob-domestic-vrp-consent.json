@@ -125,6 +125,22 @@
           }
         },
         {
+          "comment": "Check incoming idempotency key header",
+          "name": "ValidateIdempotencyKey",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "clientHandler": "IDMClientHandler",
+            "file": "CheckIdempotencyKey.groovy",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "idempotencyArgFieldToFilter": "IdempotencyKey",
+              "idempotencyArgExpirationFieldToFilter": "IdempotencyKeyExpirationTime",
+              "intentArgObject": "domesticVrpPaymentIntent"
+            }
+          }
+        },
+        {
           "comment": "Check VRPType",
           "name": "VRPTypeVerifier",
           "type": "ScriptableFilter",
@@ -155,7 +171,7 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "domesticVrpPaymentIntent",
+              "routeArgObjIntent": "domesticVrpPaymentIntent",
               "routeArgObIntentObjectType": "OBDomesticVRPConsentResponse",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "DVRP_",

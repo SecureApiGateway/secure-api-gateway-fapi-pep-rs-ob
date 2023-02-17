@@ -126,6 +126,22 @@
           }
         },
         {
+          "comment": "Check incoming idempotency key header",
+          "name": "ValidateIdempotencyKey",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "clientHandler": "IDMClientHandler",
+            "file": "CheckIdempotencyKey.groovy",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "idempotencyArgFieldToFilter": "IdempotencyKey",
+              "idempotencyArgExpirationFieldToFilter": "IdempotencyKeyExpirationTime",
+              "intentArgObject": "domesticStandingOrdersIntent"
+            }
+          }
+        },
+        {
           "comment": "Validate debtor account in RS",
           "other": "ValidateDebtorAccountInRS",
           "name": "ValidateDebtorAccountInRS",
@@ -150,7 +166,6 @@
             "args": {
               "routeArgRsBaseURI": "${urls.rsBaseUri}",
               "routeArgIntentQueryParameter": "intent",
-              "routeArgVersionQueryParameter": "version",
               "routeArgIntentType": "PDSOC_"
             }
           }
@@ -172,7 +187,7 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "domesticStandingOrdersIntent",
+              "routeArgObjIntent": "domesticStandingOrdersIntent",
               "routeArgObIntentObjectType": "OBWriteDomesticStandingOrderConsentResponse6",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "PDSOC_"

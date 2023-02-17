@@ -1,4 +1,6 @@
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /*
  * Script to prepare payment consent
@@ -11,6 +13,8 @@ if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
 SCRIPT_NAME = "[ProcessPaymentConsent] (" + fapiInteractionId + ") - ";
 
 logger.debug(SCRIPT_NAME + "Running...")
+
+String idempotencyKeyHeaderValue = request.getHeaders().getFirst("x-idempotency-key")
 
 def apiClientId = contexts.oauth2.accessToken.info.client_id
 if (apiClientId == null || apiClientId == "") {
@@ -36,6 +40,9 @@ switch (method.toUpperCase()) {
         paymentIntentData = request.entity.getJson()
         processProcessPaymentConsentRequestData(consentId, paymentIntentData, status)
 
+        // calculate the expired time for idempotency key (current date time + 24 hours)
+        Instant idempotencyKeyExpiredDateTime = Instant.now().plus(24, ChronoUnit.HOURS)
+
         def version = getObApiVersion(request)
         def idmIntent = [
                 _id               : consentId,
@@ -43,11 +50,14 @@ switch (method.toUpperCase()) {
                 OBIntentObjectType: routeArgObIntentObjectType,
                 OBIntentObject    : paymentIntentData,
                 apiClient         : ["_ref": "managed/" + routeArgObjApiClient + "/" + apiClientId],
+                Oauth2ClientId    : apiClientId,
+                IdempotencyKey    : idempotencyKeyHeaderValue,
+                IdempotencyKeyExpirationTime: idempotencyKeyExpiredDateTime.getEpochSecond()
         ]
 
         logger.debug(SCRIPT_NAME + "IDM object json [" + idmIntent + "]")
         request.setEntity(idmIntent)
-        request.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent
+        request.uri.path = "/openidm/managed/" + routeArgObjIntent
         request.uri.query = "action=create";
         return next.handle(context, request).then(this.&extractOBIntentObjectFromIdmResponse)
 
@@ -64,7 +74,7 @@ private Promise<Response, NeverThrowsException> getIdmConsent(originalRequest, c
     // Query IDM for a consent with the matching id
     var getRequest = new Request(originalRequest)
     getRequest.method = "GET"
-    getRequest.uri.path = "/openidm/managed/" + routeArgObjDomesticPaymentConsent + "/" + consentId
+    getRequest.uri.path = "/openidm/managed/" + routeArgObjIntent + "/" + consentId
     getRequest.uri.query = "_fields=OBIntentObject,apiClient/oauth2ClientId"
     return next.handle(context, getRequest)
             .then(response -> performAccessAuthorisationCheck(response, oauth2ClientId))
@@ -89,14 +99,14 @@ private Response performAccessAuthorisationCheck(response, oauth2ClientId) {
  * Responses from IDM will always contain the "OBIntentObject" as a top level field (even if we filter).
  * We want to send only the contents of the OBIntentObject as the response to the client i.e. a valid Open Banking API response
  */
-private Response extractOBIntentObjectFromIdmResponse(response) {
+private static Response extractOBIntentObjectFromIdmResponse(response) {
     if (response.status.isSuccessful()) {
         response.entity = response.entity.getJson().get("OBIntentObject")
     }
     return response
 }
 
-private void processProcessPaymentConsentRequestData(consentId, paymentIntentData, statusToSet) {
+private static void processProcessPaymentConsentRequestData(consentId, paymentIntentData, statusToSet) {
     def tz = TimeZone.getTimeZone("UTC");
     def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     df.setTimeZone(tz);
@@ -113,7 +123,7 @@ private void processProcessPaymentConsentRequestData(consentId, paymentIntentDat
  * Extract the Open Banking Api version from the request uri
  * Example uri: /rs/open-banking/v3.1.10/aisp/account-access-consents
  */
-private String getObApiVersion(request) {
+private static String getObApiVersion(request) {
     def uri = request.uri.toString()
     def pathPrefix = "/rs/open-banking/"
     int prefixEndIndex = uri.indexOf(pathPrefix)

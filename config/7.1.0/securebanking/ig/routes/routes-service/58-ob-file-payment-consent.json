@@ -125,6 +125,22 @@
           }
         },
         {
+          "comment": "Check incoming idempotency key header",
+          "name": "ValidateIdempotencyKey",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "clientHandler": "IDMClientHandler",
+            "file": "CheckIdempotencyKey.groovy",
+            "args": {
+              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+              "idempotencyArgFieldToFilter": "IdempotencyKey",
+              "idempotencyArgExpirationFieldToFilter": "IdempotencyKeyExpirationTime",
+              "intentArgObject": "filePaymentsIntent"
+            }
+          }
+        },
+        {
           "comment": "Validate debtor account in RS",
           "other": "ValidateDebtorAccountInRS",
           "name": "ValidateDebtorAccountInRS",
@@ -149,7 +165,6 @@
             "args": {
               "routeArgRsBaseURI": "${urls.rsBaseUri}",
               "routeArgIntentQueryParameter": "intent",
-              "routeArgVersionQueryParameter": "version",
               "routeArgIntentType": "PFC_"
             }
           }
@@ -162,7 +177,7 @@
             "type": "application/x-groovy",
             "file": "ProcessPaymentConsent.groovy",
             "args": {
-              "routeArgObjDomesticPaymentConsent": "filePaymentsIntent",
+              "routeArgObjIntent": "filePaymentsIntent",
               "routeArgObIntentObjectType": "OBWriteFileConsentResponse4",
               "routeArgObjApiClient": "apiClient",
               "routeArgConsentIdPrefix": "PFC_"

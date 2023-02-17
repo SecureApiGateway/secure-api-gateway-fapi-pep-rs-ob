@@ -16,10 +16,10 @@ logger.debug(SCRIPT_NAME + "Running...")
 
 String idempotencyKeyHeaderValue = request.getHeaders().getFirst("x-idempotency-key")
 
-def apiClientId = contexts.oauth2.accessToken.info.client_id
-if (apiClientId == null || apiClientId == "") {
+def oauth2ClientId = contexts.oauth2.accessToken.info.client_id
+if (oauth2ClientId == null || oauth2ClientId == "") {
     // in case of client credentials grant
-    apiClientId = contexts.oauth2.accessToken.info.sub
+    oauth2ClientId = contexts.oauth2.accessToken.info.sub
 }
 
 def method = request.method
@@ -49,8 +49,8 @@ switch (method.toUpperCase()) {
                 OBVersion         : version,
                 OBIntentObjectType: routeArgObIntentObjectType,
                 OBIntentObject    : paymentIntentData,
-                apiClient         : ["_ref": "managed/" + routeArgObjApiClient + "/" + apiClientId],
-                Oauth2ClientId    : apiClientId,
+                apiClient         : ["_ref": "managed/" + routeArgObjApiClient + "/" + oauth2ClientId],
+                Oauth2ClientId    : oauth2ClientId,
                 IdempotencyKey    : idempotencyKeyHeaderValue,
                 IdempotencyKeyExpirationTime: idempotencyKeyExpiredDateTime.getEpochSecond()
         ]
@@ -63,7 +63,35 @@ switch (method.toUpperCase()) {
 
     case "GET":
         def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1);
-        return getIdmConsent(request, consentId, apiClientId)
+        return getIdmConsent(request, consentId, oauth2ClientId)
+
+    case "DELETE":
+        def consentId = request.uri.path.substring(request.uri.path.lastIndexOf("/") + 1)
+        // only able for VRP consent
+        def splitUri = request.uri.path.split("/")
+        def consentOperation = splitUri[5]
+        // safe check only for vrp consent
+        if(consentOperation == "domestic-vrp-consents") {
+            // Do a get first to check that the TPP is authorised to access the consent
+            return getIdmConsent(request, consentId, oauth2ClientId).thenAsync(getResponse -> {
+                // If the GET fails (consent does not exist or TPP not authorised), then exit early
+                if (!getResponse.status.isSuccessful()) {
+                    return newResultPromise(getResponse)
+                }
+                // Do the delete
+                var deleteRequest = new Request(request)
+                deleteRequest.uri.path = "/openidm/managed/" + routeArgObjIntent + "/" + consentId
+                return next.handle(context, deleteRequest).then(deleteResponse -> {
+                    if (deleteResponse.status.isSuccessful()) {
+                        // OB spec expects HTTP 204 No Content response
+                        return new Response(Status.NO_CONTENT)
+                    }
+                    return deleteResponse
+                })
+            })
+        }
+        // if not is vrp consent operation let's continue
+        return next.handle(context, request)
 
     default:
         logger.debug(SCRIPT_NAME + "Method not supported")

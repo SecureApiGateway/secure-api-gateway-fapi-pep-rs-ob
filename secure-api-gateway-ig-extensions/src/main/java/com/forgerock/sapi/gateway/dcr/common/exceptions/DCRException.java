@@ -51,7 +51,7 @@ public class DCRException extends Exception {
 
     public Map<String, String> getErrorFields(){
         LinkedHashMap<String, String> fields = new LinkedHashMap<>();
-        fields.put("error_code", errorCode.getCode());
+        fields.put("error", errorCode.getCode());
         fields.put("error_description", errorDescription);
         return fields;
     };

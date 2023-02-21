@@ -82,7 +82,7 @@ public class RegistrationRequestJwtSignatureValidationService {
                 jwtSignatureValidator.validateSignature(registrationRequest.getSignedJwt(), jwks);
                 return Promises.newResultPromise(new Response(Status.OK));
             } catch (SignatureException e) {
-                String errorDescription = "Registration Request signature is invalid";
+                String errorDescription = "Registration Request signature is invalid: '" + e.getMessage() + "'";
                 log.info("({}) {}", fapiInteractionId, errorDescription, e);
                 return Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, errorDescription));

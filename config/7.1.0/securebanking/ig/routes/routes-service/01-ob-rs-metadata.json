@@ -43,7 +43,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "&{ig.fqdn}"
+                "&{mtls.fqdn}"
               ]
             }
           }
@@ -56,8 +56,8 @@
             "type": "application/x-groovy",
             "file": "ProcessRs.groovy",
             "args": {
-              "rsResponsePathToReplace": "&{ig.fqdn}",
-              "igPathReplacement": "&{ig.fqdn}/rs"
+              "rsResponsePathToReplace": "&{mtls.fqdn}",
+              "igPathReplacement": "&{mtls.fqdn}/rs"
             }
           }
         }

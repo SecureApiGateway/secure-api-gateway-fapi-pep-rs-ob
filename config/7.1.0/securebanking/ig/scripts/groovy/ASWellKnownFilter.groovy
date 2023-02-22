@@ -9,6 +9,12 @@ next.handle(context, request).thenOnResult(response -> {
         wellKnownData = response.entity.getJson()
         // Configure auth methods supported using filter arg: tokenEndpointAuthMethodsSupported
         wellKnownData["token_endpoint_auth_methods_supported"] = tokenEndpointAuthMethodsSupported
+
+        // Update endpoints defined in mtlsEndpoints arg to use the mtls host
+        mtlsEndpoints.each { endpoint ->
+            wellKnownData[endpoint] = wellKnownData[endpoint].replace(igHost, mtlsHost)
+        }
+
         response.entity.setJson(wellKnownData)
     }
 })

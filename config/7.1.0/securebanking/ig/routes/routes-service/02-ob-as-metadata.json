@@ -17,7 +17,10 @@
             "type": "application/x-groovy",
             "file": "ASWellKnownFilter.groovy",
             "args": {
-              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}"
+              "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",
+              "mtlsEndpoints": ["registration_endpoint", "token_endpoint"],
+              "igHost": "&{ig.fqdn}",
+              "mtlsHost": "&{mtls.fqdn}"
             }
           }
         },

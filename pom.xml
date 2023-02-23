@@ -16,20 +16,18 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.forgerock.securebanking.uk.gateway</groupId>
-    <artifactId>securebanking-openbanking-uk-gateway</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>com.forgerock.sapi.gateway</groupId>
+    <artifactId>secure-api-gateway-ob-uk</artifactId>
+    <version>0.9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>securebanking-openbanking-uk-gateway</name>
-    <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for SBAT
+    <name>secure-api-gateway-ob-uk</name>
+    <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for Secure API Gateway
     </description>
     <url>
-        https://github.com/SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+        https://github.com/SecureApiGateway/secure-api-gateway-ob-uk.git
     </url>
     <licenses>
         <license>
@@ -47,7 +45,7 @@
         <!-- https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html -->
         <release.java.version>11</release.java.version>
         <copyright-current-year>2022</copyright-current-year>
-        <uk.bom.version>1.1.7-SNAPSHOT</uk.bom.version>
+        <uk.bom.version>0.9.0-SNAPSHOT</uk.bom.version>
         <openig.version>7.1.0</openig.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
@@ -69,10 +67,10 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-            <!-- SBAT BOM -->
+            <!-- Secure API Gateway commons BOM -->
             <dependency>
-                <groupId>com.forgerock.securebanking.uk</groupId>
-                <artifactId>securebanking-openbanking-uk-bom</artifactId>
+                <groupId>com.forgerock.sapi.gateway</groupId>
+                <artifactId>secure-api-gateway-ob-uk-common-bom</artifactId>
                 <version>${uk.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -82,11 +80,11 @@
         </dependencies>
     </dependencyManagement>
     <scm>
-        <connection>scm:git:git@github.com:SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+        <connection>scm:git:git@github.com:SecureApiGateway/secure-api-gateway-ob-uk.git
         </connection>
-        <developerConnection>scm:git:git@github.com:SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git
+        <developerConnection>scm:git:git@github.com:SecureApiGateway/secure-api-gateway-ob-uk.git
         </developerConnection>
-        <url>https://github.com/SecureBankingAccessToolkit/securebanking-openbanking-uk-gateway.git</url>
+        <url>https://github.com/SecureApiGateway/secure-api-gateway-ob-uk.git</url>
         <tag>HEAD</tag>
     </scm>
 

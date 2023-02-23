@@ -1,7 +1,7 @@
 # ForgeRock DevOps and Cloud Deployment - Secure Banking Access toolkit Demo
 
-This repository contains a demonstration deployment of the ForgeRock platform along with the ForgeRock Secure Banking Access toolkit. These access toolkit are a set of plugins and configuration for meeting the UK Open Banking requirements, 
-based on the [Secure Banking access toolkit assets](https://github.com/SecureBankingAccessToolkit/SecureBankingAccessToolkit).
+This repository contains a demonstration deployment of the ForgeRock platform along with the ForgeRock Secure API Gateway. These access toolkit are a set of plugins and configuration for meeting the UK Open Banking requirements, 
+based on the [Secure API Gateway assets](https://github.com/SecureApiGateway/SecureApiGateway).
 
 ## Read first (Environment Setup)
 - [DevOps Developer's Guide](https://backstage.forgerock.com/docs/forgeops/7.1/index.html)
@@ -10,7 +10,7 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 
 | type                        | folder                               |
 |-----------------------------|--------------------------------------|
-| profile master              | `config/7.1.0/securebanking/`            |
+| profile master              | `config/7.1.0/securebanking/`        |
 | component                   | `${profile master}/ig`               |
 | environment                 | `${component}/config/${environment}` |
 | shared configuration folder | `${component}/lib`                   |
@@ -21,23 +21,22 @@ based on the [Secure Banking access toolkit assets](https://github.com/SecureBan
 
 | type         | folder               |
 |--------------|----------------------|
-| staging area | `docker/7.1.0/`        |
+| staging area | `docker/7.1.0/`      |
 | component    | `${staging area}/ig` |
 
-| type        | folder                                        |
-|-------------|-----------------------------------------------|
-| overlay     | `kustomize/overlay/7.1.0/securebanking`           |
-| defaults    | `kustomize/overlay/7.1.0/securebanking/defaults`  |
-| environment | `${overlay}/${environment}` except `defaults` |
+| type        | folder                                           |
+|-------------|--------------------------------------------------|
+| overlay     | `kustomize/overlay/7.1.0/securebanking`          |
+| defaults    | `kustomize/overlay/7.1.0/securebanking/defaults` |
+| environment | `${overlay}/${environment}` except `defaults`    |
 > Defaults contains the map values configuration parameters shared through all environments
 
 > Each environment on `kustomize/overlay/7.1.0/securebanking` can override the defaults map values
 
 ## IG extensions
 ### Maven modules
-| module                                                                                | Type           | Description                                                                | Dependencies                                                                                               |
-|---------------------------------------------------------------------------------------|----------------|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| [jwks](securebanking-openbanking-uk-gateway-jwks/README.md)                           | Heap config    | Support for fetching (and optionally caching) JSON Web Key Set (JWKS) data | IG                                                                                                         |
+- [secure api gateway IG extensions](secure-api-gateway-ig-extensions/README.md)
+  - Support for fetching (and optionally caching) JSON Web Key Set (JWKS) data                                                                                                         |
 
 ## Quick Start
 **Steps**

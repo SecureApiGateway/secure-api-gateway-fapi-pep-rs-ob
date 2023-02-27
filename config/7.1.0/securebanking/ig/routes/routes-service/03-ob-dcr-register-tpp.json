@@ -88,20 +88,6 @@
           }
         },
         {
-          "comment": "Verify SSA signature (AM can't process non-conformant OB SSAs)",
-          "name": "SSAVerifier",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "SSAVerifier.groovy",
-            "clientHandler": "OBClientHandler",
-            "args": {
-              "trustedDirectoryService": "${heap['TrustedDirectoriesService']}",
-              "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}"
-            }
-          }
-        },
-        {
           "comment": "Register TPP org and OAuth2 client in IDM or delete from IDM",
           "name": "CreateApiClient",
           "type": "ScriptableFilter",

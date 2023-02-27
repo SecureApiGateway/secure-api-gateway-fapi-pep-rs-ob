@@ -1,6 +1,7 @@
-import org.forgerock.http.protocol.*
+import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest
+import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement
 import groovy.json.JsonOutput
-import org.forgerock.json.jose.*
+
 import static org.forgerock.util.promise.Promises.newResultPromise
 
 /*
@@ -47,31 +48,25 @@ switch(method.toUpperCase()) {
       if (!amResponse.status.isSuccessful()) {
         return newResultPromise(amResponse)
       }
-      if (!attributes.registrationJWTs) {
-        logger.error(SCRIPT_NAME + "Required attribute not found: attributes.registrationJWTs")
-        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Missing request data"))
+
+      if(!attributes.registrationRequest) {
+        logger.error(SCRIPT_NAME + "Required attribute not found. Please ensure the " +
+                "RegistrationRequestEntityValidatorFilter is defined earlier in the chain to ensure required " +
+                "registrationRequest attribute is present")
+        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Invalid gateway route"))
       }
-      if (!attributes.registrationJWTs.ssaJwt || !attributes.registrationJWTs.ssaStr) {
-        logger.error(SCRIPT_NAME + "One or more required attributes are null: attributes.registrationJWTs.ssaJwt={}," +
-                " attributes.registrationJWTs.ssaStr={}", attributes.registrationJWTs.ssaJwt, attributes.registrationJWTs.ssaStr)
-        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Missing request data"))
-      }
-      if (!attributes.registrationJWTs.registrationJwksUri && !attributes.registrationJWTs.registrationJwks
-              || attributes.registrationJWTs.registrationJwksUri && attributes.registrationJWTs.registrationJwks ) {
-        logger.error(SCRIPT_NAME + "Exactly one of following attributes must be set: attributes.registrationJWTs.registrationJwksUri={}," +
-                " attributes.registrationJWTs.registrationJwks={}",
-                attributes.registrationJWTs.registrationJwksUri, attributes.registrationJWTs.registrationJwks)
-        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Missing request data"))
-      }
+
+      RegistrationRequest registrationRequest = attributes.registrationRequest
+      SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement()
 
       def oauth2ClientId = amResponse.entity.getJson().client_id
       if (!oauth2ClientId) {
         logger.error(SCRIPT_NAME + "Required client_id field not found in AM registration response")
         return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to get client_id"))
       }
-      def ssaClaims = attributes.registrationJWTs.ssaJwt.getClaimsSet()
-      def apiClientIdmObject = buildApiClientIdmObject(oauth2ClientId, ssaClaims)
-      def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(ssaClaims)
+
+      def apiClientIdmObject = buildApiClientIdmObject(oauth2ClientId, softwareStatement)
+      def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(softwareStatement)
 
       return createApiClientOrganisation(apiClientOrgIdmObject).thenAsync(createApiClientOrgResponse -> {
         if (!createApiClientOrgResponse.status.isSuccessful()) {
@@ -147,32 +142,27 @@ switch(method.toUpperCase()) {
     next.handle(context, request)
 }
 
-def buildApiClientIdmObject(oauth2ClientId, ssaClaims) {
-  def clientJwksUri = attributes.registrationJWTs.registrationJwksUri
-  def clientJwks = attributes.registrationJWTs.registrationJwks
+def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
   def apiClientIdmObj = [
           "_id"           : oauth2ClientId,
-          "id"            : ssaClaims.getClaim("software_id"),
-          "name"          : ssaClaims.getClaim("software_client_name"),
-          "description"   : ssaClaims.getClaim("software_client_description"),
-          "ssa"           : attributes.registrationJWTs.ssaStr,
-          "logoUri"       : ssaClaims.getClaim("software_logo_uri"),
+          "id"            : softwareStatement.getSoftwareId(),
+          "name"          : softwareStatement.getSoftwareId(),
+          "ssa"           : softwareStatement.getB64EncodedJwtString(),
           "oauth2ClientId": oauth2ClientId,
-          "apiClientOrg"  : ["_ref": "managed/" + routeArgObjApiClientOrg + "/" + ssaClaims.getClaim("org_id")]
+          "apiClientOrg"  : ["_ref": "managed/" + routeArgObjApiClientOrg + "/" + softwareStatement.getOrgId()]
   ]
 
-  if (clientJwksUri) {
-    apiClientIdmObj.jwksUri = clientJwksUri
-  }
-  if (clientJwks) {
-    apiClientIdmObj.jwks = JsonOutput.toJson(clientJwks)
+  if (softwareStatement.hasJwksUri()){
+    apiClientIdmObj.jwksUri = softwareStatement.getJwksUri()
+  } else {
+    apiClientIdmObj.jwks = JsonOutput.toJson(softwareStatement.getJwksSet())
   }
   return apiClientIdmObj
 }
 
-def buildApiClientOrganisationIdmObject(ssaClaims) {
-  def organisationName = ssaClaims.getClaim("org_name")
-  def organisationIdentifier = ssaClaims.getClaim("org_id")
+def buildApiClientOrganisationIdmObject(SoftwareStatement softwareStatement) {
+  def organisationName = softwareStatement.getOrgId()
+  def organisationIdentifier = softwareStatement.getOrgId()
   return [
           "_id" : organisationIdentifier,
           "id"  : organisationIdentifier,

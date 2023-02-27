@@ -50,6 +50,10 @@ public class SapiJwt {
         Reject.ifNull(claimsSet, "claimsSet must not be null");
     }
 
+    public boolean hasExpired() throws JwtException {
+        return claimsSet.hasExpired();
+    }
+
     /**
      * Indicates if the data in the Software Statement can be trusted, i.e. if the signature has been
      * validated against the relevant JWKS.
@@ -114,7 +118,7 @@ public class SapiJwt {
     /**
      * @return the underlying ClaimsSetFacade that can be used to access the JwtClaims
      */
-    protected ClaimsSetFacade getClaimsSet() {
+    public ClaimsSetFacade getClaimsSet() {
         return claimsSet;
     }
 }

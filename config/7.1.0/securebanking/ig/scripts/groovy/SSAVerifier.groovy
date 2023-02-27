@@ -39,6 +39,7 @@ switch(method.toUpperCase()) {
             return errorResponseFactory.errorResponse(Status.UNAUTHORIZED, "No registration JWT")
         }
 
+
         def ssaJwt = attributes.registrationJWTs.ssaJwt
         if (!ssaJwt) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("No SSA JWT")
@@ -46,9 +47,11 @@ switch(method.toUpperCase()) {
 
         def ssaClaims = ssaJwt.getClaimsSet()
         def ssaIssuer = ssaClaims.getIssuer()
+        // SSA Issuer must exist if we have a registrationRequest attribute.
         if (!ssaIssuer) {
             return errorResponseFactory.invalidSoftwareStatementErrorResponse("issuer claim is required")
         }
+
 
         TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer)
         if(trustedDirectory){

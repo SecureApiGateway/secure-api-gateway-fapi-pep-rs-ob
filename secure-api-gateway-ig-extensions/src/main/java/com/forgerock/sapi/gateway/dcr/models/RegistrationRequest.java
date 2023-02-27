@@ -15,6 +15,9 @@
  */
 package com.forgerock.sapi.gateway.dcr.models;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.forgerock.util.Reject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +45,18 @@ public class RegistrationRequest extends SapiJwt {
     public RegistrationRequest(Builder builder){
         super(builder);
         this.softwareStatement = builder.softwareStatement;
+    }
+
+    public void setResponseTypes(List<String> responseTypes){
+        this.getClaimsSet().setStringArrayClaim("response_types", responseTypes);
+    }
+
+    public Optional<List<String>> getResponseTypes(){
+        try {
+            return this.getClaimsSet().getOptionalStringListClaim("response_types");
+        } catch (JwtException e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -103,5 +118,6 @@ public class RegistrationRequest extends SapiJwt {
             String b64EncodedSsa = this.claimsSet.getStringClaim(SSA_CLAIM_NAME);
             softwareStatement = softwareStatementBuilder.build(txId, b64EncodedSsa);
         }
+
     }
 }

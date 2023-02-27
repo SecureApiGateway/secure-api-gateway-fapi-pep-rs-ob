@@ -22,6 +22,7 @@
     <groupId>com.forgerock.sapi.gateway</groupId>
     <artifactId>secure-api-gateway-ob-uk</artifactId>
     <version>0.9.0-SNAPSHOT</version>
+
     <packaging>pom</packaging>
     <name>secure-api-gateway-ob-uk</name>
     <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for Secure API Gateway

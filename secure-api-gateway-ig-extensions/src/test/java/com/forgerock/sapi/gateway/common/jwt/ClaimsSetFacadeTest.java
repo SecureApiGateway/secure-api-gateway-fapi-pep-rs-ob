@@ -20,7 +20,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.catchThrowableOfType;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.forgerock.json.JsonValue;
 import org.forgerock.json.jose.jwt.JwtClaimsSet;
@@ -165,5 +167,122 @@ class ClaimsSetFacadeTest {
         JwtException exception = catchThrowableOfType(emptyClaimSet::getIssuer, JwtException.class);
         // Then
         assertThat(exception).isNotNull();
+    }
+
+    @Test
+    void success_getRequiredStringListClaim() throws JwtException {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of("code id_token")));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        List<String> responseTypes =  claimsSetFacade.getRequiredStringListClaim("response_type");
+
+        // Then
+        assertThat(responseTypes).isNotNull();
+        assertThat(responseTypes.contains("code id_token")).isTrue();
+    }
+
+    @Test
+    void fail_claimDoesNotExist_getRequiredStringListClaim() {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet();
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredStringListClaim("response_type"), JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).isEqualTo("Jwt claim 'response_type' not defined");
+    }
+
+    @Test
+    void fail_claimIsNotList_getRequiredStringListClaim() {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", "code id_token"));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredStringListClaim("response_type"), JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).isEqualTo("Jwt claim 'response_type' is not of type List");
+    }
+
+    @Test
+    void fail_listIsNotStrings_getRequiredStringListClaim() {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of(1, 2, 3)));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredStringListClaim("response_type"), JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).isEqualTo("Jwt claim 'response_type' is not a List of Strings");
+    }
+
+    @Test
+    void success_noSuchClaim_getOptionStringListClaim() throws JwtException {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet();
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        Optional<List<String>> values = claimsSetFacade.getOptionalStringListClaim("response_type");
+
+        // Then
+        assertThat(values).isNotNull();
+        assertThat(values.isEmpty()).isTrue();
+    }
+
+    @Test
+    void success_claimExists_getOptionStringListClaim() throws JwtException {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of("code id_token")));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        Optional<List<String>> values = claimsSetFacade.getOptionalStringListClaim("response_type");
+
+        // Then
+        assertThat(values).isNotNull();
+        assertThat(values.isEmpty()).isFalse();
+        assertThat(values.get().contains("code id_token")).isTrue();
+    }
+
+    @Test
+    void success_setStringListClaim() throws JwtException {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet();
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        List<String> expectedResponseTypes = List.of("code", "code id_token");
+        claimsSetFacade.setStringArrayClaim("response_type", expectedResponseTypes);
+
+        // Then
+        Optional<List<String>> responseTypeValues = claimsSetFacade.getOptionalStringListClaim("response_type");
+        assertThat(responseTypeValues.isPresent()).isTrue();
+        assertThat(responseTypeValues.get()).isEqualTo(expectedResponseTypes);
+    }
+
+    @Test
+    void success_overwriteStringListClaim() throws JwtException {
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of("code id_token")));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        List<String> expectedResponseTypes = List.of("code1", "code1 id_token1");
+        claimsSetFacade.setStringArrayClaim("response_type", expectedResponseTypes);
+
+        // Then
+        Optional<List<String>> responseTypeValues = claimsSetFacade.getOptionalStringListClaim("response_type");
+        assertThat(responseTypeValues.isPresent()).isTrue();
+        assertThat(responseTypeValues.get()).isEqualTo(expectedResponseTypes);
     }
 }

@@ -19,7 +19,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,5 +88,18 @@ public class RegistrationRequestTest {
         String output = regRequest.toString();
         assertThat(output).isNotNull();
         assertThat(output).contains("kid");
+    }
+
+    @Test
+    void success_setResponseTypes() throws DCRRegistrationRequestBuilderException {
+        // Given
+        RegistrationRequest registrationRequest = getJwksUriBasedRegistrationrRequest();
+        List<String> responseTypes = List.of("code", "code id_token");
+        // When
+        registrationRequest.setResponseTypes(responseTypes);
+        // Then
+        Optional<List<String>> actualResponseTypes = registrationRequest.getResponseTypes();
+        assertThat(actualResponseTypes.isPresent()).isTrue();
+        assertThat(actualResponseTypes.get()).isEqualTo(responseTypes);
     }
 }

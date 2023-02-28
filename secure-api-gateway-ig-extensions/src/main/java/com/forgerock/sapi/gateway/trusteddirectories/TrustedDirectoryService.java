@@ -15,7 +15,25 @@
  */
 package com.forgerock.sapi.gateway.trusteddirectories;
 
+import org.forgerock.json.jose.jwt.JwtClaimsSet;
+
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+
 public interface TrustedDirectoryService {
+
+    /**
+     * Helper method to get the Trusted Directory for an ApiClient instance.
+     * An ApiClient has been created from a Software Statement issued by a Trusted Directory.
+     *
+     * @param apiClient ApiClient to get {@link TrustedDirectory} for
+     * @return The {@code TrustedDirectory} associated with the ApiClient's Software Statement issuer or null if
+     * no value is held for the issuer.
+     */
+    default TrustedDirectory getTrustedDirectoryConfiguration(ApiClient apiClient) {
+        final JwtClaimsSet ssaClaims = apiClient.getSoftwareStatementAssertion().getClaimsSet();
+        final String issuer = ssaClaims.getIssuer();
+        return getTrustedDirectoryConfiguration(issuer);
+    }
 
     /**
      *

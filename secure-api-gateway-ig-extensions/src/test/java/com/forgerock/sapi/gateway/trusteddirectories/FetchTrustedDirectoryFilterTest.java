@@ -98,7 +98,7 @@ class FetchTrustedDirectoryFilterTest {
         final IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> callFilterAndValidateSuccessResponse(new FetchTrustedDirectoryFilter(trustedDirectoryService), attributesContext));
 
-        assertThat(exception.getMessage()).isEqualTo("Failed to get trusted directory for ssa issuer: ACME Bank");
+        assertThat(exception.getMessage()).contains("Failed to get trusted directory for apiClient");
     }
 
     @Nested

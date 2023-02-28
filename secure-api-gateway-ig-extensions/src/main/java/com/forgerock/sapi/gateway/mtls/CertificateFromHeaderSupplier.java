@@ -32,7 +32,10 @@ import com.forgerock.sapi.gateway.fapi.FAPIUtils;
  * <p>
  * The certificate value is expected to be URL encoded, this supplier will do the URL decode to supply the
  * certificate String.
+ *
+ * @deprecated Use {@link CertificateRetriever} instead
  */
+@Deprecated
 public class CertificateFromHeaderSupplier implements BiFunction<Context, Request, String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateFromHeaderSupplier.class);

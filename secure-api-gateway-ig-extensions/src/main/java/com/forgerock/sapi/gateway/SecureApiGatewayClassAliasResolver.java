@@ -30,6 +30,7 @@ import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
 import com.forgerock.sapi.gateway.jws.RsaJwtSignatureValidator;
 import com.forgerock.sapi.gateway.mtls.DefaultTransportCertValidator;
+import com.forgerock.sapi.gateway.mtls.TokenEndpointTransportCertValidationFilter;
 import com.forgerock.sapi.gateway.mtls.TransportCertValidationFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
@@ -51,6 +52,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("RegistrationRequestJwtSignatureValidationFilter", RegistrationRequestJwtSignatureValidationFilter.class);
         ALIASES.put("RegistrationRequestEntityValidatorFilter", RegistrationRequestEntityValidatorFilter.class);
         ALIASES.put("ConsentRequestAccessAuthorisationFilter", ConsentRequestAccessAuthorisationFilter.class);
+        ALIASES.put("TokenEndpointTransportCertValidationFilter", TokenEndpointTransportCertValidationFilter.class);
     }
 
     /**

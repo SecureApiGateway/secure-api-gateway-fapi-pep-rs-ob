@@ -17,7 +17,6 @@ package com.forgerock.sapi.gateway.dcr.idm;
 
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
-import java.net.URISyntaxException;
 import java.util.Map;
 
 import org.forgerock.http.Client;
@@ -27,7 +26,6 @@ import org.forgerock.http.oauth2.OAuth2Context;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.forgerock.json.JsonValue;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.AttributesContext;
@@ -64,27 +62,14 @@ public class FetchApiClientFilter implements Filter {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
-     * The HTTP client to use when calling IDM.
-     * Must be configured to provide credentials that allow access to the IDM REST API
-     */
-    private final Client httpClient;
-
-    /**
-     * The base uri to use in GET requests to IDM to query for the apiClient
-     *
-     * Of the form: https://$IDM_HOST/openidm/managed/$API_CLIENT_MANAGED_OBJECT_NAME
-     */
-    private final String idmGetApiClientBaseUri;
-
-    /**
      * The claim in the access_token where the client_id can be found, see DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM
      */
     private final String accessTokenClientIdClaim;
 
     /**
-     * Decoder which transforms the IDM json response into an ApiClient object
+     * Service which can retrieve ApiClient data
      */
-    private final IdmApiClientDecoder idmApiClientDecoder = new IdmApiClientDecoder();
+    private final ApiClientService apiClientService;
 
     /**
      * Utility method to retrieve an ApiClient object from a Context.
@@ -98,13 +83,11 @@ public class FetchApiClientFilter implements Filter {
         return (ApiClient) context.asContext(AttributesContext.class).getAttributes().get(API_CLIENT_ATTR_KEY);
     }
 
-    public FetchApiClientFilter(Client clientHandler, String idmGetApiClientBaseUri, String accessTokenClientIdClaim) {
-        Reject.ifNull(clientHandler, "clientHandler must be provided");
-        Reject.ifBlank(idmGetApiClientBaseUri, "idmGetApiClientBaseUri must be provided");
+    public FetchApiClientFilter(ApiClientService apiClientService, String accessTokenClientIdClaim) {
+        Reject.ifNull(apiClientService, "apiClientService must be provided");
         Reject.ifBlank(accessTokenClientIdClaim, "accessTokenClientIdClaim must be provided");
-        this.httpClient = clientHandler;
-        this.idmGetApiClientBaseUri = idmGetApiClientBaseUri;
         this.accessTokenClientIdClaim = accessTokenClientIdClaim;
+        this.apiClientService = apiClientService;
     }
 
     @Override
@@ -117,7 +100,7 @@ public class FetchApiClientFilter implements Filter {
         }
         final String clientId = (String)info.get(accessTokenClientIdClaim);
 
-        return getApiClientFromIdm(clientId).thenAsync(apiClient -> {
+        return apiClientService.getApiClient(clientId).thenAsync(apiClient -> {
             logger.debug("({}) adding apiClient: {} to AttributesContext[\"{}\"]", FAPIUtils.getFapiInteractionIdForDisplay(context), apiClient, API_CLIENT_ATTR_KEY);
             context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_ATTR_KEY, apiClient);
             return next.handle(context, request);
@@ -130,23 +113,6 @@ public class FetchApiClientFilter implements Filter {
         });
     }
 
-    private Promise<ApiClient, Exception> getApiClientFromIdm(String clientId) {
-        try {
-            final Request getApiClientRequest = new Request().setMethod("GET")
-                                                             .setUri(idmGetApiClientBaseUri + clientId + "?_fields=apiClientOrg,*");
-            return httpClient.send(getApiClientRequest)
-                             .thenAsync(response -> {
-                                 if (!response.getStatus().isSuccessful()) {
-                                     throw new Exception("Failed to get ApiClient from IDM, response status: " + response.getStatus());
-                                 }
-                                 return response.getEntity().getJsonAsync()
-                                                            .then(json -> idmApiClientDecoder.decode(JsonValue.json(json)),
-                                                                  ioe -> { throw new Exception("Failed to decode apiClient response json", ioe); });
-                             }, nte -> Promises.newExceptionPromise(new Exception(nte)));
-        } catch (URISyntaxException e) {
-            return Promises.newExceptionPromise(new Exception(e));
-        }
-    }
 
     /**
      * Responsible for creating the {@link FetchApiClientFilter}
@@ -183,7 +149,8 @@ public class FetchApiClientFilter implements Filter {
             }
             final String accessTokenClientIdClaim = config.get("accessTokenClientIdClaim").defaultTo(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM).asString();
 
-            return new FetchApiClientFilter(httpClient, idmGetApiClientBaseUri, accessTokenClientIdClaim);
+            final ApiClientService apiClientService = new IdmApiClientService(httpClient, idmGetApiClientBaseUri, new IdmApiClientDecoder());
+            return new FetchApiClientFilter(apiClientService, accessTokenClientIdClaim);
         }
     }
 }

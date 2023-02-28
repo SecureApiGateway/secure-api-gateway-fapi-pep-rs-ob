@@ -90,11 +90,9 @@ public class FetchTrustedDirectoryFilter implements Filter {
     }
 
     private TrustedDirectory getTrustedDirectory(ApiClient apiClient) {
-        final JwtClaimsSet ssaClaims = apiClient.getSoftwareStatementAssertion().getClaimsSet();
-        final String issuer = ssaClaims.getIssuer();
-        final TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(issuer);
+        final TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(apiClient);
         if (trustedDirectory == null) {
-            throw new IllegalStateException("Failed to get trusted directory for ssa issuer: " + issuer);
+            throw new IllegalStateException("Failed to get trusted directory for apiClient: " + apiClient);
         }
         return trustedDirectory;
     }

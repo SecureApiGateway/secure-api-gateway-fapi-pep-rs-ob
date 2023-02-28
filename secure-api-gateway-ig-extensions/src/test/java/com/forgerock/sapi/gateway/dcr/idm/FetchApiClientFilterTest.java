@@ -25,17 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.forgerock.http.Client;
 import org.forgerock.http.Handler;
-import org.forgerock.http.MutableUri;
 import org.forgerock.http.oauth2.AccessTokenInfo;
 import org.forgerock.http.oauth2.OAuth2Context;
-import org.forgerock.http.protocol.Form;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
@@ -46,7 +43,6 @@ import org.forgerock.openig.heap.HeapException;
 import org.forgerock.openig.heap.HeapImpl;
 import org.forgerock.openig.heap.Name;
 import org.forgerock.services.context.AttributesContext;
-import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
@@ -54,8 +50,8 @@ import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.Heaplet;
+import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**
@@ -86,20 +82,24 @@ class FetchApiClientFilterTest {
         final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
         final String clientIdClaim = "aud";
         final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
-        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(idmResponseHandler), idmBaseUri, clientIdClaim);
+        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(idmResponseHandler), idmBaseUri), clientIdClaim);
         callFilterValidateSuccessBehaviour(accessToken, idmClientData, filter);
+    }
+
+    private static ApiClientService createApiClientService(Client client, String idmBaseUri) {
+        return new IdmApiClientService(client, idmBaseUri, new IdmApiClientDecoder());
     }
 
     @Test
     void failsWhenNoOAuth2ContextIsFound() {
-        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(Handlers.FORBIDDEN), "notUsed", "aud");
+        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(Handlers.FORBIDDEN), "notUsed"), "aud");
         assertThrows(IllegalArgumentException.class, () -> filter.filter(new RootContext("root"), new Request(), Handlers.FORBIDDEN),
                 "No context of type org.forgerock.http.oauth2.OAuth2Context found");
     }
 
     @Test
     void returnsErrorResponseWhenUnableToDetermineClientId() throws Exception{
-        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(Handlers.FORBIDDEN), "notUsed", "aud");
+        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(Handlers.FORBIDDEN), "notUsed"), "aud");
         final AccessTokenInfo accessTokenWithoutAudClaim = new AccessTokenInfo(json(object()), "token", Set.of("scope1"), 0L);
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(new OAuth2Context(new RootContext("root"), accessTokenWithoutAudClaim), new Request(), Handlers.FORBIDDEN);
 
@@ -108,61 +108,15 @@ class FetchApiClientFilterTest {
     }
 
     @Test
-    void returnsErrorResponseWhenIdmReturnsErrorResponse() throws Exception {
+    void returnsErrorResponseWhenApiClientServiceReturnsException() throws Exception {
         // Mock IDM returning 500 response
-        final Client idmClientHandler = new Client(Handlers.INTERNAL_SERVER_ERROR);
         final String clientIdClaim = "client_id";
-        final FetchApiClientFilter filter = new FetchApiClientFilter(idmClientHandler, "notUsed", clientIdClaim);
+        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(Handlers.INTERNAL_SERVER_ERROR), "http://localhost/openidm"), clientIdClaim);
         final OAuth2Context context = new OAuth2Context(new RootContext("root"), createAccessToken(clientIdClaim, "1234"));
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, new Request(), Handlers.FORBIDDEN);
 
         final Response response = responsePromise.get(1, TimeUnit.SECONDS);
         assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
-    }
-
-    @Test
-    void returnsErrorResponseWhenIdmReturnsInvalidJsonResponse() throws Exception {
-        // IDM returns a Form instead of json
-        final Response invalidIdmResponse = new Response(Status.OK).setEntity(new Form());
-        final Client idmClientHandler = new Client((ctx, req) -> Promises.newResultPromise(invalidIdmResponse));
-        final String clientIdClaim = "aud";
-        final FetchApiClientFilter filter = new FetchApiClientFilter(idmClientHandler, "notUsed", clientIdClaim);
-        final OAuth2Context context = new OAuth2Context(new RootContext("root"), createAccessToken(clientIdClaim, "1234"));
-        final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, new Request(), Handlers.FORBIDDEN);
-
-        final Response response = responsePromise.get(1, TimeUnit.SECONDS);
-        assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
-    }
-
-    @Test
-    void returnsErrorResponseWhenIdmReturnsApiClientMissingRequiredFields() throws Exception {
-        final String idmBaseUri = "http://localhost/openidm/managed/";
-        final String clientId = "1234-5678-9101";
-        final JsonValue idmClientData = createIdmApiClientDataAllFields(clientId);
-        idmClientData.remove("ssa"); // Remove the required ssa field
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
-
-        final String clientIdClaim = "aud";
-        final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
-        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(idmResponseHandler), idmBaseUri, clientIdClaim);
-        callFilter(accessToken, filter, (response, attributesContext) -> {
-            assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
-        });
-    }
-
-    @Test
-    void returnsErrorResponseWhenIdmUrlIsInvalid() throws Exception {
-        // Invalid base uri
-        final String idmBaseUri = "999://localhost/openidm/managed/";
-        final String clientId = "1234-5678-9101";
-
-        final String clientIdClaim = "aud";
-        final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
-        final FetchApiClientFilter filter = new FetchApiClientFilter(new Client(Handlers.FORBIDDEN), idmBaseUri, clientIdClaim);
-
-        callFilter(accessToken, filter, (response, attributesContext) -> {
-            assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
-        });
     }
 
     @Nested
@@ -224,42 +178,6 @@ class FetchApiClientFilterTest {
             final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
             // Test the filter created by the Heaplet
             callFilterValidateSuccessBehaviour(accessToken, createIdmApiClientDataAllFields(clientId), filter);
-        }
-    }
-
-    /**
-     * Mocks the expected response from IDM.
-     *
-     * Validates that it is called with the expected uri (including the expected clientId), and then returns a pre-canned
-     * response json for that clientId.
-     *
-     * If the validation fails then a Runtime exception is returned, which will be thrown when Promise.get is called.
-     */
-    private static class MockApiClientTestDataIdmHandler implements Handler {
-        private final MutableUri idmBaseUri;
-        private final String expectedClientId;
-        private final JsonValue staticApiClientData;
-
-        private MockApiClientTestDataIdmHandler(String idmBaseUri, String expectedClientId, JsonValue staticApiClientData) {
-            try {
-                this.idmBaseUri = MutableUri.uri(idmBaseUri);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-            this.expectedClientId = expectedClientId;
-            this.staticApiClientData = staticApiClientData;
-        }
-
-        @Override
-        public Promise<Response, NeverThrowsException> handle(Context context, Request request) {
-            final MutableUri requestUri = request.getUri();
-            if (requestUri.getHost().equals(idmBaseUri.getHost()) && requestUri.getScheme().equals(idmBaseUri.getScheme())
-                    && requestUri.getPath().equals(idmBaseUri.getPath() + expectedClientId)) {
-                Response idmResponse = new Response(Status.OK);
-                idmResponse.setEntity(staticApiClientData);
-                return Promises.newResultPromise(idmResponse);
-            }
-            return Promises.newRuntimeExceptionPromise(new IllegalStateException("Unexpected requestUri: " + requestUri));
         }
     }
 

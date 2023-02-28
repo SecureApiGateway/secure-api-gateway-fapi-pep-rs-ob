@@ -66,7 +66,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 /**
- * Collection of util methods to aid in the generation of crypto relaeted objects such as: KeyPair, X509Certificate,
+ * Collection of util methods to aid in the generation of crypto related objects such as: KeyPair, X509Certificate,
  * JWK and JWKSet objects
  */
 public class CryptoUtils {

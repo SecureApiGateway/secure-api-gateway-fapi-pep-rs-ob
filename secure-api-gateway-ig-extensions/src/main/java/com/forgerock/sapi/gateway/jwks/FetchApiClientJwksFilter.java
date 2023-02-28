@@ -17,16 +17,11 @@ package com.forgerock.sapi.gateway.jwks;
 
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
-import java.net.MalformedURLException;
-
 import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.forgerock.json.JsonException;
-import org.forgerock.json.JsonValue;
-import org.forgerock.json.jose.exceptions.FailedToLoadJWKException;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
@@ -66,10 +61,7 @@ public class FetchApiClientJwksFilter implements Filter {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    /**
-     * The service to delegate to when looking up remote JWKSets by URL
-     */
-    private final JwkSetService jwkSetService;
+    private final ApiClientJwkSetService apiClientJwkSetService;
 
     /**
      * Utility method to retrieve a {@link JWKSet} object from a Context, which belongs to the ApiClient.
@@ -83,9 +75,9 @@ public class FetchApiClientJwksFilter implements Filter {
         return (JWKSet) context.asContext(AttributesContext.class).getAttributes().get(API_CLIENT_JWKS_ATTR_KEY);
     }
 
-    public FetchApiClientJwksFilter(JwkSetService jwkSetService) {
-        Reject.ifNull(jwkSetService, "jwkSetService must be provided");
-        this.jwkSetService = jwkSetService;
+    public FetchApiClientJwksFilter(ApiClientJwkSetService apiClientJwkSetService) {
+        Reject.ifNull(apiClientJwkSetService, "apiClientJwkSetService must be provided");
+        this.apiClientJwkSetService = apiClientJwkSetService;
     }
 
     @Override
@@ -93,7 +85,7 @@ public class FetchApiClientJwksFilter implements Filter {
         final ApiClient apiClient = getApiClient(context);
         final TrustedDirectory trustedDirectory = getTrustedDirectory(context);
 
-        return getJwkSet(apiClient, trustedDirectory).thenAsync(jwkSet -> {
+        return apiClientJwkSetService.getJwkSet(apiClient, trustedDirectory).thenAsync(jwkSet -> {
             logger.debug("({}) added jwks to context for apiClient", FAPIUtils.getFapiInteractionIdForDisplay(context));
             context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_JWKS_ATTR_KEY, jwkSet);
             return next.handle(context, request);
@@ -127,54 +119,6 @@ public class FetchApiClientJwksFilter implements Filter {
     }
 
     /**
-     * The JWKSet for an ApiClient can either be looked up via a URL or it is embedded into the software statement,
-     * use the TrustedDirectory configuration to determine the location of the JWKSet.
-     */
-    private Promise<JWKSet, FailedToLoadJWKException> getJwkSet(ApiClient apiClient, TrustedDirectory trustedDirectory) {
-        if (trustedDirectory.softwareStatementHoldsJwksUri()) {
-            return getJwkSetUsingJwksUri(apiClient);
-        } else {
-            return getJwkSetFromSsaClaim(apiClient, trustedDirectory);
-        }
-    }
-
-    /**
-     * Use the jwkSetService to fetch the JWKSet using the ApiClient.jwksUri
-     */
-    private Promise<JWKSet, FailedToLoadJWKException> getJwkSetUsingJwksUri(ApiClient apiClient) {
-        try {
-            if (apiClient.getJwksUri() == null) {
-                return Promises.newExceptionPromise(new FailedToLoadJWKException("TrustedDirectory configuration " +
-                        "requires the jwksUri to be set for the apiClient"));
-            }
-            return jwkSetService.getJwkSet(apiClient.getJwksUri().toURL());
-        } catch (MalformedURLException e) {
-            return Promises.newExceptionPromise(new FailedToLoadJWKException("Malformed jwksUri", e));
-        }
-    }
-
-    /**
-     * Extract the JWKSet from a claim within the software statement assertion.
-     */
-    private Promise<JWKSet, FailedToLoadJWKException> getJwkSetFromSsaClaim(ApiClient apiClient, TrustedDirectory trustedDirectory) {
-        final String jwksClaimsName = trustedDirectory.getSoftwareStatementJwksClaimName();
-        if (jwksClaimsName == null) {
-            return Promises.newExceptionPromise(new FailedToLoadJWKException("Trusted Directory has " +
-                    "softwareStatemdntHoldsJwksUri=false but is missing softwareStatementJwksClaimName value"));
-        }
-        final JsonValue rawJwks = apiClient.getSoftwareStatementAssertion().getClaimsSet().get(jwksClaimsName);
-        if (rawJwks.isNull()) {
-            return Promises.newExceptionPromise(new FailedToLoadJWKException("SSA is missing claim: " + jwksClaimsName
-                    + " which is expected to contain the JWKS"));
-        }
-        try {
-            return Promises.newResultPromise(JWKSet.parse(rawJwks));
-        } catch (JsonException je) {
-            return Promises.newExceptionPromise(new FailedToLoadJWKException("Invalid JWKS json at claim: " + jwksClaimsName, je));
-        }
-    }
-
-    /**
      * Heaplet responsible for constructing {@link FetchApiClientFilter} objects.
      *
      * Configuration:
@@ -194,7 +138,7 @@ public class FetchApiClientJwksFilter implements Filter {
         @Override
         public Object create() throws HeapException {
             final JwkSetService jwkSetService = config.get("jwkSetService").as(requiredHeapObject(heap, JwkSetService.class));
-            return new FetchApiClientJwksFilter(jwkSetService);
+            return new FetchApiClientJwksFilter(new DefaultApiClientJwkSetService(jwkSetService));
         }
     }
 }

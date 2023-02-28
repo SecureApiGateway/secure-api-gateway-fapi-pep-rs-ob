@@ -20,13 +20,8 @@ import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.function.BiFunction;
 
 import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
@@ -55,9 +50,8 @@ import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
  * This filter depends on the {@link JWKSet} containing the keys for this {@link ApiClient} being present in
  * the {@link AttributesContext}.
  *
- * The certificate for the request is supplied by the pluggable clientTlsCertificateSupplier,
- * see {@link CertificateFromHeaderSupplier} for an example implementation (this is the default configured
- * by the {@link Heaplet})
+ * The certificate for the request is supplied by the pluggable certificateRetriever, see {@link FromHeaderCertificateRetriever}
+ * for an example implementation (this is the default configured by the {@link Heaplet})
  *
  * Once the {@link X509Certificate} and JWKSet have been obtained, then the filter delegates to a {@link TransportCertValidator}
  * to do the validation.
@@ -69,45 +63,44 @@ public class TransportCertValidationFilter implements Filter {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
-     * Function which returns the client's PEM encoded x509 certificate which is used for MTLS as a String.
+     * Retrieves the client's x509 certificate used for mutual TLS
      */
-    private final BiFunction<Context, Request, String> clientTlsCertificateSupplier;
+    private final CertificateRetriever certificateRetriever;
 
     /**
      * Validator which checks if the client's MTLS certificate is valid.
      */
     private final TransportCertValidator transportCertValidator;
 
-    public TransportCertValidationFilter(BiFunction<Context, Request, String> clientTlsCertificateSupplier,
-                                         TransportCertValidator transportCertValidator) {
-        Reject.ifNull(clientTlsCertificateSupplier, "clientTlsCertificate must be provided");
+    public TransportCertValidationFilter(CertificateRetriever certificateRetriever,
+                                        TransportCertValidator transportCertValidator) {
+        Reject.ifNull(certificateRetriever, "certificateRetriever must be provided");
         Reject.ifNull(transportCertValidator, "transportCertValidator must be provided");
-        this.clientTlsCertificateSupplier = clientTlsCertificateSupplier;
+        this.certificateRetriever = certificateRetriever;
         this.transportCertValidator = transportCertValidator;
     }
 
-    private Response createErrorResponse(String message) {
+    // FIXME
+    static Response createErrorResponse(String message) {
         return new Response(Status.BAD_REQUEST).setEntity(json(object(field("error_description", message))));
     }
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
         logger.debug("({}) attempting to validate transport cert", FAPIUtils.getFapiInteractionIdForDisplay(context));
-        final String clientCertPem = clientTlsCertificateSupplier.apply(context, request);
-        if (clientCertPem == null) {
-            return Promises.newResultPromise(createErrorResponse("client tls certificate not found"));
-        }
+
+        final JWKSet jwkSet = getJwkSet(context);
 
         final X509Certificate certificate;
         try {
-            certificate = parseCertificate(clientCertPem);
+            certificate = certificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException e) {
             logger.warn("("+  FAPIUtils.getFapiInteractionIdForDisplay(context) + ") transport cert not valid", e);
-            return Promises.newResultPromise(createErrorResponse("client tls certificate could not be parsed as an X509 certificate"));
+            return Promises.newResultPromise(createErrorResponse("client tls certificate must be provided as a valid x509 certificate"));
         }
 
         try {
-            transportCertValidator.validate(certificate, getJwkSet(context));
+            transportCertValidator.validate(certificate, jwkSet);
             logger.debug("({}) transport cert validated successfully", FAPIUtils.getFapiInteractionIdForDisplay(context));
             return next.handle(context, request);
         } catch (CertificateException e) {
@@ -124,15 +117,6 @@ public class TransportCertValidationFilter implements Filter {
             throw new IllegalStateException("apiClientJwkSet not found in request context");
         }
         return apiClientJwkSet;
-    }
-
-    static X509Certificate parseCertificate(String cert) throws CertificateException {
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8)));
-        if (!(certificate instanceof X509Certificate)) {
-            throw new CertificateException("client tls cert must be in X.509 format");
-        }
-        return (X509Certificate) certificate;
     }
 
     /**
@@ -160,8 +144,8 @@ public class TransportCertValidationFilter implements Filter {
             final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
             final TransportCertValidator transportCertValidator = config.get("transportCertValidator").required()
                                                                         .as(requiredHeapObject(heap, TransportCertValidator.class));
-            final BiFunction<Context, Request, String> certificateSupplier = new CertificateFromHeaderSupplier(clientCertHeaderName);
-            return new TransportCertValidationFilter(certificateSupplier, transportCertValidator);
+            final CertificateRetriever certificateRetriever = new FromHeaderCertificateRetriever(clientCertHeaderName);
+            return new TransportCertValidationFilter(certificateRetriever, transportCertValidator);
         }
     }
 }

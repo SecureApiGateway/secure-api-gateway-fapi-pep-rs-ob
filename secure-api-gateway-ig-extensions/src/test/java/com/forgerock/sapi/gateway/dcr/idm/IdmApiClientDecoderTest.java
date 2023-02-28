@@ -42,7 +42,11 @@ public class IdmApiClientDecoderTest {
     private final IdmApiClientDecoder idmApiClientDecoder = new IdmApiClientDecoder();
 
     public static JsonValue createIdmApiClientDataAllFields(String clientId) {
-        return createIdmApiClientDataRequiredFieldsOnly(clientId).put("jwksUri", "https://somelocation/jwks.jwks");
+        return createIdmApiClientDataAllFields(clientId, "https://somelocation/jwks.jwks");
+    }
+
+    public static JsonValue createIdmApiClientDataAllFields(String clientId, String jwksUri) {
+        return createIdmApiClientDataRequiredFieldsOnly(clientId).put("jwksUri", jwksUri);
     }
 
     public static JsonValue createIdmApiClientDataRequiredFieldsOnly(String clientId) {

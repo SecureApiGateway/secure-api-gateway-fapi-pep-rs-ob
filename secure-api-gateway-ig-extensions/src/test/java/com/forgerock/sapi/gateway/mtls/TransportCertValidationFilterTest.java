@@ -68,7 +68,7 @@ class TransportCertValidationFilterTest {
      * JWKSet containing TEST_TLS_CERT plus others
      */
     private static JWKSet TEST_JWKS;
-    private final CertificateFromHeaderSupplier clientTlsCertificateSupplier = new CertificateFromHeaderSupplier(CERTIFICATE_HEADER_NAME);
+    private final FromHeaderCertificateRetriever certificateResolver = new FromHeaderCertificateRetriever(CERTIFICATE_HEADER_NAME);
     private final DefaultTransportCertValidator certValidator = new DefaultTransportCertValidator("tls");
 
     @BeforeAll
@@ -80,7 +80,7 @@ class TransportCertValidationFilterTest {
 
     @Test
     public void testValidCert() throws Exception {
-        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(clientTlsCertificateSupplier, certValidator);
+        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(certificateResolver, certValidator);
         testValidCert(transportCertValidationFilter);
     }
 
@@ -97,31 +97,33 @@ class TransportCertValidationFilterTest {
 
     @Test
     public void failureResponseIfCertHeaderDoesNotExist() throws Exception {
-        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(clientTlsCertificateSupplier, certValidator);
+        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(certificateResolver, certValidator);
         final Context context = createContextWithJwksAttribute(TEST_JWKS);
         final Request request = new Request();
 
         final TestSuccessResponseHandler responseHandler = new TestSuccessResponseHandler();
         final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(context, request, responseHandler);
         final Response response = responsePromise.get(1, TimeUnit.SECONDS);
-        verifyErrorResponse(response, "client tls certificate not found", responseHandler);
+        verifyErrorResponse(response, "client tls certificate must be provided as a valid x509 certificate",
+                            responseHandler);
     }
 
     @Test
     public void failureResponseIfCertHeaderValueCorrupted() throws Exception {
-        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(clientTlsCertificateSupplier, certValidator);
+        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(certificateResolver, certValidator);
         final Context context = createContextWithJwksAttribute(TEST_JWKS);
         final Request request = createRequestWithCertHeader(CERTIFICATE_HEADER_NAME, "badly formed cert...");
 
         final TestSuccessResponseHandler responseHandler = new TestSuccessResponseHandler();
         final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(context, request, responseHandler);
         final Response response = responsePromise.get(1, TimeUnit.SECONDS);
-        verifyErrorResponse(response, "client tls certificate could not be parsed as an X509 certificate", responseHandler);
+        verifyErrorResponse(response, "client tls certificate must be provided as a valid x509 certificate",
+                            responseHandler);
     }
 
     @Test
     public void failureResponseIfApiClientJwksAttributeNotSet() {
-        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(clientTlsCertificateSupplier, certValidator);
+        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(certificateResolver, certValidator);
         final Context context = new AttributesContext(new RootContext());
         final Request request = createRequestWithCertHeader(CERTIFICATE_HEADER_NAME, TEST_TLS_CERT);
 
@@ -133,7 +135,7 @@ class TransportCertValidationFilterTest {
 
     @Test
     public void failureResponseWhenCertNotInJwks() throws Exception {
-        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(clientTlsCertificateSupplier, certValidator);
+        final TransportCertValidationFilter transportCertValidationFilter = new TransportCertValidationFilter(certificateResolver, certValidator);
         final Context context = createContextWithJwksAttribute(TEST_JWKS);
         final String certNotInJwks = URLEncoder.encode(convertToPem(generateX509Cert(generateRsaKeyPair(), "CN=test")), Charset.defaultCharset());
         final Request request = createRequestWithCertHeader(CERTIFICATE_HEADER_NAME, certNotInJwks);

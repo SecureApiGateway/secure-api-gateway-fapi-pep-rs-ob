@@ -249,7 +249,7 @@ switch (method.toUpperCase()) {
             // have the jwks in the jwks claim in the software statement. If that were the case it would result in
             // AM being unable to validate client credential jws used in `private_key_jwt` as the
             // `token_endpoint_auth_method`.
-            regRequestClaimsSet.setClaim("jwks", apiClientJwkSet.getJWKsAsJsonValue());
+            regRequestClaimsSet.setClaim("jwks", apiClientJwkSet.toJsonValue());
 
             // AM doesn't understand JWS encoded registration requests, so we need to convert the jwt JSON and pass it on
             // However, this might not be the best place to do that?

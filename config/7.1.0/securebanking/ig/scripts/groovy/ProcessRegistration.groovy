@@ -180,13 +180,8 @@ switch (method.toUpperCase()) {
             return errorResponse
         }
 
-        // TODO: Subject DN for cert bound access tokens
+        regRequestClaimsSet.setClaim("tls_client_certificate_bound_access_tokens", true)
 
-        // AM doesn't understand JWS encoded registration requests, so we need to convert the jwt JSON and pass it on
-        // However, this might not be the best place to do that?
-        def regJson = regRequestClaimsSet.build();
-        logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
-        request.setEntity(regJson)
 
         // Put is editing an existing registration, so needs the client_id param in the uri
         if (request.method == "PUT") {
@@ -196,6 +191,33 @@ switch (method.toUpperCase()) {
         // Verify that the tls transport cert is registered for the TPP's software statement
         if ( softwareStatement.hasJwksUri() ) {
             URL softwareStatementJwksUri = softwareStatement.getJwksUri();
+            // We need to set the jwks_uri claim in the registration request because the software statement might not
+            // have the jwks URI in the jwks_uri claim in the software statement. For example, the OB Test Directory
+            // issued SSAs have thw jwks URI claim in the software_jwks_endpoint claim - which is unknown to AM and
+            // will be ignored. This will result in an OAuth2 Client with an empty Json Web Key URI field. This will
+            // Result AM being unable to validate client credential jws used in `private_key_jwt` as the
+            // `token_endpoint_auth_method`.
+            if (routeArgObJwksHosts) {
+                // If the JWKS URI host is in our list of private JWKS hosts, then proxy back through IG
+                if (routeArgObJwksHosts && routeArgObJwksHosts.contains(softwareStatementJwksUri.getHost())) {
+                    String newUri = routeArgProxyBaseUrl + "/" + softwareStatementJwksUri.getHost() + softwareStatementJwksUri.getPath();
+                    logger.debug(SCRIPT_NAME + "Updating private JWKS URI from {} to {}", softwareStatementJwksUri, newUri);
+                    try {
+                        softwareStatementJwksUri = new URL(newUri);
+                    } catch (MalformedURLException e){
+                        logger.error(SCRIPT_NAME + "Failed to create URL from new URI string {}", newUri);
+                        return new Response(Status.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+            regRequestClaimsSet.setClaim("jwks_uri", softwareStatementJwksUri.toString());
+
+            // AM doesn't understand JWS encoded registration requests, so we need to convert the jwt JSON and pass it on
+            // However, this might not be the best place to do that?
+            def regJson = regRequestClaimsSet.build();
+            logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
+            request.setEntity(regJson)
+
             logger.debug(SCRIPT_NAME + "Checking cert against remote jwks: " + softwareStatementJwksUri)
             return jwkSetService.getJwkSet(softwareStatementJwksUri)
                     .thenCatchAsync(e -> {
@@ -216,11 +238,25 @@ switch (method.toUpperCase()) {
         } else {
             // Verify against the software_jwks which is a JWKSet embedded within the software_statement
             // NOTE: this is only suitable for developer testing purposes
+
             if (!allowIgIssuedTestCerts) {
                 String errorDescription = "software_statement must contain software_jwks_endpoint"
                 return errorResponseFactory.invalidSoftwareStatementErrorResponse(errorDescription)
             }
             JWKSet apiClientJwkSet = softwareStatement.getJwksSet()
+
+            // We need to set the jwks claim in the registration request because the software statement might not
+            // have the jwks in the jwks claim in the software statement. If that were the case it would result in
+            // AM being unable to validate client credential jws used in `private_key_jwt` as the
+            // `token_endpoint_auth_method`.
+            regRequestClaimsSet.setClaim("jwks", apiClientJwkSet.getJWKsAsJsonValue());
+
+            // AM doesn't understand JWS encoded registration requests, so we need to convert the jwt JSON and pass it on
+            // However, this might not be the best place to do that?
+            def regJson = regRequestClaimsSet.build();
+            logger.debug(SCRIPT_NAME + "final json [" + regJson + "]")
+            request.setEntity(regJson)
+
             logger.debug(SCRIPT_NAME + "Checking cert against ssa software_jwks: " + apiClientJwkSet)
             if (!tlsClientCertExistsInJwkSet(apiClientJwkSet)) {
                 String errorDescription = "tls transport cert does not match any certs registered in jwks for software " +

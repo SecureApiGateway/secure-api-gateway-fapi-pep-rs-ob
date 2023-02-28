@@ -53,7 +53,6 @@ next.handle(context, request).thenOnResult({ response ->
         critClaims.add(ISS_CRIT_CLAIM);
         critClaims.add(TAN_CRIT_CLAIM);
 
-        //TODO - http://openbanking.org.uk/iss must be extracted from the OB signing certificate of the ASPSP. Currently we don't have open banking certificates on ASPSP side
         String jwt
         try {
             jwt = new JwtBuilderFactory()
@@ -62,7 +61,7 @@ next.handle(context, request).thenOnResult({ response ->
                     .alg(signAlgorithm)
                     .kid(routeArgKid)
                     .header(IAT_CRIT_CLAIM, System.currentTimeMillis() / 1000)
-                    .header(ISS_CRIT_CLAIM, "CN=0015800001041REAAY,organizationIdentifier=PSDGB-OB-Unknown0015800001041REAAY,O=FORGEROCK LIMITED,C=GB")
+                    .header(ISS_CRIT_CLAIM, obAspspOrgId) // For an ASPSP the ISS_CRIT_CLAIM is the OB Issued orgId
                     .header(TAN_CRIT_CLAIM, routeArgTrustedAnchor)
                     .crit(critClaims)
                     .done()

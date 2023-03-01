@@ -35,6 +35,8 @@ import org.forgerock.secrets.SecretBuilder;
 import org.forgerock.secrets.SecretsProvider;
 import org.forgerock.secrets.keys.VerificationKey;
 import org.forgerock.util.Reject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Validator that validates a JWT using an RSA Public Key.
@@ -44,6 +46,7 @@ import org.forgerock.util.Reject;
  */
 public class RsaJwtSignatureValidator implements JwtSignatureValidator {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtSignatureValidator.class);
     public static final String USE_SIGNING_KEY = "sig";
 
     private final SigningManager signingManager = new SigningManager(new SecretsProvider(Clock.systemUTC()));
@@ -60,6 +63,7 @@ public class RsaJwtSignatureValidator implements JwtSignatureValidator {
             if (kid == null) {
                 throw new IllegalStateException("kid must be present in the JWT header");
             }
+
             final JwsAlgorithm jwsAlgorithm = jwt.getHeader().getAlgorithm();
             if (!supportedAlgorithms.contains(jwsAlgorithm)) {
                 throw new IllegalStateException("jwt signed using unsupported algorithm: " + jwsAlgorithm);
@@ -74,6 +78,9 @@ public class RsaJwtSignatureValidator implements JwtSignatureValidator {
             if (!USE_SIGNING_KEY.equals(jwk.getUse())) {
                 throw new IllegalStateException("jwk for kid: " + kid + " must be signing key, instead found: " + jwk.getUse());
             }
+
+            log.debug("RsaJwtSignatureValidator() found jwk for kid. Signing algo supported, is RsaJwk, and is signing " +
+                    "key. Validating signature");
             RSAPublicKey publicKey = ((RsaJWK) jwk).toRSAPublicKey();
             final SecretBuilder secretBuilder = new SecretBuilder().publicKey(publicKey)
                                                                    .expiresAt(Instant.MAX)

@@ -58,25 +58,25 @@ def errorResponseFactory = new ErrorResponseFactory(SCRIPT_NAME)
 def defaultResponseTypes = ["code id_token"]
 def supportedResponseTypes = [defaultResponseTypes]
 
-if (!attributes.registrationRequest) {
-    logger.error(SCRIPT_NAME + "RegistrationRequestEntityValidatorFilter must be run prior to this script")
-    return new Response(Status.INTERNAL_SERVER_ERROR)
-}
-logger.debug(SCRIPT_NAME + "required registrationRequest is present")
-
-RegistrationRequest registrationRequest = attributes.registrationRequest
-if (! registrationRequest.signatureHasBeenValidated() ){
-    logger.error(SCRIPT_NAME + "registrationResponse signature has not been validated. " +
-            "RegistrationRequestJwtSignatureValidatorFilter must be run prior to this script")
-    return new Response(Status.INTERNAL_SERVER_ERROR)
-}
-logger.debug(SCRIPT_NAME + "required registrationRequest signatures have been validated")
-
 def method = request.method
 
 switch (method.toUpperCase()) {
     case "POST":
     case "PUT":
+        if (!attributes.registrationRequest) {
+            logger.error(SCRIPT_NAME + "RegistrationRequestEntityValidatorFilter must be run prior to this script")
+            return new Response(Status.INTERNAL_SERVER_ERROR)
+        }
+        logger.debug(SCRIPT_NAME + "required registrationRequest is present")
+
+        RegistrationRequest registrationRequest = attributes.registrationRequest
+        if (! registrationRequest.signatureHasBeenValidated() ){
+            logger.error(SCRIPT_NAME + "registrationResponse signature has not been validated. " +
+                    "RegistrationRequestJwtSignatureValidatorFilter must be run prior to this script")
+            return new Response(Status.INTERNAL_SERVER_ERROR)
+        }
+        logger.debug(SCRIPT_NAME + "required registrationRequest signatures have been validated")
+
         def SCOPE_ACCOUNTS = "accounts"
         def SCOPE_PAYMENTS = "payments"
         def ROLE_PAYMENT_INITIATION = "0.4.0.19495.1.2"

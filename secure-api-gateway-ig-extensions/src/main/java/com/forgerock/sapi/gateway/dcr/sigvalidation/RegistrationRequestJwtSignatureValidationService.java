@@ -79,6 +79,8 @@ public class RegistrationRequestJwtSignatureValidationService {
 
         return supplier.getJWKSet(fapiInteractionId, registrationRequest).thenAsync((jwks)->{
             try {
+                log.debug("({}) validating jwt signed by {} against jwks {}", fapiInteractionId,
+                        registrationRequest.getKeyId(), jwks);
                 jwtSignatureValidator.validateSignature(registrationRequest.getSignedJwt(), jwks);
                 return Promises.newResultPromise(new Response(Status.OK));
             } catch (SignatureException e) {

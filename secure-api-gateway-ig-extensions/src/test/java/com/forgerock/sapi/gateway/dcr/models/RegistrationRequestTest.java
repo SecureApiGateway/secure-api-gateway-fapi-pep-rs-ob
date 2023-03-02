@@ -56,9 +56,11 @@ public class RegistrationRequestTest {
         Map<String, Object> ssaClaims = Map.of("iss", trustedDirectory.getIssuer(),
                 trustedDirectory.getSoftwareStatementJwksUriClaimName(), "https://jwks_uri.com",
                 trustedDirectory.getSoftwareStatementOrgIdClaimName(), "Acme Ltd",
-                trustedDirectory.getSoftwareStatementSoftwareIdClaimName(), "Acme App");
+                trustedDirectory.getSoftwareStatementSoftwareIdClaimName(), "Acme App",
+                trustedDirectory.getSoftwareStatementRedirectUrisClaimName(), List.of("https://domain1.com/callback"));
         String b64EncodedSsaString = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", b64EncodedSsaString);
+        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", b64EncodedSsaString,
+                "redirect_uris", List.of("https://domain1.com/callback"));
         String b64EncodedRegRequestString = CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
         return requestBuilder.build(TX_ID, b64EncodedRegRequestString);
     }

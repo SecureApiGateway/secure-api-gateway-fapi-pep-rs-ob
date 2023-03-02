@@ -17,6 +17,7 @@ package com.forgerock.sapi.gateway.common.jwt;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -114,6 +115,34 @@ public class ClaimsSetFacade {
             }
         } catch (ClassCastException exception) {
             throw new JwtException("Jwt claim '" + claimName + "' is not a List of Strings");
+        }
+    }
+
+    public List<URL> getRequiredUriListClaim(String claimName) throws JwtException {
+        checkClaimName(claimName);
+        try {
+            JsonValue claimValue = this.claimsSet.get(claimName);
+            if (claimValue.getObject() == null) {
+                throw new JwtException("claim of name " + claimName + " must exist in the JWT");
+            }
+            if (claimValue.isList()){
+                List<Object> claimValueList = claimValue.asList();
+                List<URL> uriList = new ArrayList<>(claimValueList.size());
+                for(int index = 0; index < claimValueList.size(); index++){
+                    Object claim = claimValueList.get(index);
+                    try {
+                        URL url = new URL((String)claim);
+                        uriList.add(index, url);
+                    } catch (MalformedURLException e) {
+                        throw new JwtException("claim of name '" + claimName + "' is expected to hold valid URLs: " + e.getMessage());
+                    }
+                }
+                return uriList;
+            } else {
+                throw new JwtException("claim of name '" + claimName + "' is not of type List");
+            }
+        } catch (ClassCastException exception) {
+            throw new JwtException("claim of name '" + claimName + "' is not a List of Strings");
         }
     }
 

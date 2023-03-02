@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 
 import org.forgerock.json.jose.jws.SignedJwt;
@@ -58,7 +59,8 @@ class RegistrationRequestBuilderTest {
     void success_build() throws JwtException, DCRRegistrationRequestBuilderException {
         // Given
         String softwareStatementb64EncodedString = "header.payload.sig";
-        Map<String, Object> claims = Map.of("iss", "Acme App", "software_statement", softwareStatementb64EncodedString);
+        Map<String, Object> claims = Map.of("iss", "Acme App", "software_statement", softwareStatementb64EncodedString,
+                "redirect_uris", List.of("https://domain1.com/callback"));
         SignedJwt regRequestSignedJwt = CryptoUtils.createSignedJwt(claims, JWSAlgorithm.PS256);
         // When
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenReturn(regRequestSignedJwt);

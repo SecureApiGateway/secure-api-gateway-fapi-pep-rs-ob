@@ -83,4 +83,10 @@ public interface TrustedDirectory {
      * @return the name of the claim in the software statement that holds a unique identifier for the software statement
      */
     String getSoftwareStatementSoftwareIdClaimName();
+
+    /**
+     * @return the name of the claim in the software statement that holds the array of redirect_uris registered for
+     * the software statement
+     */
+    String getSoftwareStatementRedirectUrisClaimName();
 }

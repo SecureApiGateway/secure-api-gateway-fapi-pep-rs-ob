@@ -15,6 +15,7 @@
  */
 package com.forgerock.sapi.gateway.dcr.models;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,10 +42,12 @@ public class RegistrationRequest extends SapiJwt {
     public static final String REGISTRATION_REQUEST_KEY = "registrationRequest";
 
     private final SoftwareStatement softwareStatement;
+    private final List<URL> redirectUris;
 
     public RegistrationRequest(Builder builder){
         super(builder);
         this.softwareStatement = builder.softwareStatement;
+        this.redirectUris = builder.redirectUris;
     }
 
     public void setResponseTypes(List<String> responseTypes){
@@ -68,6 +71,13 @@ public class RegistrationRequest extends SapiJwt {
     }
 
     /**
+     * @return the redirect urls specified in the registration request
+     */
+    public List<URL> getRedirectUris(){
+        return this.redirectUris;
+    }
+
+    /**
      * Class to build a {@code RegistrationRequest} from the b64 url encoded registration request jwt string.
      */
     public static class Builder extends SapiJwtBuilder {
@@ -75,6 +85,7 @@ public class RegistrationRequest extends SapiJwt {
         private static final Logger log = LoggerFactory.getLogger(Builder.class);
         private final SoftwareStatement.Builder softwareStatementBuilder;
         private SoftwareStatement softwareStatement;
+        private List<URL> redirectUris;
 
         /**
          * Construct a {@code Builder)
@@ -91,7 +102,7 @@ public class RegistrationRequest extends SapiJwt {
         }
 
         /**
-         * Build a {@code RegistrationRequest} from a the b64 encoded string representation of the registration request
+         * Build a {@code RegistrationRequest} from the b64 encoded string representation of the registration request
          * jwt
          * @param transactionId used for logging context and log tracing
          * @param b64EncodedJwtString the b64 encoded jwt string from the registration request body
@@ -117,6 +128,7 @@ public class RegistrationRequest extends SapiJwt {
             String SSA_CLAIM_NAME = "software_statement";
             String b64EncodedSsa = this.claimsSet.getStringClaim(SSA_CLAIM_NAME);
             softwareStatement = softwareStatementBuilder.build(txId, b64EncodedSsa);
+            this.redirectUris = this.claimsSet.getRequiredUriListClaim("redirect_uris");
         }
 
     }

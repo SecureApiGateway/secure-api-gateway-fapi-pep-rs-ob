@@ -94,7 +94,8 @@ class RegistrationRequestEntityValidatorFilterTest {
         Request request = new Request();
         request.setMethod("POST");
         Map<String, Object> ssaClaims = Map.of("iss", "test-publisher", "software_jwks", getJwkSetObject(),
-                "org_id", "Acme Inc", "software_id", "Acme Banking App");
+                "org_id", "Acme Inc", "software_id", "Acme Banking App",
+                "software_redirect_uris", List.of("https://domain1.com/callback"));
         // When
         when(reqRequestSupplier.apply(context, request)).thenReturn(createRegistrationRequestWithJwksBasedSSA(ssaClaims));
         Promise<Response, NeverThrowsException> promise = filter.filter(context, request, handler);
@@ -134,7 +135,8 @@ class RegistrationRequestEntityValidatorFilterTest {
         RSASSASigner signer = CryptoUtils.createRSASSASigner();
         // Can make valid JWKS entry!! Grrr
         String ssa = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa);
+        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa,
+                "redirect_uris", List.of("https://domain1.com/callback"));
         return CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
     }
 
@@ -145,7 +147,8 @@ class RegistrationRequestEntityValidatorFilterTest {
         Request request = new Request();
         request.setMethod("POST");
         Map<String, Object> ssaClaims = Map.of("iss", "OpenBanking Ltd", "software_jwks_endpoint", "https://jwks.com",
-                "org_id", "Acme Inc", "software_id", "Acme Banking App");
+                "org_id", "Acme Inc", "software_id", "Acme Banking App",
+                "software_redirect_uris", List.of("https://domain1.com/callback"));
 
         // When
         when(reqRequestSupplier.apply(context, request)).thenReturn(createRegistrationRequestWithJwksUriBasedSSA(ssaClaims));
@@ -164,7 +167,8 @@ class RegistrationRequestEntityValidatorFilterTest {
     private String createRegistrationRequestWithJwksUriBasedSSA(Map<String, Object> ssaClaims) throws NoSuchAlgorithmException {
         RSASSASigner signer = CryptoUtils.createRSASSASigner();
         String ssa = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa);
+        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa,
+                "redirect_uris", List.of("https://domain1.com/callback"));
         String registrationRequest = CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
         return registrationRequest;
     }

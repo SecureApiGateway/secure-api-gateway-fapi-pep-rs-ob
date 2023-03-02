@@ -1,22 +1,15 @@
+import org.forgerock.json.jose.jwk.JWKSet
+import org.forgerock.json.jose.jwk.JWK
+import com.forgerock.sapi.gateway.common.jwt.ClaimsSetFacade
 import com.forgerock.sapi.gateway.common.jwt.JwtException
-import org.forgerock.util.promise.*
-import org.forgerock.http.protocol.*
-import org.forgerock.json.JsonValue
-import org.forgerock.json.jose.*
-import org.forgerock.json.jose.jwk.*
-import org.forgerock.json.jose.common.JwtReconstruction
-import org.forgerock.json.jose.jwt.JwtClaimsSet
-import org.forgerock.json.jose.jws.SignedJwt
-import org.forgerock.json.jose.jwt.Jwt
-import java.net.URI
-import groovy.json.JsonSlurper
-import com.forgerock.securebanking.uk.gateway.jwks.*
-import java.security.SignatureException
-import com.nimbusds.jose.jwk.RSAKey;
-import com.securebanking.gateway.dcr.ErrorResponseFactory
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest
 import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement
-import com.forgerock.sapi.gateway.common.jwt.ClaimsSetFacade
+import com.forgerock.securebanking.uk.gateway.jwks.*
+import com.nimbusds.jose.jwk.RSAKey
+import com.securebanking.gateway.dcr.ErrorResponseFactory
+
+import java.security.SignatureException
+
 import static org.forgerock.util.promise.Promises.newResultPromise
 
 /*
@@ -180,6 +173,12 @@ switch (method.toUpperCase()) {
             return errorResponse
         }
 
+        try {
+            validateRegistrationRedirectUris(registrationRequest)
+        } catch (IllegalStateException e){
+            return errorResponseFactory.invalidRedirectUriErrorResponse(e.getMessage())
+        }
+
         regRequestClaimsSet.setClaim("tls_client_certificate_bound_access_tokens", true)
 
 
@@ -284,6 +283,32 @@ switch (method.toUpperCase()) {
         logger.debug(SCRIPT_NAME + "Method not supported")
         return next.handle(context, request)
 
+}
+
+
+/**
+ * Validate the redirect_uris claim in the registration request is valid as per the OB DCR spec:
+ * https://openbankinguk.github.io/dcr-docs-pub/v3.2/dynamic-client-registration.html
+ */
+private void validateRegistrationRedirectUris(RegistrationRequest registrationRequest) {
+    List<URL> regRedirectUris = registrationRequest.getRedirectUris()
+    SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement()
+    List<URL> ssaRedirectUris = softwareStatement.getRedirectUris()
+
+    for(URL regRequestRedirectUri : regRedirectUris){
+        if(!"https".equals(regRequestRedirectUri.getProtocol())){
+
+            throw new IllegalStateException("invalid registration request redirect_uris value: " + regRedirect + " must use https")
+        }
+
+        if("localhost".equals(regRequestRedirectUri.getHost())){
+            throw new IllegalStateException("invalid registration request redirect_uris value: " + regRedirect + " must not point to localhost")
+        }
+
+        if(!ssaRedirectUris.contains(regRequestRedirectUri)){
+            throw new IllegalStateException("invalid registration request redirect_uris value, must match or be a subset of the software_redirect_uris")
+        }
+    }
 }
 
 /**

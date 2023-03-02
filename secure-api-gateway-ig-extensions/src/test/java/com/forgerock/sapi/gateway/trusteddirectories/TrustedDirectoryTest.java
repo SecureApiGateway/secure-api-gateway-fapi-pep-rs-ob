@@ -15,8 +15,6 @@
  */
 package com.forgerock.sapi.gateway.trusteddirectories;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -66,6 +64,11 @@ public class TrustedDirectoryTest {
         @Override
         public String getSoftwareStatementSoftwareIdClaimName() {
             return "softwareIdClaimName";
+        }
+
+        @Override
+        public String getSoftwareStatementRedirectUrisClaimName() {
+            return "software_redirect_uris";
         }
     };
 

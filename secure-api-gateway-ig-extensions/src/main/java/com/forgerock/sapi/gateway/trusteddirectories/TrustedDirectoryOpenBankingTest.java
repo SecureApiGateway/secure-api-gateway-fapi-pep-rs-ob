@@ -51,6 +51,8 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
      */
     final static String softwareStatementSoftwareIdClaimName = "software_id";
 
+    final static String softwareStatementRedirectUriClaimName = "software_redirect_uris";
+
     static {
         try {
             jwksUri = new URL("https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks");
@@ -92,5 +94,10 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
     @Override
     public String getSoftwareStatementSoftwareIdClaimName() {
         return softwareStatementSoftwareIdClaimName;
+    }
+
+    @Override
+    public String getSoftwareStatementRedirectUrisClaimName() {
+        return softwareStatementRedirectUriClaimName;
     }
 }

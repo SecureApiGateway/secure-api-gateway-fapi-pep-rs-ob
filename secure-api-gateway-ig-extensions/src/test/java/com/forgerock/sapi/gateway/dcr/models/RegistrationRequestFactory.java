@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import com.forgerock.sapi.gateway.util.CryptoUtils;
@@ -37,7 +38,7 @@ public class RegistrationRequestFactory {
             throw new RuntimeException(e);
         }
     }
-    public static RegistrationRequest getRegRequestWithJwksUriSoftwareStatement() {
+    public static RegistrationRequest getRegRequestWithJwksUriSoftwareStatement() throws MalformedURLException {
         Map<String, Object> ssaClaims = Map.of();
         SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
         when(softwareStatement.hasJwksUri()).thenReturn(true);
@@ -50,6 +51,7 @@ public class RegistrationRequestFactory {
         RegistrationRequest registrationRequest = mock(RegistrationRequest.class);
         when(registrationRequest.getSoftwareStatement()).thenReturn(softwareStatement);
         when(registrationRequest.getSignedJwt()).thenReturn(CryptoUtils.createSignedJwt(regRequestClaims, JWSAlgorithm.PS256));
+        when(registrationRequest.getRedirectUris()).thenReturn(List.of(new URL("https://domain1.com/callback")));
         return registrationRequest;
     }
 

@@ -285,4 +285,68 @@ class ClaimsSetFacadeTest {
         assertThat(responseTypeValues.isPresent()).isTrue();
         assertThat(responseTypeValues.get()).isEqualTo(expectedResponseTypes);
     }
+
+    @Test
+    void success_getRequiredUriList() throws JwtException {
+
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of("https://domain1.com/callback", "https://domain2.com/callback")));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        List<URL> responseTypes =  claimsSetFacade.getRequiredUriListClaim("response_type");
+
+        // Then
+        assertThat(responseTypes).isNotNull();
+        assertThat(responseTypes.size()).isEqualTo(2);
+        assertThat(responseTypes.get(0).toString()).isEqualTo("https://domain1.com/callback");
+    }
+
+    @Test
+    void fail_getRequiredUriList_NotURLs() {
+
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of("hello", "there")));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredUriListClaim("response_type"),
+                JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).contains("claim of name 'response_type' is expected to hold valid URLs:");
+    }
+
+    @Test
+    void fail_getRequiredUriList_NotStrings() {
+
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", List.of(1.0f, 3.2f)));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredUriListClaim("response_type"),
+                JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).contains("claim of name 'response_type' is not a List of Strings");
+    }
+
+    @Test
+    void fail_getRequiredUriList_NotList() {
+
+        // Given
+        JwtClaimsSet claimsSet = new JwtClaimsSet(Map.of("response_type", "https://doamin1.com/callback"));
+        ClaimsSetFacade claimsSetFacade = new ClaimsSetFacade(claimsSet);
+
+        // When
+        JwtException exception =  catchThrowableOfType(()->claimsSetFacade.getRequiredUriListClaim("response_type"),
+                JwtException.class);
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).contains("claim of name 'response_type' is not of type List");
+    }
 }

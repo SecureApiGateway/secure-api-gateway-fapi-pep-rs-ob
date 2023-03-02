@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import org.forgerock.json.jose.jwk.JWKSet;
@@ -35,8 +36,8 @@ import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.common.jwt.JwtException;
 import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
-import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
 import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
+import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
 import com.forgerock.sapi.gateway.jws.JwtDecoder;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryOpenBankingTest;
@@ -55,6 +56,9 @@ class SoftwareStatementBuilderTest {
     private static final String SOFTWARE_ID ="Acme App";
     private static final String JWKS_URI = "https://jwks.com";
     private static final String SSA_JWT_STRING = "header.payload.sig";
+
+    private static final List<String> REDIRECT_URIS =
+            List.of("https://domain1.io/callback", "https://domain2.io.callback");
 
     public static final String TX_ID = "tx_id";
 
@@ -136,7 +140,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failInvalidJwt_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failInvalidJwt_buildSoftwareStatement() throws JwtException {
         // Given
         SignedJwt ssaJwt = mock(SignedJwt.class);
         JwsHeader ssaHeader = mock(JwsHeader.class);
@@ -157,7 +161,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoIssuerClaim_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failNoIssuerClaim_buildSoftwareStatement() throws JwtException {
         // Given
         SignedJwt ssaJwt = mock(SignedJwt.class);
         JwtClaimsSet claimsSet = getValidJwkUriBasedClaims();
@@ -173,7 +177,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failUnrecognisedIssuer_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failUnrecognisedIssuer_buildSoftwareStatement() throws JwtException {
         // Given
         JwsHeader ssaHeader = mock(JwsHeader.class);
         SignedJwt ssaJwt = mock(SignedJwt.class);
@@ -191,7 +195,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoOrgId_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failNoOrgId_buildSoftwareStatement() throws JwtException {
         // Given
         JwsHeader ssaHeader = mock(JwsHeader.class);
         SignedJwt ssaJwt = mock(SignedJwt.class);
@@ -212,7 +216,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoSoftwareId_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failNoSoftwareId_buildSoftwareStatement() throws JwtException {
         // Given
         String jwtString = "header.payload.sig";
         JwsHeader ssaHeader = mock(JwsHeader.class);
@@ -234,7 +238,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoJwksUri_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failNoJwksUri_buildSoftwareStatement() throws JwtException {
         // Given
         String jwtString = "header.payload.sig";
         JwsHeader ssaHeader = mock(JwsHeader.class);
@@ -256,7 +260,7 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoJwks_buildSoftwareStatement() throws JwtException, DCRRegistrationRequestBuilderException {
+    void failNoJwks_buildSoftwareStatement() throws JwtException {
         // Given
         String jwtString = "header.payload.sig";
         JwsHeader ssaHeader = mock(JwsHeader.class);
@@ -281,7 +285,8 @@ class SoftwareStatementBuilderTest {
         Map<String, Object> claims = Map.of("iss", ISSUER,
                 TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementOrgIdClaimName(), ORG_ID,
                 TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementJwksUriClaimName(), JWKS_URI);
+                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementJwksUriClaimName(), JWKS_URI,
+                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
         return  new JwtClaimsSet(claims);
     }
 
@@ -289,7 +294,8 @@ class SoftwareStatementBuilderTest {
         Map<String, Object> claims = Map.of("iss", ISSUER,
                 DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementOrgIdClaimName(), ORG_ID,
                 DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID,
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementJwksClaimName(),  DCRTestHelpers.getJwksJsonValue());
+                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementJwksClaimName(),  DCRTestHelpers.getJwksJsonValue(),
+                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
         return  new JwtClaimsSet(claims);
     }
 }

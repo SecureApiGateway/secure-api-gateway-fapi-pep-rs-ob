@@ -15,6 +15,7 @@
  */
 package com.forgerock.sapi.gateway.jwks;
 
+import static com.forgerock.sapi.gateway.dcr.idm.ApiClientTest.createApiClientWithSoftwareStatementJwks;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -35,6 +36,7 @@ import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.forgerock.util.promise.Promise;
 import org.junit.jupiter.api.Test;
 
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.jwks.cache.BaseCachingJwkSetServiceTest.ReturnsErrorsJwkStore;
 import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
@@ -65,7 +67,7 @@ class DefaultApiClientJwkSetServiceTest {
     @Test
     void failsIfJwkSetServiceThrowsException() throws Exception {
         final URL jwksUri = new URL("https://directory.com/jwks/12345");
-        final ApiClient apiClient = createApiClientWithJwksUri(jwksUri.toURI());
+        final ApiClient apiClient = ApiClientTest.createApiClientWithJwksUri(jwksUri.toURI());
         final TrustedDirectory trustedDirectory = new TrustedDirectoryOpenBankingTest();
 
         // Returns an Exception promise on every call
@@ -80,7 +82,7 @@ class DefaultApiClientJwkSetServiceTest {
 
     @Test
     void failsIfJwksUriIsInvalid() throws Exception {
-        final ApiClient apiClient = createApiClientWithJwksUri(new URI("foo://bar"));
+        final ApiClient apiClient = ApiClientTest.createApiClientWithJwksUri(new URI("foo://bar"));
         final TrustedDirectory trustedDirectory = new TrustedDirectoryOpenBankingTest();
 
         final JwkSetService errorsJwkStore = new ReturnsErrorsJwkStore();
@@ -94,7 +96,7 @@ class DefaultApiClientJwkSetServiceTest {
 
     @Test
     void failsIfJwksUriIsNull() {
-        final ApiClient apiClient = createApiClientWithJwksUri(null);
+        final ApiClient apiClient = ApiClientTest.createApiClientWithJwksUri(null);
         final TrustedDirectory trustedDirectory = new TrustedDirectoryOpenBankingTest();
 
         final JwkSetService errorsJwkStore = new ReturnsErrorsJwkStore();
@@ -149,10 +151,11 @@ class DefaultApiClientJwkSetServiceTest {
         final ApiClientJwkSetService apiClientJwkSetService = new DefaultApiClientJwkSetService(errorsJwkStore);
         final URL secureApiGatewayJwksURI = new URL("https://blah.com");
         final TrustedDirectory misconfiguredDirectory = new TrustedDirectorySecureApiGateway(secureApiGatewayJwksURI);
-        final ApiClient apiClient = new ApiClient();
+
         final JwtClaimsSet claimsSet = new JwtClaimsSet();
         claimsSet.setClaim(misconfiguredDirectory.getSoftwareStatementJwksClaimName(), json(object(field("keys", "should be a list"))));
-        apiClient.setSoftwareStatementAssertion(new SignedJwt(new JwsHeader(), claimsSet, new byte[0], new byte[0]));
+
+        final ApiClient apiClient = ApiClientTest.createBuilderWithTestValues().setSoftwareStatementAssertion(new SignedJwt(new JwsHeader(), claimsSet, new byte[0], new byte[0])).build();
 
         final Promise<JWKSet, FailedToLoadJWKException> jwkSetPromise = apiClientJwkSetService.getJwkSet(apiClient, misconfiguredDirectory);
 
@@ -166,7 +169,7 @@ class DefaultApiClientJwkSetServiceTest {
     }
 
     private void fetchJwkSetFromJwksUri(JWKSet expectedJwkSet, URL jwksUri, ApiClientJwkSetService apiClientJwkSetService) throws Exception {
-        final ApiClient apiClient = createApiClientWithJwksUri(jwksUri.toURI());
+        final ApiClient apiClient = ApiClientTest.createApiClientWithJwksUri(jwksUri.toURI());
         // OB Trusted Dir uses the jwksUri
         final TrustedDirectory trustedDirectory = new TrustedDirectoryOpenBankingTest();
         invokeFilterAndValidateSuccessResponse(expectedJwkSet, apiClient, trustedDirectory, apiClientJwkSetService);
@@ -189,21 +192,5 @@ class DefaultApiClientJwkSetServiceTest {
         final Promise<JWKSet, FailedToLoadJWKException> jwkSetPromise = apiClientJwkSetService.getJwkSet(apiClient, trustedDirectory);
         final JWKSet jwkSet = jwkSetPromise.get(1, TimeUnit.MILLISECONDS);
         assertEquals(expectedJwkSet, jwkSet);
-    }
-
-    static ApiClient createApiClientWithJwksUri(URI jwksUri) {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setJwksUri(jwksUri);
-        return apiClient;
-    }
-
-    private ApiClient createApiClientWithSoftwareStatementJwks(JWKSet jwkSet, String softwareStatementJwksClaimName) {
-        final ApiClient apiClient = new ApiClient();
-        final JwtClaimsSet claimsSet = new JwtClaimsSet();
-        if (softwareStatementJwksClaimName != null) {
-            claimsSet.setClaim(softwareStatementJwksClaimName, jwkSet.toJsonValue());
-        }
-        apiClient.setSoftwareStatementAssertion(new SignedJwt(new JwsHeader(), claimsSet, new byte[0], new byte[0]));
-        return apiClient;
     }
 }

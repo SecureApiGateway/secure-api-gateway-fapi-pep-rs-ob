@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter.Heaplet;
@@ -60,9 +61,7 @@ class FetchTrustedDirectoryFilterTest {
         ssaClaims.setIssuer(issuer);
         final SignedJwt ssaSignedJwt = new SignedJwt(new JwsHeader(), ssaClaims, new byte[0], new byte[0]);
 
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setSoftwareStatementAssertion(ssaSignedJwt);
-        return apiClient;
+        return ApiClientTest.createBuilderWithTestValues().setSoftwareStatementAssertion(ssaSignedJwt).build();
     }
 
     @Test

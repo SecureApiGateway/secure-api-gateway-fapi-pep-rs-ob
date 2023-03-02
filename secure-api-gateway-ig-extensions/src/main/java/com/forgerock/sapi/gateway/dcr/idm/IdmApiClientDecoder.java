@@ -23,6 +23,7 @@ import org.forgerock.json.jose.common.JwtReconstruction;
 import org.forgerock.json.jose.jws.SignedJwt;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient.ApiClientBuilder;
 import com.forgerock.sapi.gateway.dcr.models.ApiClientOrganisation;
 
 /**
@@ -42,32 +43,18 @@ public class IdmApiClientDecoder {
      */
     public ApiClient decode(JsonValue apiClientJson) {
         try {
-            final ApiClient apiClient = new ApiClient();
-            apiClient.setClientName(apiClientJson.get("name").as(this::requiredField).asString());
-            apiClient.setOauth2ClientId(apiClientJson.get("oauth2ClientId").as(this::requiredField).asString());
-            apiClient.setSoftwareClientId(apiClientJson.get("id").as(this::requiredField).asString());
-
-            apiClient.setSoftwareStatementAssertion(apiClientJson.get("ssa").as(this::requiredField).as(
-                    ssa -> {
-                        final String jwtString = ssa.asString();
-                        try {
-                            return new JwtReconstruction().reconstructJwt(jwtString, SignedJwt.class);
-                        } catch (RuntimeException rte) {
-                            throw new JsonValueException(ssa, "failed to decode JWT, raw jwt string: " + jwtString, rte);
-                        }
-                    }));
-
-            apiClient.setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(org -> {
-                final String orgId = org.get("id").as(this::requiredField).asString();
-                final String orgName = org.get("name").as(this::requiredField).asString();
-                return new ApiClientOrganisation(orgId, orgName);
-            }));
+            final ApiClientBuilder apiClientBuilder = new ApiClientBuilder()
+                    .setClientName(apiClientJson.get("name").as(this::requiredField).asString())
+                    .setOauth2ClientId(apiClientJson.get("oauth2ClientId").as(this::requiredField).asString())
+                    .setSoftwareClientId(apiClientJson.get("id").as(this::requiredField).asString())
+                    .setSoftwareStatementAssertion(apiClientJson.get("ssa").as(this::requiredField).as(this::decodeSsa))
+                    .setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(this::decodeApiClientOrganisation));
 
             final JsonValue jwksUri = apiClientJson.get("jwksUri");
             if (jwksUri.isNotNull()) {
-                apiClient.setJwksUri(jwksUri.as(jwks -> URI.create(jwks.asString())));
+                apiClientBuilder.setJwksUri(jwksUri.as(jwks -> URI.create(jwks.asString())));
             }
-            return apiClient;
+            return apiClientBuilder.build();
         } catch (JsonValueException jve) {
             // These errors are expected and contain enough information to understand what when wrong e.g. missing required field
             throw jve;
@@ -86,5 +73,20 @@ public class IdmApiClientDecoder {
             throw new JsonValueException(jsonValue, "is a required field, failed to decode IDM ApiClient");
         }
         return jsonValue;
+    }
+
+    private SignedJwt decodeSsa(JsonValue ssa) {
+        final String jwtString = ssa.asString();
+        try {
+            return new JwtReconstruction().reconstructJwt(jwtString, SignedJwt.class);
+        } catch (RuntimeException rte) {
+            throw new JsonValueException(ssa, "failed to decode JWT, raw jwt string: " + jwtString, rte);
+        }
+    }
+
+    private ApiClientOrganisation decodeApiClientOrganisation(JsonValue org) {
+        final String orgId = org.get("id").as(this::requiredField).asString();
+        final String orgName = org.get("name").as(this::requiredField).asString();
+        return new ApiClientOrganisation(orgId, orgName);
     }
 }

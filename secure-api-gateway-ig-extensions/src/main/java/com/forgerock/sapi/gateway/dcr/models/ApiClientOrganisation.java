@@ -17,6 +17,8 @@ package com.forgerock.sapi.gateway.dcr.models;
 
 import java.util.Objects;
 
+import org.forgerock.util.Reject;
+
 /**
  * Data object which represents an Organisation to which one or more {@link ApiClient} objects belong
  */
@@ -33,6 +35,8 @@ public class ApiClientOrganisation {
     private final String name;
 
     public ApiClientOrganisation(String id, String name) {
+        Reject.ifBlank(id, "id must be provided");
+        Reject.ifBlank(name, "name must be provided");
         this.id = id;
         this.name = name;
     }

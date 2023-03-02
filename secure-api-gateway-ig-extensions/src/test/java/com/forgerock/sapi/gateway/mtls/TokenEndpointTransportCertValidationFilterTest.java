@@ -59,8 +59,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient.ApiClientBuilder;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
 import com.forgerock.sapi.gateway.mtls.TokenEndpointTransportCertValidationFilter.Heaplet;
@@ -110,12 +112,12 @@ class TokenEndpointTransportCertValidationFilterTest {
             transportCertValidationFilter = new TokenEndpointTransportCertValidationFilter(mockApiClientService, mockTrustedDirectoryService,
                     mockApiClientJwkSetService, mockCertificateRetriever, mockTransportCertValidator, DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM);
 
-            testApiClient = new ApiClient();
-            testApiClient.setOauth2ClientId(testClientId);
+            final ApiClientBuilder apiClientBuilder = ApiClientTest.createBuilderWithTestValues().setOauth2ClientId(testClientId);
             final URI jwksUri;
             try {
                 jwksUri = new URI("http://localhost/jwks");
-                testApiClient.setJwksUri(jwksUri);
+                apiClientBuilder.setJwksUri(jwksUri);
+                testApiClient = apiClientBuilder.build();
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }

@@ -29,6 +29,8 @@ JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
 
  If ASPSPs have updated to v3.1.4 or later, they must not include the b64 claim in the header,
  and any TPPs using these ASPSPs must do the same.
+
+ This script relies on the apiClient attribute being set, therefore must be installed after the FetchApiClientFilter
  */
 
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
@@ -232,7 +234,7 @@ def isJwsSignatureValid(String detachedSignatureValue, RSAPublicKey rsaPublicKey
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader);
     if (!criticalParamsValid) {
         logger.error(SCRIPT_NAME + "Critical params validations failed. Stopping further validations.")
-        return newResultPromise(false)
+        return false
     }
 
     //Validate Signature
@@ -289,35 +291,35 @@ def validateCriticalParameters(JWSHeader jwsHeader) {
     }
     logger.debug(SCRIPT_NAME + "Found valid tan!")
 
-    X500Name jwtHeaderSubject = new X500Name(jwsHeader.getCustomParam(ISS_CRIT_CLAIM))
-    logger.debug(SCRIPT_NAME + "Initialized jwtHeaderSubject: " + jwtHeaderSubject)
 
-    // ToDo: This looks wrong. Spec:
-    // https://openbankinguk.github.io/read-write-api-site3/v3.1.10/profiles/read-write-data-api-profile.html#step-2-form-the-jose-header
-    // This says for http://openbanking.org.uk/iss:
-    //   This must be a string that identifies the PSP.
-    //   If the issuer is using a certificate this value must match the subject of the signing certificate.
-    //   If the issuer is using a signing key lodged with a Trust Anchor, the value is defined by the Trust Anchor and should uniquely identify the PSP.
-    //   For example, when using the Open Banking Directory, the value must be:
-    //      When issued by a TPP, of the form {{org-id}}/{{software-statement-id}},
-    //      When issued by an ASPSP of the form {{org-id}}
-    //   Where:
-    //     org-id is the open-banking issued organization id
-    //     software-statement-id is the open-banking issued software-statement-id 
-    // 
-    // So, there are two issues here. 
-    // 1. First, the cert we are checking here is the Transport cert, and it should be the signing cert.
-    // 2. The expected value here should be of the form {{org-id}}/{{software-statement-id}} as this jwt was issued
-    //    by the TPP.
-    X500Name routeSubjectDn = new X500Name(attributes.clientCertificate.subjectDN.toString())
-    logger.debug(SCRIPT_NAME + "Initialized routeSubjectDn: " + routeSubjectDn)
+    def issCritClaim = jwsHeader.getCustomParam(ISS_CRIT_CLAIM)
+    return validateIssCritClaim(issCritClaim)
+}
 
-
-    if (!routeSubjectDn.equals(jwtHeaderSubject)) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Comparison of subject dns failed")
-        return false;
+// Validate the "http://openbanking.org.uk/iss" claim
+//
+// OB Spec:
+// If the issuer is using a signing key lodged with a Trust Anchor, the value is defined by the Trust Anchor and should uniquely identify the PSP.
+// For example, when using the Open Banking Directory, the value must be:
+// - When issued by a TPP, of the form {{org-id}}/{{software-statement-id}},
+def validateIssCritClaim(issCritClaim) {
+    if (issCritClaim == null) {
+        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Missing required header value: " + ISS_CRIT_CLAIM)
+        return false
     }
-    return true;
+    if (attributes.apiClient == null) {
+        throw new IllegalStateException("Route is configured incorrectly, " + SCRIPT_NAME + "requires apiClient context attribute");
+    }
+    def apiClient = attributes.apiClient
+    def orgId = apiClient.getOrganisation().getId()
+    def softwareStatementId = apiClient.getSoftwareClientId()
+    def expectedIssuerValue = orgId + "/" + softwareStatementId
+    if (expectedIssuerValue != issCritClaim) {
+        logger.error(SCRIPT_NAME + "Invalid " + ISS_CRIT_CLAIM + " value, expected: " + expectedIssuerValue + " actual: " + issCritClaim)
+        return false
+    }
+    logger.debug(SCRIPT_NAME + ISS_CRIT_CLAIM + " is valid")
+    return true
 }
 
 /**

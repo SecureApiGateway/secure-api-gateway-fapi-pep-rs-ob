@@ -104,7 +104,7 @@ public class IdmApiClientServiceTest {
         final Exception exception = assertThrows(Exception.class, () -> apiClientPromise.getOrThrow(1, TimeUnit.MILLISECONDS));
 
         assertEquals("java.net.URISyntaxException: Illegal character in scheme name at index 0:" +
-                " 999://localhost/openidm/managed/9999?_fields=apiClientOrg,*", exception.getMessage());
+                " 999://localhost/openidm/managed/9999?_fields=apiClientOrg/*,*", exception.getMessage());
     }
 
     /**

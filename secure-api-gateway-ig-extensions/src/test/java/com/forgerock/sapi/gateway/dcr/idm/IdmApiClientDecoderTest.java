@@ -120,11 +120,17 @@ public class IdmApiClientDecoderTest {
                 () -> idmApiClientDecoder.decode(json(object())));
         assertEquals("/name: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
 
+        // Test with ssa field missing
         final JsonValue missingSsaField = createIdmApiClientDataRequiredFieldsOnly("123454");
         missingSsaField.remove("ssa");
-
         decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(missingSsaField));
         assertEquals("/ssa: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
+
+        // Test with apiClientOrg.id field missing
+        final JsonValue missingOrgId = createIdmApiClientDataRequiredFieldsOnly("2323");
+        missingOrgId.get("apiClientOrg").remove("id");
+        decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(missingOrgId));
+        assertEquals("/apiClientOrg/id: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
     }
 
     @Test

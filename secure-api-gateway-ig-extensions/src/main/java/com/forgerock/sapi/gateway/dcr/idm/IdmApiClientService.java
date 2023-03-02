@@ -60,7 +60,7 @@ public class IdmApiClientService implements ApiClientService {
         Reject.ifBlank("clientId must be provided");
         try {
             final Request getApiClientRequest = new Request().setMethod("GET")
-                                                             .setUri(idmGetApiClientBaseUri + clientId + "?_fields=apiClientOrg,*");
+                                                             .setUri(idmGetApiClientBaseUri + clientId + "?_fields=apiClientOrg/*,*");
             return httpClient.send(getApiClientRequest)
                     .thenAsync(response -> {
                         if (!response.getStatus().isSuccessful()) {

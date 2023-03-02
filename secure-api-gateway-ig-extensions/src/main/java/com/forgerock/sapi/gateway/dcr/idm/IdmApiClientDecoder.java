@@ -58,9 +58,8 @@ public class IdmApiClientDecoder {
                     }));
 
             apiClient.setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(org -> {
-                final JsonValue orgJson = JsonValue.json(org);
-                final String orgId = orgJson.get("id").asString();
-                final String orgName = orgJson.get("name").asString();
+                final String orgId = org.get("id").as(this::requiredField).asString();
+                final String orgName = org.get("name").as(this::requiredField).asString();
                 return new ApiClientOrganisation(orgId, orgName);
             }));
 

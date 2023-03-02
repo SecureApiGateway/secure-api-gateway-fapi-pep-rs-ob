@@ -8,6 +8,7 @@
     "type": "Chain",
     "config": {
       "filters": [
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Add x-fapi-interaction-id header if one was not present in the request",
           "name": "FapiInteractionIdFilter",

@@ -453,7 +453,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
-            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
         }
 
         @Test

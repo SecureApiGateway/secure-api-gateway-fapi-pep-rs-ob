@@ -15,14 +15,10 @@
  */
 package com.forgerock.sapi.gateway.fapi.v1;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,7 +52,8 @@ import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
 import com.forgerock.sapi.gateway.dcr.common.Validator;
 import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-import com.forgerock.sapi.gateway.mtls.CertificateFromHeaderSupplier;
+import com.forgerock.sapi.gateway.mtls.CertificateRetriever;
+import com.forgerock.sapi.gateway.mtls.FromHeaderCertificateRetriever;
 
 /**
  * Filter which rejects Dynamic Client Registration (DCR) request that would result in OAuth2 clients that would not
@@ -199,14 +196,9 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     private Collection<String> registrationObjectSigningFieldNames;
 
     /**
-     * Function which returns the client's PEM encoded x509 certificate which is used for MTLS as a String.
+     * Retrieves the client's mTLS certificate
      */
-    private BiFunction<Context, Request, String> clientTlsCertificateSupplier;
-
-    /**
-     * Function which validates a PEM encoded x509 certificate String
-     */
-    private Validator<String> certificateValidator;
+    private CertificateRetriever clientCertificateRetriever;
 
     /**
      * Function which returns the DCR Registration Request json object.
@@ -254,9 +246,16 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
         if (!VALIDATABLE_HTTP_REQUEST_METHODS.contains(request.getMethod())) {
             return next.handle(context, request);
         }
-        try {
-            certificateValidator.validate(clientTlsCertificateSupplier.apply(context, request));
 
+        try {
+            clientCertificateRetriever.retrieveCertificate(context, request);
+        } catch (CertificateException ce) {
+            LOGGER.debug("({}), FAPI Validation failed due to client certificate error", FAPIUtils.getFapiInteractionIdForDisplay(context), ce);
+            return Promises.newResultPromise(errorResponseFactory.errorResponse(context, DCRErrorCode.INVALID_CLIENT_METADATA,
+                    "MTLS client certificate is missing or malformed"));
+        }
+
+        try {
             final JsonValue registrationRequestObject = registrationRequestObjectSupplier.apply(context, request);
             if (registrationRequestObject == null) {
                 throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "registration request entity is missing or malformed");
@@ -431,12 +430,8 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
         this.registrationObjectSigningFieldNames = registrationObjectSigningFieldNames;
     }
 
-    void setClientTlsCertificateSupplier(BiFunction<Context, Request, String> clientTlsCertificateSupplier) {
-        this.clientTlsCertificateSupplier = clientTlsCertificateSupplier;
-    }
-
-    void setCertificateValidator(Validator<String> certificateValidator) {
-        this.certificateValidator = certificateValidator;
+    void setClientCertificateRetriever(CertificateRetriever certificateRetriever) {
+        this.clientCertificateRetriever = certificateRetriever;
     }
 
     void setRegistrationRequestObjectSupplier(BiFunction<Context, Request, JsonValue> registrationRequestObjectSupplier) {
@@ -456,26 +451,6 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
     public List<Validator<JsonValue>> getDefaultRequestObjectValidators() {
         return List.of(this::validateRedirectUris, this::validateResponseTypes, this::validateSigningAlgorithmUsed,
                        this::validateTokenEndpointAuthMethods);
-    }
-
-    /**
-     * Default implementation of the ClientCertificateValidator.
-     * This function takes a pem encoded certificate String and validates it.
-     */
-    public static class DefaultClientCertificateValidator implements Validator<String> {
-        @Override
-        public void validate(String certPem) {
-            if (certPem == null) {
-                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
-            }
-            final InputStream certStream = new ByteArrayInputStream(certPem.getBytes());
-            try {
-                final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                final Certificate certificate = certificateFactory.generateCertificate(certStream);
-            } catch (CertificateException e) {
-                throw new ValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate PEM supplied is invalid", e);
-            }
-        }
     }
 
     /**
@@ -549,12 +524,8 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
                                                                 .defaultTo(DEFAULT_REG_OBJ_SIGNING_FIELD_NAMES)
                                                                 .asList(String.class));
 
-            final Validator<String> certificateValidator = new DefaultClientCertificateValidator();
-            filter.setCertificateValidator(certificateValidator);
-
             final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
-            final BiFunction<Context, Request, String> certificateSupplier = new CertificateFromHeaderSupplier(clientCertHeaderName);
-            filter.setClientTlsCertificateSupplier(certificateSupplier);
+            filter.setClientCertificateRetriever(new FromHeaderCertificateRetriever(clientCertHeaderName));
 
             final List<Validator<JsonValue>> requestObjectValidators = filter.getDefaultRequestObjectValidators();
             filter.setRegistrationRequestObjectValidators(requestObjectValidators);

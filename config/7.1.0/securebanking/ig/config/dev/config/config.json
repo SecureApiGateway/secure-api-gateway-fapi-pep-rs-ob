@@ -162,6 +162,11 @@
               "type": "application/x-groovy",
               "file": "FapiTransactionIdFilter.groovy"
             }
+          },
+          {
+            "comment": "Log any unhandled exceptions, installed after the FapiTransactionIdFilter so that the txId being logged is set to the x-fapi-interaction-id",
+            "name": "SapiLogAttachedExceptionFilter",
+            "type": "SapiLogAttachedExceptionFilter"
           }
         ]
       }

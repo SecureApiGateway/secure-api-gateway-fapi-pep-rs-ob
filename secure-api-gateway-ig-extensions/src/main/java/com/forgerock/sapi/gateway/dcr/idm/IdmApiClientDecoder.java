@@ -47,6 +47,7 @@ public class IdmApiClientDecoder {
                     .setClientName(apiClientJson.get("name").as(this::requiredField).asString())
                     .setOauth2ClientId(apiClientJson.get("oauth2ClientId").as(this::requiredField).asString())
                     .setSoftwareClientId(apiClientJson.get("id").as(this::requiredField).asString())
+                    .setDeleted(apiClientJson.get("deleted").as(this::requiredField).asBoolean())
                     .setSoftwareStatementAssertion(apiClientJson.get("ssa").as(this::requiredField).as(this::decodeSsa))
                     .setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(this::decodeApiClientOrganisation));
 

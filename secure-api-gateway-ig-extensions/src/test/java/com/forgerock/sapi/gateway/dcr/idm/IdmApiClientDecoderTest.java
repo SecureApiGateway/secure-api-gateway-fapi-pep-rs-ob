@@ -55,6 +55,7 @@ public class IdmApiClientDecoderTest {
                 field("description", "Blah blah blah"),
                 field("ssa", createTestSoftwareStatementAssertion().build()),
                 field("oauth2ClientId", clientId),
+                field("deleted", false),
                 field("apiClientOrg", object(field("id", "98761234"),
                         field("name", "Test Organisation")))));
     }

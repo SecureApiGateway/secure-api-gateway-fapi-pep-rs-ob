@@ -128,12 +128,11 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        final String fapiInteractionIdForDisplay = FAPIUtils.getFapiInteractionIdForDisplay(context);
         final X509Certificate clientCertificate;
         try {
              clientCertificate = certificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException e) {
-            logger.error("({}) Failed to resolve client mtls certificate", fapiInteractionIdForDisplay, e);
+            logger.error("Failed to resolve client mtls certificate", e);
             return Promises.newResultPromise(TransportCertValidationFilter.createErrorResponse(e.getMessage()));
         }
 
@@ -145,34 +144,35 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
             } else {
                 return response.getEntity()
                                .getJsonAsync()
+                               .thenCatchAsync(ioe -> Promises.newExceptionPromise(new Exception("Failed to get response entity json", ioe)))
                                .then(this::getClientIdFromAccessToken)
-                               .thenAsync(apiClientService::getApiClient, io -> {
-                                   // Exception handler to keep the generics happy, converts Promise<T, IOException> => Promise<T, Exception>
-                                   logger.warn("({}) IOException getting json from response", io);
-                                   return Promises.newExceptionPromise(io);
-                               })
-                               .thenAsync(validateApiClientTransportCert(fapiInteractionIdForDisplay, clientCertificate, response),
+                               .thenAsync(this::getApiClient)
+                               .thenAsync(validateApiClientTransportCert(clientCertificate, response),
                                           ex -> {
                                             // Top level exception handler
-                                            logger.error("({}) Failed to validate client mtls cert", fapiInteractionIdForDisplay, ex);
+                                            logger.error("({}) Failed to validate client mtls cert", ex);
                                             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           },
                                           rte -> {
-                                              logger.error("({}) Failed to validate client mtls cert", fapiInteractionIdForDisplay, rte);
+                                              logger.error("({}) Failed to validate client mtls cert", rte);
                                               return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           });
             }
         });
     }
 
-    private AsyncFunction<ApiClient, Response, NeverThrowsException> validateApiClientTransportCert(String fapiInteractionIdForDisplay,
-                                                                                                    X509Certificate clientCertificate,
+    private Promise<ApiClient, Exception> getApiClient(String clientId) {
+        return apiClientService.getApiClient(clientId)
+                               .thenCatchAsync(ae -> Promises.newExceptionPromise(new Exception("Failed to get ApiClient due to exception", ae)));
+    }
+
+    private AsyncFunction<ApiClient, Response, NeverThrowsException> validateApiClientTransportCert(X509Certificate clientCertificate,
                                                                                                     Response response) {
 
         return apiClient -> {
             final TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(apiClient);
             if (trustedDirectory == null) {
-                logger.error("({}) Failed to get trusted directory for apiClient: {}", fapiInteractionIdForDisplay, apiClient);
+                logger.error("Failed to get trusted directory for apiClient: {}", apiClient);
                 return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
             }
 
@@ -180,14 +180,14 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
                 try {
                     transportCertValidator.validate(clientCertificate, jwkSet);
                 } catch (CertificateException ce) {
-                    logger.error("({}) failed to validate that the supplied client certificate", ce);
+                    logger.error("Failed to validate that the supplied client certificate", ce);
                     return TransportCertValidationFilter.createErrorResponse(ce.getMessage());
                 }
                 // Successfully validated the client's cert, allow the original response to continue along the filter chain.
-                logger.debug("({}) transport cert validated successfully", fapiInteractionIdForDisplay);
+                logger.debug("Transport cert validated successfully");
                 return response;
             }, ex -> {
-                logger.error("({}) Failed to get JWKS for apiClient: {}", fapiInteractionIdForDisplay, apiClient, ex);
+                logger.error("Failed to get JWKS for apiClient: {}", apiClient, ex);
                 return new Response(Status.INTERNAL_SERVER_ERROR);
             });
         };

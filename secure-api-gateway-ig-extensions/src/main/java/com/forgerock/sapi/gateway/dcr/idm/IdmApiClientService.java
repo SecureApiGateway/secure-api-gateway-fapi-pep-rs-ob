@@ -19,11 +19,13 @@ import java.net.URISyntaxException;
 
 import org.forgerock.http.Client;
 import org.forgerock.http.protocol.Request;
+import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
 import org.forgerock.util.Reject;
 import org.forgerock.util.promise.Promise;
 import org.forgerock.util.promise.Promises;
 
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**
@@ -56,22 +58,35 @@ public class IdmApiClientService implements ApiClientService {
     }
 
     @Override
-    public Promise<ApiClient, Exception> getApiClient(String clientId) {
+    public Promise<ApiClient, ApiClientServiceException> getApiClient(String clientId) {
         Reject.ifBlank("clientId must be provided");
         try {
             final Request getApiClientRequest = new Request().setMethod("GET")
                                                              .setUri(idmGetApiClientBaseUri + clientId + "?_fields=apiClientOrg/*,*");
             return httpClient.send(getApiClientRequest)
                     .thenAsync(response -> {
-                        if (!response.getStatus().isSuccessful()) {
-                            throw new Exception("Failed to get ApiClient from IDM, response status: " + response.getStatus());
+                        if (response.getStatus() == Status.NOT_FOUND) {
+                            throw new ApiClientServiceException(ErrorCode.NOT_FOUND, "ApiClient clientId: " + clientId + " not found");
+                        }
+                        else if (!response.getStatus().isSuccessful()) {
+                            throw new ApiClientServiceException(ErrorCode.SERVER_ERROR, "Failed to get ApiClient from IDM, response status: " + response.getStatus());
                         }
                         return response.getEntity().getJsonAsync()
-                                .then(json -> idmApiClientDecoder.decode(JsonValue.json(json)),
-                                        ioe -> { throw new Exception("Failed to decode apiClient response json", ioe); });
-                    }, nte -> Promises.newExceptionPromise(new Exception(nte)));
+                                .then(json -> {
+                                    final ApiClient apiClient;
+                                    try {
+                                        apiClient = idmApiClientDecoder.decode(JsonValue.json(json));
+                                    } catch (RuntimeException ex) {
+                                        throw new ApiClientServiceException(ErrorCode.DECODE_FAILED, "Failed to decode apiClient response json", ex);
+                                    }
+                                    if (apiClient.isDeleted()) {
+                                        throw new ApiClientServiceException(ErrorCode.DELETED, "ApiClient clientId: " + clientId + " has been deleted");
+                                    }
+                                    return apiClient;
+                                }, ioe -> { throw new ApiClientServiceException(ErrorCode.SERVER_ERROR, "Failed to get response json entity", ioe); });
+                    }, nte -> Promises.newExceptionPromise(new ApiClientServiceException(ErrorCode.SERVER_ERROR, "Unexpected NeverThrowsException was thrown", nte)));
         } catch (URISyntaxException e) {
-            return Promises.newExceptionPromise(new Exception(e));
+            return Promises.newExceptionPromise(new ApiClientServiceException(ErrorCode.SERVER_ERROR, "Failed to build request URI", e));
         }
     }
 }

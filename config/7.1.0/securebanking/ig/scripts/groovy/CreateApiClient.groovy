@@ -40,60 +40,18 @@ def errorResponse(httpCode, message) {
 def method = request.method
 
 switch(method.toUpperCase()) {
-  // Create or Update a DCR, which requires us to Create or Update ApiClient data in IDM
+  // New registration in AM, creates a new ApiClient in IDM
   case "POST":
+    return createOrUpdateRegistration(method)
   case "PUT":
-    return next.handle(context, request).thenAsync(amResponse -> {
-      // Do not create or update ApiClient if AM did not successfully process the registration
-      if (!amResponse.status.isSuccessful()) {
-        return newResultPromise(amResponse)
+    // PUT updates an existing registration, fetch it from IDM first to check it hasn't been deleted
+    def apiClientId = request.getQueryParams().getFirst("client_id")
+    return getApiClient(apiClientId).thenAsync(idmResponse -> {
+      // Failed to get IDM data (client may have been deleted)
+      if (!idmResponse.status.isSuccessful()) {
+        return newResultPromise(idmResponse)
       }
-
-      if(!attributes.registrationRequest) {
-        logger.error(SCRIPT_NAME + "Required attribute not found. Please ensure the " +
-                "RegistrationRequestEntityValidatorFilter is defined earlier in the chain to ensure required " +
-                "registrationRequest attribute is present")
-        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Invalid gateway route"))
-      }
-
-      RegistrationRequest registrationRequest = attributes.registrationRequest
-      SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement()
-
-      def oauth2ClientId = amResponse.entity.getJson().client_id
-      if (!oauth2ClientId) {
-        logger.error(SCRIPT_NAME + "Required client_id field not found in AM registration response")
-        return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to get client_id"))
-      }
-
-      def apiClientIdmObject = buildApiClientIdmObject(oauth2ClientId, softwareStatement)
-      def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(softwareStatement)
-
-      return createApiClientOrganisation(apiClientOrgIdmObject).thenAsync(createApiClientOrgResponse -> {
-        if (!createApiClientOrgResponse.status.isSuccessful()) {
-          return newResultPromise(createApiClientOrgResponse)
-        }
-        // POST creates new DCR and therefore must create apiClient in IDM
-        if ("POST".equals(method)) {
-          return createApiClient(apiClientIdmObject).then(createApiClientResponse -> {
-            if (!createApiClientResponse.status.isSuccessful()) {
-              return createApiClientResponse
-            } else {
-              // Return the original AM success response if we created the IDM objects
-              return amResponse
-            }
-          })
-        } else {
-          // Updating a DCR, update apiClient data in IDM
-          return updateApiClient(apiClientIdmObject).then(updateApiClientResponse -> {
-            if (!updateApiClientResponse.status.isSuccessful()) {
-              return updateApiClientResponse
-            } else {
-              // Return the original AM success response if we updated the IDM objects
-              return amResponse
-            }
-          })
-        }
-      })
+      return createOrUpdateRegistration(method)
     })
   case "DELETE":
     return next.handle(context, request).thenAsync(response -> {
@@ -101,13 +59,19 @@ switch(method.toUpperCase()) {
       if (response.status.isSuccessful()) {
         // ProcessRegistration filter will have added the client_id param
         def apiClientId = request.getQueryParams().getFirst("client_id")
-        Request deleteApiClientReq = new Request()
-        deleteApiClientReq.setMethod('DELETE')
-        deleteApiClientReq.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
-        logger.info("Deleting IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
-        return http.send(deleteApiClientReq).thenAsync(idmResponse -> {
+
+        // Submit a patch request to set the apiClient.deleted field to true
+        Request patchSetApiClientDeleted = new Request()
+        patchSetApiClientDeleted.setMethod('POST')
+        patchSetApiClientDeleted.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId
+                + "?_action=patch")
+        patchSetApiClientDeleted.setEntity([["operation": "replace",
+                                             "field"    : "deleted",
+                                             "value"    : true]])
+        logger.info("Marking IDM object: " + routeArgObjApiClient + " as deleted for client_id: " + apiClientId)
+        return http.send(patchSetApiClientDeleted).thenAsync(idmResponse -> {
           if (idmResponse.status.isSuccessful()) {
-            logger.debug("IDM object successfully deleted for client_id: " + apiClientId)
+            logger.debug("IDM object successfully marked as deleted client_id: " + apiClientId)
             return newResultPromise(new Response(Status.NO_CONTENT))
           }
           return newResultPromise(errorResponse(Status.BAD_REQUEST, "Failed to delete registration"))
@@ -121,17 +85,13 @@ switch(method.toUpperCase()) {
     return next.handle(context, request).thenAsync(amResponse -> {
       if (amResponse.status.isSuccessful()) {
         def apiClientId = request.getQueryParams().getFirst("client_id")
-        Request getApiClient = new Request()
-        getApiClient.setMethod('GET')
-        getApiClient.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
-        logger.info("Retrieving IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
-        return http.send(getApiClient).thenAsync(idmResponse -> {
-          if (idmResponse.status.isSuccessful()) {
-            var apiClient = idmResponse.getEntity().getJson()
-            attributes.apiClient = apiClient
+        return getApiClient(apiClientId).then(idmResponse -> {
+          // Failed to get IDM data
+          if (!idmResponse.status.isSuccessful()) {
+            return idmResponse
           }
-          // Pass the original AM response on, the IDM response is only used to enrich the AM response (on a best effort basis)
-          return newResultPromise(amResponse)
+          // Return the AM response containing the OAuth2 registration details
+          return amResponse
         })
       }
       // AM returned an error, pass this on
@@ -140,6 +100,61 @@ switch(method.toUpperCase()) {
   default:
     logger.debug(SCRIPT_NAME + "Method not supported")
     next.handle(context, request)
+}
+
+def createOrUpdateRegistration(method) {
+  return next.handle(context, request).thenAsync(amResponse -> {
+    // Do not create or update ApiClient if AM did not successfully process the registration
+    if (!amResponse.status.isSuccessful()) {
+      return newResultPromise(amResponse)
+    }
+
+    if (!attributes.registrationRequest) {
+      logger.error(SCRIPT_NAME + "Required attribute not found. Please ensure the " +
+              "RegistrationRequestEntityValidatorFilter is defined earlier in the chain to ensure required " +
+              "registrationRequest attribute is present")
+      return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Invalid gateway route"))
+    }
+
+    RegistrationRequest registrationRequest = attributes.registrationRequest
+    SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement()
+
+    def oauth2ClientId = amResponse.entity.getJson().client_id
+    if (!oauth2ClientId) {
+      logger.error(SCRIPT_NAME + "Required client_id field not found in AM registration response")
+      return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to get client_id"))
+    }
+
+    def apiClientIdmObject = buildApiClientIdmObject(oauth2ClientId, softwareStatement)
+    def apiClientOrgIdmObject = buildApiClientOrganisationIdmObject(softwareStatement)
+
+    return createApiClientOrganisation(apiClientOrgIdmObject).thenAsync(createApiClientOrgResponse -> {
+      if (!createApiClientOrgResponse.status.isSuccessful()) {
+        return newResultPromise(createApiClientOrgResponse)
+      }
+      // POST creates new DCR and therefore must create apiClient in IDM
+      if ("POST".equals(method)) {
+        return createApiClient(apiClientIdmObject).then(createApiClientResponse -> {
+          if (!createApiClientResponse.status.isSuccessful()) {
+            return createApiClientResponse
+          } else {
+            // Return the original AM success response if we created the IDM objects
+            return amResponse
+          }
+        })
+      } else {
+        // Updating a DCR, update apiClient data in IDM
+        return updateApiClient(apiClientIdmObject).then(updateApiClientResponse -> {
+          if (!updateApiClientResponse.status.isSuccessful()) {
+            return updateApiClientResponse
+          } else {
+            // Return the original AM success response if we updated the IDM objects
+            return amResponse
+          }
+        })
+      }
+    })
+  })
 }
 
 def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
@@ -218,6 +233,29 @@ def updateApiClient(apiClientIdmObject) {
       return new Response(Status.INTERNAL_SERVER_ERROR)
     } else {
       logger.debug(SCRIPT_NAME + "successfully updated apiClient")
+      return apiClientResponse
+    }
+  })
+}
+
+def getApiClient(apiClientId) {
+  Request getApiClient = new Request()
+  getApiClient.setMethod('GET')
+  getApiClient.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
+  logger.info("Retrieving IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
+  return http.send(getApiClient).then(apiClientResponse -> {
+    if (!apiClientResponse.status.isSuccessful()) {
+      logger.error(SCRIPT_NAME + "unexpected IDM response when attempting to get {}, status: {}, entity: {}", routeArgObjApiClient, apiClientResponse.status, apiClientResponse.entity)
+      return new Response(Status.INTERNAL_SERVER_ERROR)
+    } else {
+      // Handle case where ApiClient has been deleted by an admin user in IDM but the AM OAuth2 client is still active.
+      var apiClient = apiClientResponse.getEntity().getJson()
+      if (apiClient.deleted) {
+        logger.warn("Failed to retrieve apiClient for client_id: " + apiClientId + " , client has been deleted in IDM")
+        return errorResponse(Status.UNAUTHORIZED, "Failed to get registration")
+      }
+      // Add the apiClient to the attributes context for use by other filters
+      attributes.apiClient = apiClient
       return apiClientResponse
     }
   })

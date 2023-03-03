@@ -15,6 +15,8 @@
  */
 package com.forgerock.sapi.gateway.dcr.idm;
 
+import static org.forgerock.json.JsonValue.field;
+import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
 import java.util.Map;
@@ -37,8 +39,9 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException;
+import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 /**
  * Fetches {@link ApiClient} data from IDM using the client_id identified from the access_token provided with this request.
@@ -95,24 +98,32 @@ public class FetchApiClientFilter implements Filter {
         final OAuth2Context oAuth2Context = context.asContext(OAuth2Context.class);
         final Map<String, Object> info = oAuth2Context.getAccessToken().getInfo();
         if (!info.containsKey(accessTokenClientIdClaim)) {
-            logger.error("({}) access token is missing required " + accessTokenClientIdClaim + " claim", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.error("Access token is missing required \"{}\" claim", accessTokenClientIdClaim);
             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
         }
         final String clientId = (String)info.get(accessTokenClientIdClaim);
 
-        return apiClientService.getApiClient(clientId).thenAsync(apiClient -> {
-            logger.debug("({}) adding apiClient: {} to AttributesContext[\"{}\"]", FAPIUtils.getFapiInteractionIdForDisplay(context), apiClient, API_CLIENT_ATTR_KEY);
+        return apiClientService.getApiClient(clientId).thenOnResult(apiClient -> {
+            logger.debug("Adding apiClient: {} to AttributesContext[\"{}\"]", apiClient, API_CLIENT_ATTR_KEY);
             context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_ATTR_KEY, apiClient);
-            return next.handle(context, request);
-        }, ex -> {
-            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to get apiClient from idm due to exception", ex);
-            return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
-        }, rte -> {
-            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to get apiClient from idm due to exception", rte);
-            return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
-        });
+        }).thenAsync(apiClient -> next.handle(context, request),
+                     this::handleApiClientServiceException, this::handleUnexpectedException);
     }
 
+    private Promise<Response, NeverThrowsException> handleApiClientServiceException(ApiClientServiceException ex) {
+        // Handles the case where the client has a valid access token but their ApiClient has been deleted from the data store
+        if (ex.getErrorCode() == ErrorCode.DELETED || ex.getErrorCode() == ErrorCode.NOT_FOUND) {
+            logger.warn("Failed to get ApiClient due to: {}", ex.getErrorCode(), ex);
+            return Promises.newResultPromise(new Response(Status.UNAUTHORIZED).setEntity(json(field("error", "client registration is invalid"))));
+        } else {
+            return handleUnexpectedException(ex);
+        }
+    }
+
+    private Promise<Response, NeverThrowsException> handleUnexpectedException(Exception ex) {
+        logger.error("Failed to get ApiClient from idm due to an unexpected exception", ex);
+        return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
+    }
 
     /**
      * Responsible for creating the {@link FetchApiClientFilter}

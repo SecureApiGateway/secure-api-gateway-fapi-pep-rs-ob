@@ -24,6 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
+
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
@@ -44,6 +46,7 @@ import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 import com.forgerock.sapi.gateway.dcr.common.ResponseFactory;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequestFactory;
+import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
 
 class RegistrationRequestJwtSignatureValidationFilterTest {
 
@@ -84,10 +87,24 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
                 ssaSignatureValidatorService);
     }
 
+    private RegistrationRequest getRegRequestWithJwksSsa() throws DCRRegistrationRequestBuilderException {
+        Map<String, Object> regRequestClaimOverrides = Map.of();
+        Map<String, Object> ssaClaimOverrides = Map.of();
+        return RegistrationRequestFactory.getRegRequestWithJwksSoftwareStatement(regRequestClaimOverrides,
+                ssaClaimOverrides);
+    }
+
+    private RegistrationRequest getRegRequestWithJwksUriSsa() throws DCRRegistrationRequestBuilderException {
+        Map<String, Object> regRequestClaimOverrides = Map.of();
+        Map<String, Object> ssaClaimOverrides = Map.of();
+        return RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement(regRequestClaimOverrides,
+                ssaClaimOverrides);
+    }
+
     @Test
     void filter_successSoftwareStatementWithJwskUri() throws Exception {
         // Given
-        RegistrationRequest registrationRequest = RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement();
+        RegistrationRequest registrationRequest = getRegRequestWithJwksSsa();
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
@@ -127,7 +144,7 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
     @Test
     void filter_ResponseIsInvalidSoftwareStatementWhenSignatureIsInvalid() throws Exception{
         // Given
-        RegistrationRequest registrationRequest = RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement();
+        RegistrationRequest registrationRequest = getRegRequestWithJwksSsa();
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
@@ -151,7 +168,7 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
     @Test
     void filter_ResponseIsInvalidSoftwareStatementWhenRTEValidatingSSA() throws Exception{
         // Given
-        RegistrationRequest registrationRequest = RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement();
+        RegistrationRequest registrationRequest = getRegRequestWithJwksSsa();
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
@@ -171,7 +188,7 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
     @Test
     void filter_ResponseIsInvalidClientMetadataWhenRegRequestSigInvalid() throws Exception {
         // Given
-        RegistrationRequest registrationRequest = RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement();
+        RegistrationRequest registrationRequest = getRegRequestWithJwksSsa();
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
@@ -194,7 +211,7 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
     @Test
     void filter_ResponseIsInvalidClientMetadataWhenRTEValidatingRegRequestSig() throws Exception {
         // Given
-        RegistrationRequest registrationRequest = RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement();
+        RegistrationRequest registrationRequest = getRegRequestWithJwksSsa();
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);

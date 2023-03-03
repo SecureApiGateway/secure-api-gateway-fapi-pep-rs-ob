@@ -24,9 +24,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +31,6 @@ import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.services.context.AttributesContext;
 import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
@@ -49,13 +45,12 @@ import org.junit.jupiter.api.Test;
 import com.forgerock.sapi.gateway.common.rest.AcceptHeaderSupplier;
 import com.forgerock.sapi.gateway.dcr.common.ResponseFactory;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
+import com.forgerock.sapi.gateway.dcr.models.RegistrationRequestFactory;
 import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement;
+import com.forgerock.sapi.gateway.dcr.models.SoftwareStatementTestFactory;
 import com.forgerock.sapi.gateway.jws.JwtDecoder;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryServiceStatic;
-import com.forgerock.sapi.gateway.util.CryptoUtils;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.crypto.RSASSASigner;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
 
 class RegistrationRequestEntityValidatorFilterTest {
 
@@ -68,8 +63,8 @@ class RegistrationRequestEntityValidatorFilterTest {
     private final Handler handler = mock(Handler.class);
 
     @BeforeAll
-    static void setupClass() throws MalformedURLException {
-        TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryServiceStatic(true, new URL("https://jwks.com"));
+    static void setupClass()  {
+        TrustedDirectoryService trustedDirectoryService = TrustedDirectoryTestFactory.getTrustedDirectoryService();
         SoftwareStatement.Builder softwareStatementBuilder = new SoftwareStatement.Builder(trustedDirectoryService, jwtDecoder);
         registrationRequestBuilder = new RegistrationRequest.Builder(softwareStatementBuilder, jwtDecoder);
     }
@@ -88,16 +83,16 @@ class RegistrationRequestEntityValidatorFilterTest {
     }
 
     @Test
-    void successWithIGDirectoryRequest() throws InterruptedException, NoSuchAlgorithmException {
+    void successWithJwskBasedRequest()
+            throws InterruptedException, DCRRegistrationRequestBuilderException {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
         request.setMethod("POST");
-        Map<String, Object> ssaClaims = Map.of("iss", "test-publisher", "software_jwks", getJwkSetObject(),
-                "org_id", "Acme Inc", "software_id", "Acme Banking App",
-                "software_redirect_uris", List.of("https://domain1.com/callback"));
+
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
         // When
-        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegistrationRequestWithJwksBasedSSA(ssaClaims));
+        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegRequestB64EncodeJwtWithJwksBasedSSA(ssaClaims));
         Promise<Response, NeverThrowsException> promise = filter.filter(context, request, handler);
 
         assertThat(promise).isNotNull();
@@ -111,15 +106,14 @@ class RegistrationRequestEntityValidatorFilterTest {
     }
 
     @Test
-    void errorWhenUnrecognisedSSAIssuer_filter() throws InterruptedException, NoSuchAlgorithmException {
+    void errorWhenUnrecognisedSSAIssuer_filter() throws InterruptedException, DCRRegistrationRequestBuilderException {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
         request.setMethod("POST");
-        Map<String, Object> ssaClaims = Map.of("iss", "invalid_isser", "software_jwks_endpoint", "https://jwks.com",
-                "org_id", "Acme Inc", "software_id", "Acme Banking App");
+        Map<String, Object> ssaClaimsOverrides = Map.of("iss", "invalid_issuer");
         // When
-        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegistrationRequestWithJwksUriBasedSSA(ssaClaims));
+        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegRequestB64EncodedJwtWithJwksUriBasedSSA(ssaClaimsOverrides));
         when(responseFactory.getResponse(any(String.class), any(List.class), eq(Status.BAD_REQUEST), any(Map.class))).thenReturn(new Response(Status.BAD_REQUEST));
         Promise<Response, NeverThrowsException> promise = filter.filter(context, request, handler);
 
@@ -131,27 +125,22 @@ class RegistrationRequestEntityValidatorFilterTest {
         verify(handler, never()).handle(context, request);
     }
 
-    private String createRegistrationRequestWithJwksBasedSSA(Map<String, Object> ssaClaims) throws NoSuchAlgorithmException {
-        RSASSASigner signer = CryptoUtils.createRSASSASigner();
-        // Can make valid JWKS entry!! Grrr
-        String ssa = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa,
-                "redirect_uris", List.of("https://domain1.com/callback"));
-        return CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
+    private String createRegRequestB64EncodeJwtWithJwksBasedSSA(Map<String, Object> ssaClaimOverrides)
+            throws DCRRegistrationRequestBuilderException {
+        RegistrationRequest regReq =
+                RegistrationRequestFactory.getRegRequestWithJwksSoftwareStatement(Map.of(), ssaClaimOverrides);
+        return regReq.getB64EncodedJwtString();
     }
 
     @Test
-    void successWithOBTestDirectoryRequest_filter() throws InterruptedException, NoSuchAlgorithmException {
+    void successWithOBTestDirectoryRequest_filter() throws InterruptedException, DCRRegistrationRequestBuilderException {
         // Given
         final AttributesContext context = new AttributesContext(new RootContext());
         Request request = new Request();
         request.setMethod("POST");
-        Map<String, Object> ssaClaims = Map.of("iss", "OpenBanking Ltd", "software_jwks_endpoint", "https://jwks.com",
-                "org_id", "Acme Inc", "software_id", "Acme Banking App",
-                "software_redirect_uris", List.of("https://domain1.com/callback"));
 
         // When
-        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegistrationRequestWithJwksUriBasedSSA(ssaClaims));
+        when(reqRequestSupplier.apply(context, request)).thenReturn(createRegRequestB64EncodedJwtWithJwksUriBasedSSA(Map.of()));
         Promise<Response, NeverThrowsException> promise = filter.filter(context, request, handler);
 
         assertThat(promise).isNotNull();
@@ -164,17 +153,10 @@ class RegistrationRequestEntityValidatorFilterTest {
         assertThat(softwareStatement.hasJwksUri()).isTrue();
     }
 
-    private String createRegistrationRequestWithJwksUriBasedSSA(Map<String, Object> ssaClaims) throws NoSuchAlgorithmException {
-        RSASSASigner signer = CryptoUtils.createRSASSASigner();
-        String ssa = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", ssa,
-                "redirect_uris", List.of("https://domain1.com/callback"));
-        String registrationRequest = CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
-        return registrationRequest;
-    }
-
-    private Object getJwkSetObject(){
-        JWKSet jwkSet = CryptoUtils.createJwkSet();
-        return jwkSet.toJsonValue().getObject();
+    private String createRegRequestB64EncodedJwtWithJwksUriBasedSSA(Map<String, Object> ssaClaims)
+            throws  DCRRegistrationRequestBuilderException {
+        RegistrationRequest regRequest =
+                RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement(Map.of(), ssaClaims);
+        return  regRequest.getB64EncodedJwtString();
     }
 }

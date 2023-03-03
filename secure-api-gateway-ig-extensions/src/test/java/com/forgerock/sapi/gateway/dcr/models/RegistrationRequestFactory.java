@@ -15,14 +15,17 @@
  */
 package com.forgerock.sapi.gateway.dcr.models;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
+import com.forgerock.sapi.gateway.jws.JwtDecoder;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
 import com.forgerock.sapi.gateway.util.CryptoUtils;
 import com.nimbusds.jose.JWSAlgorithm;
 
@@ -31,6 +34,8 @@ public class RegistrationRequestFactory {
     private static String JWKS_URI = "https://jwks.io";
     private static URL JWKS_URL;
 
+    private static List<String> REDIRECT_URIS = List.of("https://domain1.com/callback", "https://domain2.com/callback");
+
     static {
         try {
             JWKS_URL = new URL(JWKS_URI);
@@ -38,21 +43,54 @@ public class RegistrationRequestFactory {
             throw new RuntimeException(e);
         }
     }
-    public static RegistrationRequest getRegRequestWithJwksUriSoftwareStatement() throws MalformedURLException {
-        Map<String, Object> ssaClaims = Map.of();
-        SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
-        when(softwareStatement.hasJwksUri()).thenReturn(true);
-        when(softwareStatement.getJwksUri()).thenReturn(JWKS_URL);
-        when(softwareStatement.getSignedJwt()).thenReturn(CryptoUtils.createSignedJwt(ssaClaims, JWSAlgorithm.PS256));
-        String b64EncodedSoftwareStatement = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        when(softwareStatement.getB64EncodedJwtString()).thenReturn(b64EncodedSoftwareStatement);
+    public static RegistrationRequest getRegRequestWithJwksUriSoftwareStatement(
+            Map<String, Object> overrideRegRequestClaims, Map<String, Object> overrideSsaClaims)
+            throws DCRRegistrationRequestBuilderException {
 
-        Map<String, Object> regRequestClaims = Map.of("software_statement", b64EncodedSoftwareStatement);
-        RegistrationRequest registrationRequest = mock(RegistrationRequest.class);
-        when(registrationRequest.getSoftwareStatement()).thenReturn(softwareStatement);
-        when(registrationRequest.getSignedJwt()).thenReturn(CryptoUtils.createSignedJwt(regRequestClaims, JWSAlgorithm.PS256));
-        when(registrationRequest.getRedirectUris()).thenReturn(List.of(new URL("https://domain1.com/callback")));
-        return registrationRequest;
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksUriBasedSsaClaims(overrideSsaClaims);
+        String ssab64EncodedJwtString = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
+        Map<String, Object> registrationRequestClaims = new HashMap<>();
+        registrationRequestClaims.put("iss", "Acme Ltd");
+        registrationRequestClaims.put("software_statement", ssab64EncodedJwtString);
+        registrationRequestClaims.put("redirect_uris", REDIRECT_URIS);
+        registrationRequestClaims.putAll(overrideRegRequestClaims);
+
+        String regRequestB64EncodedJwt = CryptoUtils.createEncodedJwtString(registrationRequestClaims, JWSAlgorithm.PS256);
+        TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryService() {
+            @Override
+            public TrustedDirectory getTrustedDirectoryConfiguration(String issuer) {
+                return TrustedDirectoryTestFactory.getJwksUriBasedTrustedDirectory();
+            }
+        };
+        SoftwareStatement.Builder ssBuilder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
+        RegistrationRequest.Builder builder = new RegistrationRequest.Builder(ssBuilder, new JwtDecoder());
+        return builder.build("tx-id", regRequestB64EncodedJwt);
+    }
+
+    public static RegistrationRequest getRegRequestWithJwksSoftwareStatement(
+            Map<String, Object> overrideRegRequestClaims, Map<String, Object> overrideSsaClaims )
+            throws DCRRegistrationRequestBuilderException {
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(overrideSsaClaims);
+        ssaClaims.putAll(overrideSsaClaims);
+        String ssab64EncodedJwtString = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
+
+        Map<String, Object> registrationRequestClaims = new HashMap<>();
+        registrationRequestClaims.put("iss", "Acme Ltd");
+        registrationRequestClaims.put("software_statement", ssab64EncodedJwtString);
+        registrationRequestClaims.put("redirect_uris", REDIRECT_URIS);
+        registrationRequestClaims.putAll(overrideRegRequestClaims);
+
+        String regRequestB64EncodedJwt = CryptoUtils.createEncodedJwtString(registrationRequestClaims, JWSAlgorithm.PS256);
+        TrustedDirectoryService trustedDirectoryService = new TrustedDirectoryService() {
+            @Override
+            public TrustedDirectory getTrustedDirectoryConfiguration(String issuer) {
+                return TrustedDirectoryTestFactory.getJwksBasedTrustedDirectory();
+            }
+        };
+
+        SoftwareStatement.Builder ssBuilder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
+        RegistrationRequest.Builder builder = new RegistrationRequest.Builder(ssBuilder, new JwtDecoder());
+        return builder.build("tx-id", regRequestB64EncodedJwt);
     }
 
 

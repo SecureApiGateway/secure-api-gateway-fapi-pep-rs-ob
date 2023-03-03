@@ -53,6 +53,9 @@ public class TrustedDirectorySecureApiGateway implements TrustedDirectory {
 
     private final static String softwareStatementRedirectUrisClaimName = "software_redirect_uris";
 
+
+    final static String softwareStatementRolesClaimName = "software_roles";
+
     /**
      * Constructor
      * @param secureApiGatewayJwksUri The jwks_uri against which SSAs issued by the Secure API Gateway can be
@@ -100,5 +103,10 @@ public class TrustedDirectorySecureApiGateway implements TrustedDirectory {
     @Override
     public String getSoftwareStatementRedirectUrisClaimName() {
         return softwareStatementRedirectUrisClaimName;
+    }
+
+    @Override
+    public String getSoftwareStatementRolesClaimName() {
+        return softwareStatementRolesClaimName;
     }
 }

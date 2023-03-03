@@ -47,9 +47,8 @@ public class SoftwareStatement extends SapiJwt {
     private final boolean hasJwksUri;
     private final URL jwksUri;
     private final JWKSet jwksSet;
-
     private final List<URL> redirectUris;
-
+    private final List<String> roles;
 
     /**
      * Constructor takes a builder
@@ -65,6 +64,7 @@ public class SoftwareStatement extends SapiJwt {
         this.jwksSet = builder.jwkSet;
         this.redirectUris = builder.redirectUris;
         this.trustedDirectoryJwksUrl = builder.trustedDirectoryJwksUrl;
+        this.roles = builder.roles;
     }
 
     /**
@@ -122,6 +122,11 @@ public class SoftwareStatement extends SapiJwt {
         return this.redirectUris;
     }
 
+    /**
+     * @return return the roles assigned to this software statement
+     */
+    public List<String> getRoles() { return this.roles; }
+
 
     /**
      * A builder that may be used to construct a Software Statement
@@ -137,6 +142,7 @@ public class SoftwareStatement extends SapiJwt {
         private JWKSet jwkSet;
         private URL trustedDirectoryJwksUrl;
         private List<URL> redirectUris;
+        private List<String> roles;
 
         public Builder(TrustedDirectoryService trustedDirectoryService, JwtDecoder jwtDecoder) {
             super(jwtDecoder);
@@ -183,6 +189,7 @@ public class SoftwareStatement extends SapiJwt {
             this.softwareId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementSoftwareIdClaimName());
             this.trustedDirectoryJwksUrl = trustedDirectory.getDirectoryJwksUri();
             this.redirectUris = claimsSet.getRequiredUriListClaim(trustedDirectory.getSoftwareStatementRedirectUrisClaimName());
+            this.roles = claimsSet.getRequiredStringListClaim(trustedDirectory.getSoftwareStatementRolesClaimName());
         }
 
         private JWKSet getJwkSet(String transactionId)

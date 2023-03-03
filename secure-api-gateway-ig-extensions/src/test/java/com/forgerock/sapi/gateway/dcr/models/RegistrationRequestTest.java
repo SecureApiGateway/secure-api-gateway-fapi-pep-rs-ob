@@ -16,8 +16,6 @@
 package com.forgerock.sapi.gateway.dcr.models;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
@@ -28,47 +26,28 @@ import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
 import com.forgerock.sapi.gateway.jws.JwtDecoder;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTest;
-import com.forgerock.sapi.gateway.util.CryptoUtils;
-import com.nimbusds.jose.JWSAlgorithm;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
 
 public class RegistrationRequestTest {
 
     private static final String TX_ID = "tx_id";
-    private static final TrustedDirectoryService directoryService = mock(TrustedDirectoryService.class);
+    private static final TrustedDirectoryService directoryService = TrustedDirectoryTestFactory.getTrustedDirectoryService();
     private static final RegistrationRequest.Builder requestBuilder;
-    private static final TrustedDirectory trustedDirectory;
 
     static {
-        trustedDirectory = TrustedDirectoryTest.getJwksUriBasedTrustedDirectory();
-        when(directoryService.getTrustedDirectoryConfiguration(trustedDirectory.getIssuer()))
-                .thenReturn(trustedDirectory);
         JwtDecoder jwtDecoder = new JwtDecoder();
-        SoftwareStatement.Builder softwareStatementBuilder =
-                new SoftwareStatement.Builder(directoryService, jwtDecoder);
+        SoftwareStatement.Builder softwareStatementBuilder = new SoftwareStatement.Builder(directoryService, jwtDecoder);
         requestBuilder = new RegistrationRequest.Builder(softwareStatementBuilder, jwtDecoder);
     }
 
     private static RegistrationRequest getJwksUriBasedRegistrationrRequest()
             throws DCRRegistrationRequestBuilderException {
-        Map<String, Object> ssaClaims = Map.of("iss", trustedDirectory.getIssuer(),
-                trustedDirectory.getSoftwareStatementJwksUriClaimName(), "https://jwks_uri.com",
-                trustedDirectory.getSoftwareStatementOrgIdClaimName(), "Acme Ltd",
-                trustedDirectory.getSoftwareStatementSoftwareIdClaimName(), "Acme App",
-                trustedDirectory.getSoftwareStatementRedirectUrisClaimName(), List.of("https://domain1.com/callback"));
-        String b64EncodedSsaString = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        Map<String, Object> regRequestClaims = Map.of("iss", "Acme App", "software_statement", b64EncodedSsaString,
-                "redirect_uris", List.of("https://domain1.com/callback"));
-        String b64EncodedRegRequestString = CryptoUtils.createEncodedJwtString(regRequestClaims, JWSAlgorithm.PS256);
-        return requestBuilder.build(TX_ID, b64EncodedRegRequestString);
+        return RegistrationRequestFactory.getRegRequestWithJwksUriSoftwareStatement(Map.of(), Map.of());
     }
 
     @BeforeEach
     void setup() {
-        when(directoryService.getTrustedDirectoryConfiguration(trustedDirectory.getIssuer()))
-                .thenReturn(trustedDirectory);
     }
 
     @Test
@@ -79,7 +58,7 @@ public class RegistrationRequestTest {
         SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement();
         // Then
         assertThat(softwareStatement).isNotNull();
-        assertThat(softwareStatement.getIssuer()).isEqualTo(trustedDirectory.getIssuer());
+        assertThat(softwareStatement.getIssuer()).isEqualTo(TrustedDirectoryTestFactory.JWKS_URI_BASED_DIRECTORY_ISSUER);
     }
 
     @Test

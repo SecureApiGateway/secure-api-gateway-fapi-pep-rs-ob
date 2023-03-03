@@ -89,4 +89,9 @@ public interface TrustedDirectory {
      * the software statement
      */
     String getSoftwareStatementRedirectUrisClaimName();
+
+    /**
+     * @return the name of the claim in the software statement that holds the roles allocated to this software statement
+     */
+    String getSoftwareStatementRolesClaimName();
 }

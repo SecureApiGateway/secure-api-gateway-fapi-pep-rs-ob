@@ -15,39 +15,58 @@
  */
 package com.forgerock.sapi.gateway.dcr.models;
 
-import static com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTest.getJwksUriBasedTrustedDirectory;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
-import com.forgerock.sapi.gateway.jws.JwtDecoder;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
-import com.forgerock.sapi.gateway.util.CryptoUtils;
-import com.nimbusds.jose.JWSAlgorithm;
+import org.forgerock.json.JsonValue;
+
+import com.forgerock.sapi.gateway.common.jwt.JwtException;
+import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
 
 public class SoftwareStatementTestFactory {
+    private static final String ORG_ID = "Acme Inc.";
+    private static final String SOFTWARE_ID ="Acme App";
+    private static final String JWKS_URI = "https://jwks.com";
+    private static final JsonValue JWKS_SET;
+    private static final List<String> REDIRECT_URIS =
+            List.of("https://domain1.io/callback", "https://domain2.io.callback");
+    private static final List<String> ROLES = List.of("AISP", "PISP", "CBPII");
 
-    public static SoftwareStatement getJwksUriBasedValidSoftwareStatement(Map<String, Object> ssaClaims) throws DCRRegistrationRequestBuilderException {
-        TrustedDirectoryService trustedDirectoryService = mock(TrustedDirectoryService.class);
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration("JwksBasedTrustedDirectory"))
-                .thenReturn(getJwksUriBasedTrustedDirectory());
-
-        SoftwareStatement.Builder builder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
-
-        String b64EncodedJwtString  = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
-        return builder.build("tx-id", b64EncodedJwtString);
+    static {
+        try {
+            JWKS_SET = DCRTestHelpers.getJwksJsonValue();
+        } catch (JwtException e) {
+            throw new RuntimeException("Failed to getJwksJsonValue", e);
+        }
     }
 
+    public static Map<String, Object> getValidJwksUriBasedSsaClaims(Map<String, Object> overrideSsaClaims){
+        TrustedDirectory directory = TrustedDirectoryTestFactory.getJwksUriBasedTrustedDirectory();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("iss", directory.getIssuer());
+        claims.put(directory.getSoftwareStatementOrgIdClaimName(), ORG_ID);
+        claims.put(directory.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID);
+        claims.put(directory.getSoftwareStatementJwksUriClaimName(), JWKS_URI);
+        claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
+        claims.put(directory.getSoftwareStatementRolesClaimName(), ROLES);
+        claims.putAll(overrideSsaClaims);
+        return claims;
+    };
 
-    public static String getJwksUriBasedValidb64EncodedSoftwareStatementString(Map<String, Object> ssaClaims) {
-        TrustedDirectoryService trustedDirectoryService = mock(TrustedDirectoryService.class);
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration("JwksBasedTrustedDirectory"))
-                .thenReturn(getJwksUriBasedTrustedDirectory());
+    public static Map<String, Object> getValidJwksBasedSsaClaims(Map<String, Object> overrideSsaClaims) {
+        TrustedDirectory directory = TrustedDirectoryTestFactory.getJwksBasedTrustedDirectory();
 
-        SoftwareStatement.Builder builder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
-
-        return CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("iss", directory.getIssuer());
+        claims.put(directory.getSoftwareStatementOrgIdClaimName(), ORG_ID);
+        claims.put(directory.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID);
+        claims.put(directory.getSoftwareStatementJwksClaimName(), JWKS_SET.getObject());
+        claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
+        claims.put(directory.getSoftwareStatementRolesClaimName(), ROLES);
+        claims.putAll(overrideSsaClaims);
+        return claims;
     }
 }

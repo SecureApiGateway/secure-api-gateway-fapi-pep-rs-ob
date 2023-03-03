@@ -17,95 +17,57 @@ package com.forgerock.sapi.gateway.dcr.models;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowableOfType;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
 
 import org.forgerock.json.jose.jwk.JWKSet;
-import org.forgerock.json.jose.jws.JwsHeader;
-import org.forgerock.json.jose.jws.SignedJwt;
-import org.forgerock.json.jose.jwt.JwtClaimsSet;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.common.jwt.JwtException;
 import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
 import com.forgerock.sapi.gateway.dcr.request.DCRRegistrationRequestBuilderException;
 import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
 import com.forgerock.sapi.gateway.jws.JwtDecoder;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryOpenBankingTest;
-import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectorySecureApiGateway;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
+import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
+import com.forgerock.sapi.gateway.util.CryptoUtils;
+import com.nimbusds.jose.JWSAlgorithm;
 
 class SoftwareStatementBuilderTest {
 
-    private final TrustedDirectoryService trustedDirectoryService = mock(TrustedDirectoryService.class);
-    private final JwtDecoder jwtDecoder = mock(JwtDecoder.class);
-    private static final TrustedDirectory TRUSTED_DIRECTORY_OPEN_BANKING_TEST = new TrustedDirectoryOpenBankingTest();
-    private static final TrustedDirectory DIRECTORY_SECURE_API_GATEWAY;
-    private static final String KEY_ID = "key-id-value";
+    private final TrustedDirectoryService trustedDirectoryService = TrustedDirectoryTestFactory.getTrustedDirectoryService();
+    private final JwtDecoder jwtDecoder = new JwtDecoder();
+
     private static final String ISSUER = "SSA_Issuer";
     private static final String ORG_ID = "Acme Inc.";
     private static final String SOFTWARE_ID ="Acme App";
     private static final String JWKS_URI = "https://jwks.com";
-    private static final String SSA_JWT_STRING = "header.payload.sig";
-
-    private static final List<String> REDIRECT_URIS =
-            List.of("https://domain1.io/callback", "https://domain2.io.callback");
 
     public static final String TX_ID = "tx_id";
 
     public SoftwareStatement.Builder builder;
 
-    static {
-        try {
-            URL jwksUri = new URL("https://bankjwkms.com");
-            DIRECTORY_SECURE_API_GATEWAY = new TrustedDirectorySecureApiGateway(jwksUri);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     @BeforeEach
-    void setUp() throws DCRRegistrationRequestBuilderException {
+    void setUp() {
          builder = new SoftwareStatement.Builder(trustedDirectoryService, jwtDecoder);
-    }
-
-    @AfterEach
-    void tearDown() {
-        reset(trustedDirectoryService, jwtDecoder);
     }
 
     @Test
     void successJwksUriBased_buildSoftwareStatement()
-            throws DCRRegistrationRequestBuilderException, JwtException, MalformedURLException {
+            throws DCRRegistrationRequestBuilderException, MalformedURLException {
         // Given
-        SignedJwt ssaJwt = mock(SignedJwt.class);
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        JwtClaimsSet claimsSet = getValidJwkUriBasedClaims();
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksUriBasedSsaClaims(Map.of());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(claimsSet);
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER))
-                .thenReturn(new TrustedDirectoryOpenBankingTest());
-
-
-        SoftwareStatement softwareStatement = builder.build("tx_id", SSA_JWT_STRING);
+        SoftwareStatement softwareStatement = builder.build("tx_id", requestJwt);
 
         // Then
         assertThat(softwareStatement).isNotNull();
-        assertThat(softwareStatement.getKeyId()).isEqualTo(KEY_ID);
         assertThat(softwareStatement.getOrgId()).isEqualTo(ORG_ID);
         assertThat(softwareStatement.getSoftwareId()).isEqualTo(SOFTWARE_ID);
         assertThat(softwareStatement.hasJwksUri()).isTrue();
@@ -113,21 +75,13 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void successJwksBased_buildSoftwareStatement() throws DCRRegistrationRequestBuilderException,
-            JwtException, JwtException {
+    void successJwksBased_buildSoftwareStatement() throws DCRRegistrationRequestBuilderException {
         // Given
-        SignedJwt ssaJwt = mock(SignedJwt.class);
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        JwtClaimsSet claimsSet = getValidJwkBasedClaims();
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(claimsSet);
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER)).thenReturn(DIRECTORY_SECURE_API_GATEWAY);
-
-        SoftwareStatement softwareStatement = builder.build(TX_ID, SSA_JWT_STRING);
+        SoftwareStatement softwareStatement = builder.build(TX_ID, requestJwt);
 
         // Then
         assertThat(softwareStatement).isNotNull();
@@ -136,24 +90,15 @@ class SoftwareStatementBuilderTest {
         assertThat(softwareStatement.hasJwksUri()).isFalse();
         JWKSet expectedJWkSet = JWKSet.parse(DCRTestHelpers.JWKS_JSON);
         assertThat(softwareStatement.getJwksSet()).isEqualTo(expectedJWkSet);
-        assertThat(softwareStatement.getSignedJwt()).isEqualTo(ssaJwt);
     }
 
     @Test
-    void failInvalidJwt_buildSoftwareStatement() throws JwtException {
+    void failInvalidJwt_buildSoftwareStatement() {
         // Given
-        SignedJwt ssaJwt = mock(SignedJwt.class);
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        JwtClaimsSet claimsSet = getValidJwkUriBasedClaims();
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING))
-                .thenThrow(JwtException.class);
-
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                        builder.build(TX_ID, SSA_JWT_STRING),
+                        builder.build(TX_ID, "not.valid.jwt"),
                 DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
@@ -161,141 +106,101 @@ class SoftwareStatementBuilderTest {
     }
 
     @Test
-    void failNoIssuerClaim_buildSoftwareStatement() throws JwtException {
+    void failNoIssuerClaim_buildSoftwareStatement() {
         // Given
-        SignedJwt ssaJwt = mock(SignedJwt.class);
-        JwtClaimsSet claimsSet = getValidJwkUriBasedClaims();
+        Map<String, Object> ssaClaims = new java.util.HashMap<>(SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of()));
+        ssaClaims.remove("iss");
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of()));
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
     }
 
     @Test
-    void failUnrecognisedIssuer_buildSoftwareStatement() throws JwtException {
+    void failUnrecognisedIssuer_buildSoftwareStatement() {
         // Given
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        SignedJwt ssaJwt = mock(SignedJwt.class);
+        Map<String, Object> ssaClaimOverrides = Map.of("iss", "unrecognisedIssuer");
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(ssaClaimOverrides);
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of("iss", ISSUER)));
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.UNAPPROVED_SOFTWARE_STATEMENT);
     }
 
     @Test
-    void failNoOrgId_buildSoftwareStatement() throws JwtException {
+    void failNoOrgId_buildSoftwareStatement() {
         // Given
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        SignedJwt ssaJwt = mock(SignedJwt.class);
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
+        String ssaIssuer = (String)ssaClaims.get("iss");
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
+        ssaClaims.remove(trustedDirectory.getSoftwareStatementOrgIdClaimName());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(SSA_JWT_STRING)).thenReturn(ssaJwt);
-
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of("iss", ISSUER)));
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER))
-                .thenReturn(TRUSTED_DIRECTORY_OPEN_BANKING_TEST);
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
     }
 
     @Test
-    void failNoSoftwareId_buildSoftwareStatement() throws JwtException {
+    void failNoSoftwareId_buildSoftwareStatement() {
         // Given
-        String jwtString = "header.payload.sig";
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        SignedJwt ssaJwt = mock(SignedJwt.class);
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
+        String ssaIssuer = (String)ssaClaims.get("iss");
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
+        ssaClaims.remove(trustedDirectory.getSoftwareStatementSoftwareIdClaimName());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(jwtString)).thenReturn(ssaJwt);
-
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of("iss", ISSUER, "org_id", ORG_ID)));
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER))
-                .thenReturn(TRUSTED_DIRECTORY_OPEN_BANKING_TEST);
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
     }
 
     @Test
-    void failNoJwksUri_buildSoftwareStatement() throws JwtException {
+    void failNoJwksUri_buildSoftwareStatement() {
         // Given
-        String jwtString = "header.payload.sig";
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        SignedJwt ssaJwt = mock(SignedJwt.class);
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksUriBasedSsaClaims(Map.of());
+        String ssaIssuer = (String)ssaClaims.get("iss");
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
+        ssaClaims.remove(trustedDirectory.getSoftwareStatementJwksUriClaimName());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(jwtString)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of("iss", ISSUER, "org_id", ORG_ID,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementJwksUriClaimName(), SOFTWARE_ID)));
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER))
-                .thenReturn(TRUSTED_DIRECTORY_OPEN_BANKING_TEST);
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
     }
 
     @Test
-    void failNoJwks_buildSoftwareStatement() throws JwtException {
+    void failNoJwks_buildSoftwareStatement() {
         // Given
-        String jwtString = "header.payload.sig";
-        JwsHeader ssaHeader = mock(JwsHeader.class);
-        SignedJwt ssaJwt = mock(SignedJwt.class);
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
+        String ssaIssuer = (String)ssaClaims.get("iss");
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
+        ssaClaims.remove(trustedDirectory.getSoftwareStatementJwksClaimName());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
+
         // When
-        when(ssaJwt.getHeader()).thenReturn(ssaHeader);
-        when(ssaHeader.getKeyId()).thenReturn(KEY_ID);
-        when(jwtDecoder.getSignedJwt(jwtString)).thenReturn(ssaJwt);
-        when(ssaJwt.getClaimsSet()).thenReturn(new JwtClaimsSet(Map.of("iss", ISSUER, "org_id", ORG_ID,
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID)));
-        when(trustedDirectoryService.getTrustedDirectoryConfiguration(ISSUER))
-                .thenReturn(DIRECTORY_SECURE_API_GATEWAY);
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, SSA_JWT_STRING), DCRRegistrationRequestBuilderException.class);
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
     }
 
-
-    private JwtClaimsSet getValidJwkUriBasedClaims() {
-        Map<String, Object> claims = Map.of("iss", ISSUER,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementOrgIdClaimName(), ORG_ID,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementJwksUriClaimName(), JWKS_URI,
-                TRUSTED_DIRECTORY_OPEN_BANKING_TEST.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
-        return  new JwtClaimsSet(claims);
-    }
-
-    private JwtClaimsSet getValidJwkBasedClaims() throws JwtException {
-        Map<String, Object> claims = Map.of("iss", ISSUER,
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementOrgIdClaimName(), ORG_ID,
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID,
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementJwksClaimName(),  DCRTestHelpers.getJwksJsonValue(),
-                DIRECTORY_SECURE_API_GATEWAY.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
-        return  new JwtClaimsSet(claims);
-    }
 }

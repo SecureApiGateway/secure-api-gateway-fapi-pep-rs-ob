@@ -98,6 +98,7 @@ next.handle(context, request).thenOnResult({response ->
   Status status = response.getStatus()
   String responseBody = response.getEntity().getString();
 
+  // Build an OBErrorResponse1 response object
   if ((status.isClientError() || status.isServerError()) && !isObCompliantError(responseBody)) {
 
     def code = status.getCode()
@@ -108,31 +109,17 @@ next.handle(context, request).thenOnResult({response ->
     ]
 
     requestIds = request.headers.get("x-request-id")
-
-
     if (requestIds) {
       newBody.put("Id",requestIds.firstValue)
     }
 
     newBody.put("Message",  status.toString())
 
-    Map<String,String> errorList = attributes.obErrors
-
-    if (!errorList) {
-      errorList = getGenericError(status,responseBody)
-    }
-
-    newBody.put("Errors",errorList)
+    def obErrorObject = getGenericError(status, responseBody)
+    errorList = [obErrorObject]
+    newBody.put("Errors", errorList)
     logger.debug(SCRIPT_NAME + "Final Error Response: " + newBody)
     response.setEntity(newBody)
   }
 })
-
-
-
-
-
-
-
-
 

@@ -56,25 +56,10 @@ def getErrorResponse() {
     logger.error(SCRIPT_NAME + "Message: " + message + ". ErrorCode:" + errorCode)
 
     response = new Response(Status.BAD_REQUEST)
-
-    Map<String,String> newBody = [
-            Code: Status.BAD_REQUEST.toString()
-    ]
-
-    requestIds = request.headers.get("x-request-id")
-    if (requestIds) {
-        newBody.put("Id", requestIds.firstValue)
-    }
-    newBody.put("Message",  Status.BAD_REQUEST.toString())
-
-    Map<String,String> errorList =[
-            ErrorCode: errorCode,
-            Message: message
-    ]
-
-    newBody.put("Errors", errorList)
-    response.setEntity(newBody)
-    return response;
+    response.setEntity(json(object(field("Code", Status.BAD_REQUEST.toString()),
+                                   field("Errors", array(object(field("ErrorCode", errorCode),
+                                                                field("Message", message)))))))
+    return response
 }
 /**
  * End definitions

@@ -242,7 +242,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "rs.dev.forgerock.financial"
+                "&{mtls.fqdn}"
               ]
             }
           }

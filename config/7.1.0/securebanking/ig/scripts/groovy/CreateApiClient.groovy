@@ -167,11 +167,20 @@ def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
           "apiClientOrg"  : ["_ref": "managed/" + routeArgObjApiClientOrg + "/" + softwareStatement.getOrgId()]
   ]
 
+  StringBuilder sb = new StringBuilder();
+  for(String role: softwareStatement.getRoles()){
+    sb.append(role).append(', ')
+  }
+  sb.deleteCharAt(sb.length() -2)
+  apiClientIdmObj.roles = sb.toString()
+
   if (softwareStatement.hasJwksUri()){
     apiClientIdmObj.jwksUri = softwareStatement.getJwksUri()
   } else {
-    apiClientIdmObj.jwks = JsonOutput.toJson(softwareStatement.getJwksSet())
+    apiClientIdmObj.jwks = softwareStatement.getJwksSet().toJsonValue()
+    logger.debug("jwks is '{}'", apiClientIdmObj)
   }
+
   return apiClientIdmObj
 }
 

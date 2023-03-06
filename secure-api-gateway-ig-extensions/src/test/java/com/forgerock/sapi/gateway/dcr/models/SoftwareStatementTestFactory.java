@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.forgerock.json.JsonValue;
 
-import com.forgerock.sapi.gateway.common.jwt.JwtException;
 import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
@@ -36,11 +35,7 @@ public class SoftwareStatementTestFactory {
     private static final List<String> ROLES = List.of("AISP", "PISP", "CBPII");
 
     static {
-        try {
-            JWKS_SET = DCRTestHelpers.getJwksJsonValue();
-        } catch (JwtException e) {
-            throw new RuntimeException("Failed to getJwksJsonValue", e);
-        }
+        JWKS_SET = DCRTestHelpers.getJwksJsonValue();
     }
 
     public static Map<String, Object> getValidJwksUriBasedSsaClaims(Map<String, Object> overrideSsaClaims){

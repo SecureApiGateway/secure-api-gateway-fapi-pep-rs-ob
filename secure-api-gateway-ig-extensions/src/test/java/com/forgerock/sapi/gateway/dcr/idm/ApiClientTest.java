@@ -19,13 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.json.jose.jws.JwsHeader;
 import org.forgerock.json.jose.jws.SignedJwt;
 import org.forgerock.json.jose.jwt.JwtClaimsSet;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
@@ -67,6 +67,8 @@ public class ApiClientTest {
                 .setSoftwareClientId("softwareClientId543")
                 .setSoftwareStatementAssertion(EMPTY_SSA)
                 .setJwksUri(null)
+                .setRoles(List.of("AISP", "PISP", "CBPII"))
+                .setJwks(new JWKSet())
                 .setOrganisation(new ApiClientOrganisation("orgId123", "Test Organisation"));
     }
 }

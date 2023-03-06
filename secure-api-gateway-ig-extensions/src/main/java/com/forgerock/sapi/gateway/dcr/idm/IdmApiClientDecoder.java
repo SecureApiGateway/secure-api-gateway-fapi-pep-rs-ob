@@ -16,10 +16,13 @@
 package com.forgerock.sapi.gateway.dcr.idm;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
 import org.forgerock.json.JsonValue;
 import org.forgerock.json.JsonValueException;
 import org.forgerock.json.jose.common.JwtReconstruction;
+import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.json.jose.jws.SignedJwt;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
@@ -49,11 +52,17 @@ public class IdmApiClientDecoder {
                     .setSoftwareClientId(apiClientJson.get("id").as(this::requiredField).asString())
                     .setDeleted(apiClientJson.get("deleted").as(this::requiredField).asBoolean())
                     .setSoftwareStatementAssertion(apiClientJson.get("ssa").as(this::requiredField).as(this::decodeSsa))
-                    .setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(this::decodeApiClientOrganisation));
+                    .setOrganisation(apiClientJson.get("apiClientOrg").as(this::requiredField).as(this::decodeApiClientOrganisation))
+                    .setRoles(apiClientJson.get("roles").as(this::requiredField).as(this::decodeRoles));
 
             final JsonValue jwksUri = apiClientJson.get("jwksUri");
             if (jwksUri.isNotNull()) {
                 apiClientBuilder.setJwksUri(jwksUri.as(jwks -> URI.create(jwks.asString())));
+            }
+
+            final JsonValue jwks = apiClientJson.get("jwks");
+            if (jwks.isNotNull()){
+                apiClientBuilder.setJwks(this.decodeJwks(jwks));
             }
             return apiClientBuilder.build();
         } catch (JsonValueException jve) {
@@ -63,6 +72,17 @@ public class IdmApiClientDecoder {
             // Unexpected decode exception, dump the raw json to provide additional debug info
             throw new IllegalStateException("Unexpected exception thrown decoding apiClient, raw json: " + apiClientJson, ex);
         }
+    }
+
+    private JWKSet decodeJwks(JsonValue jwks) {
+        JWKSet jwkSet = JWKSet.parse(jwks);
+        return jwkSet;
+    }
+
+    private List<String> decodeRoles(JsonValue jsonValue) {
+        String rolesString = jsonValue.asString();
+        String[] splitRoles = rolesString.split(",\\s");
+        return Arrays.asList(splitRoles);
     }
 
     /**

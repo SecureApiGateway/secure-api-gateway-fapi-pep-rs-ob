@@ -39,6 +39,7 @@ import org.forgerock.util.promise.Promise;
 import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Test;
 
+import com.forgerock.sapi.gateway.common.jwt.JwtException;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
@@ -62,7 +63,7 @@ public class IdmApiClientServiceTest {
     }
 
     @Test
-    void testThrowsExceptionIfApiClientHasBeenDeleted() {
+    void testThrowsExceptionIfApiClientHasBeenDeleted() throws JwtException {
         final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(TEST_CLIENT_ID);
         idmClientData.put("deleted", Boolean.TRUE);
         final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(TEST_IDM_BASE_URI, TEST_CLIENT_ID, idmClientData);
@@ -101,7 +102,7 @@ public class IdmApiClientServiceTest {
     }
 
     @Test
-    void testThrowsExceptionWhenIdmReturnsApiClientMissingRequiredFields() {
+    void testThrowsExceptionWhenIdmReturnsApiClientMissingRequiredFields() throws JwtException {
         final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(TEST_CLIENT_ID);
         idmClientData.remove("ssa"); // Remove the required ssa field
         final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(TEST_IDM_BASE_URI, TEST_CLIENT_ID, idmClientData);

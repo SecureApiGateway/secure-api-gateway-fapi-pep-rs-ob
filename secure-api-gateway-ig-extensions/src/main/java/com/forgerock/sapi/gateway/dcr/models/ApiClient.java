@@ -16,8 +16,10 @@
 package com.forgerock.sapi.gateway.dcr.models;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 
+import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.json.jose.jws.SignedJwt;
 import org.forgerock.util.Reject;
 
@@ -35,6 +37,8 @@ public class ApiClient {
         private String softwareClientId;
         private String clientName;
         private URI jwksUri;
+        private JWKSet jwks;
+        private List<String> roles;
         private SignedJwt softwareStatementAssertion;
         private ApiClientOrganisation organisation;
         private boolean deleted;
@@ -59,6 +63,11 @@ public class ApiClient {
             return this;
         }
 
+        public ApiClientBuilder setJwks(JWKSet jwks){
+            this.jwks = jwks;
+            return this;
+        }
+
         public ApiClientBuilder setSoftwareStatementAssertion(SignedJwt softwareStatementAssertion) {
             this.softwareStatementAssertion = softwareStatementAssertion;
             return this;
@@ -74,13 +83,19 @@ public class ApiClient {
             return this;
         }
 
+        public ApiClientBuilder setRoles(List<String> roles){
+            this.roles = roles;
+            return this;
+        }
+
         public ApiClient build() {
             Reject.ifNull(oauth2ClientId, "oauth2ClientId must be configured");
             Reject.ifNull(softwareClientId, "softwareClientId must be configured");
             Reject.ifNull(clientName, "clientName must be configured");
             Reject.ifNull(softwareStatementAssertion, "softwareStatementAssertion must be configured");
             Reject.ifNull(organisation, "organisation must be configured");
-            return new ApiClient(oauth2ClientId, softwareClientId, clientName, jwksUri, softwareStatementAssertion, organisation, deleted);
+            Reject.ifNull(roles, "roles must be configured");
+            return new ApiClient(oauth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
         }
     }
 
@@ -108,6 +123,11 @@ public class ApiClient {
     private final URI jwksUri;
 
     /**
+     * The JWK Set for this client
+     */
+    private final JWKSet jwks;
+
+    /**
      * The Software Statement Assertions (SSA), which is a signed JWT containing the Software Statement registered.
      */
     private final SignedJwt softwareStatementAssertion;
@@ -117,16 +137,24 @@ public class ApiClient {
      */
     private final ApiClientOrganisation organisation;
 
+    /**
+     * The roles allowed by this client
+     */
+    private final List<String> roles;
+
     private final boolean deleted;
 
-    private ApiClient(String oauth2ClientId, String softwareClientId, String clientName, URI jwksUri,
-                      SignedJwt softwareStatementAssertion, ApiClientOrganisation organisation, boolean deleted) {
+    private ApiClient(String oauth2ClientId, String softwareClientId, String clientName, URI jwksUri, JWKSet jwks,
+            SignedJwt softwareStatementAssertion, ApiClientOrganisation organisation, List<String> roles,
+            boolean deleted) {
         this.oauth2ClientId = oauth2ClientId;
         this.softwareClientId = softwareClientId;
         this.clientName = clientName;
         this.jwksUri = jwksUri;
+        this.jwks = jwks;
         this.softwareStatementAssertion = softwareStatementAssertion;
         this.organisation = organisation;
+        this.roles = roles;
         this.deleted = deleted;
     }
 
@@ -163,12 +191,12 @@ public class ApiClient {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ApiClient apiClient = (ApiClient) o;
-        return deleted == apiClient.deleted && Objects.equals(oauth2ClientId, apiClient.oauth2ClientId) && Objects.equals(softwareClientId, apiClient.softwareClientId) && Objects.equals(clientName, apiClient.clientName) && Objects.equals(jwksUri, apiClient.jwksUri) && Objects.equals(softwareStatementAssertion, apiClient.softwareStatementAssertion) && Objects.equals(organisation, apiClient.organisation);
+        return deleted == apiClient.deleted && Objects.equals(oauth2ClientId, apiClient.oauth2ClientId) && Objects.equals(softwareClientId, apiClient.softwareClientId) && Objects.equals(clientName, apiClient.clientName) && Objects.equals(jwksUri, apiClient.jwksUri) && Objects.equals(jwks, apiClient.jwks) && Objects.equals(softwareStatementAssertion, apiClient.softwareStatementAssertion) && Objects.equals(organisation, apiClient.organisation) && Objects.equals(roles, apiClient.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(oauth2ClientId, softwareClientId, clientName, jwksUri, softwareStatementAssertion, organisation, deleted);
+        return Objects.hash(oauth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
     }
 
     @Override
@@ -178,8 +206,10 @@ public class ApiClient {
                 ", softwareClientId='" + softwareClientId + '\'' +
                 ", clientName='" + clientName + '\'' +
                 ", jwksUri=" + jwksUri +
+                ", jwks=" + jwks.toJsonValue() +
                 ", softwareStatementAssertion=" + softwareStatementAssertion +
                 ", organisation=" + organisation +
+                ", roles=" + roles.toString() +
                 ", deleted=" + deleted +
                 '}';
     }

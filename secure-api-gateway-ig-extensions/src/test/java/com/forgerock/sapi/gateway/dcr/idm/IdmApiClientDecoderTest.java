@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -36,6 +38,7 @@ import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.sigvalidation.DCRTestHelpers;
 
 public class IdmApiClientDecoderTest {
 
@@ -55,9 +58,11 @@ public class IdmApiClientDecoderTest {
                 field("description", "Blah blah blah"),
                 field("ssa", createTestSoftwareStatementAssertion().build()),
                 field("oauth2ClientId", clientId),
+                field("roles", "AISP, PISP, CBPII"),
+                field("jwks", DCRTestHelpers.getJwksJsonValue()),
                 field("deleted", false),
                 field("apiClientOrg", object(field("id", "98761234"),
-                        field("name", "Test Organisation")))));
+                field("name", "Test Organisation")))));
     }
 
     /**

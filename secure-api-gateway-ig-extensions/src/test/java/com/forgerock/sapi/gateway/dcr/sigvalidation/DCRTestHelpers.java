@@ -177,11 +177,15 @@ public class DCRTestHelpers {
      * @return a JsonValue jwks set
      * @throws JwtException when the jwt can't be decoded
      */
-    public static JsonValue getJwksJsonValue() throws JwtException {
+    public static JsonValue getJwksJsonValue() {
         String b64EncodedSSA = DCRTestHelpers.VALID_SSA_FROM_IG;
         JwtDecoder jwtDecoder = new JwtDecoder();
         SignedJwt ssa = null;
-        ssa = jwtDecoder.getSignedJwt(b64EncodedSSA);
+        try {
+            ssa = jwtDecoder.getSignedJwt(b64EncodedSSA);
+        } catch (JwtException e){
+            throw new IllegalArgumentException(e);
+        }
         JwtClaimsSet ssaClaims = ssa.getClaimsSet();
         JsonValue jwks = ssaClaims.get("software_jwks");
         return jwks;

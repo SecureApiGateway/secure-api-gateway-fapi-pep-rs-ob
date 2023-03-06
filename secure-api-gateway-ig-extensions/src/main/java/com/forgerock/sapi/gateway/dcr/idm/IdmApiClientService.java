@@ -24,6 +24,8 @@ import org.forgerock.json.JsonValue;
 import org.forgerock.util.Reject;
 import org.forgerock.util.promise.Promise;
 import org.forgerock.util.promise.Promises;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
@@ -33,6 +35,7 @@ import com.forgerock.sapi.gateway.dcr.models.ApiClient;
  */
 public class IdmApiClientService implements ApiClientService {
 
+    Logger log = LoggerFactory.getLogger(ApiClientService.class);
     /**
      * The base uri to use in GET requests to IDM to query for the apiClient
      *

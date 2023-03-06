@@ -268,7 +268,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "response.entity.getJson().OBIntentObject.Data.ConsentId",
+              "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
               "role": "PISP",
               "event": "EXEC"
             }

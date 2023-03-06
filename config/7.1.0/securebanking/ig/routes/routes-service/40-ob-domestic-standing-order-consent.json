@@ -236,7 +236,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandlerRs"
+      "handler": "SBATReverseProxyHandlerIdentityPlatform"
     }
   }
 }

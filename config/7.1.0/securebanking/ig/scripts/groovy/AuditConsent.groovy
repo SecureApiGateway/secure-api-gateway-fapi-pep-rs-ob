@@ -1,11 +1,7 @@
 import static org.forgerock.json.resource.Requests.newCreateRequest;
 import static org.forgerock.json.resource.ResourcePath.resourcePath;
 
-def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
-if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
-SCRIPT_NAME = "[AuditConsent] (" + fapiInteractionId + ") - "
-
-logger.debug(SCRIPT_NAME + "Running...")
+SCRIPT_NAME = "[AuditConsent] - "
 
 // Helper functions
 def String transactionId() {
@@ -22,8 +18,6 @@ def auditEventRequest(String topicName, JsonValue auditEvent) {
   return newCreateRequest(resourcePath("/" + topicName), auditEvent);
 }
 
-
-
 def resourceEvent() {
   return object(field('path', request.uri.path),
           field('method', request.method));
@@ -31,35 +25,37 @@ def resourceEvent() {
 
 
 next.handle(context, request).thenOnResult(response -> {
+    logger.debug(SCRIPT_NAME + "Running...")
+    if (!response.status.isSuccessful()) {
+        logger.info(SCRIPT_NAME + "Error response, skipping audit")
+        return
+    }
+
+    logger.info(SCRIPT_NAME + context)
 
     def binding = new Binding()
     binding.response = response
     binding.contexts = contexts
     consentId = new GroovyShell(binding).evaluate(consentIdLocator)
 
-
-  def consent = object(
+    def consent = object(
           field('id', consentId),
           field('role', role)
-  )
-  // Build the event
-  JsonValue auditEvent = auditEvent('OB-CONSENT-' + event).add('consent', consent)
+    )
+    // Build the event
+    JsonValue auditEvent = auditEvent('OB-CONSENT-' + event).add('consent', consent)
 
-  def fapiInfo = [:]
-
-
-  ['x-fapi-interaction-id', 'x-fapi-financial-id'].each { header ->
-    def values = request.headers.get(header)
-    if (values) {
-        fapiInfo.put( header, values.firstValue)
+    def fapiInfo = [:]
+    ['x-fapi-interaction-id', 'x-fapi-financial-id'].each { header ->
+        def values = request.headers.get(header)
+        if (values) {
+            fapiInfo.put( header, values.firstValue)
+        }
     }
 
-  }
+    auditEvent = auditEvent.add('fapiInfo', fapiInfo);
 
-  auditEvent = auditEvent.add('fapiInfo', fapiInfo);
-
-  // Send the event
-  auditService.handleCreate(context, auditEventRequest("ObConsentTopic", auditEvent));
-
-  return response
+    // Send the event
+    auditService.handleCreate(context, auditEventRequest("ObConsentTopic", auditEvent))
+    logger.debug(SCRIPT_NAME + "audited event for consentId: " + consentId)
 })

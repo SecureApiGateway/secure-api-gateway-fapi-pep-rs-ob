@@ -136,18 +136,18 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
             logger.error(SCRIPT_NAME + message)
             response.status = intentResponseStatus
             response.entity = "{ \"error\":\"" + message + "\"}"
-            return response
+            return newResultPromise(response)
         }
 
         def intentResponseContent = intentResponse.getEntity();
         def intentResponseObject = intentResponseContent.getJson();
 
         if (intentResponseObject.apiClient == null) {
-            message = "Orfan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
+            message = "Orphan consent, The consent requested to get with id [" + intentResponseObject._id + "] doesn't have a apiClient related."
             logger.error(SCRIPT_NAME + message)
             response.status = Status.BAD_REQUEST
             response.entity = "{ \"error\":\"" + message + "\"}"
-            return response
+            return newResultPromise(response)
         }
 
         attributes.put("resourceOwnerUsername", intentResponseObject.user ? intentResponseObject.user._id : null)
@@ -165,25 +165,28 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
                     return newResultPromise(getErrorResponse())
                 }
 
+                def paymentAmount
                 if (intentType == IntentType.DOMESTIC_VRP_PAYMENT_CONSENT) {
                     // For VRP, checking the max individual amount to confirm that the debtor accounts has funds for the payment
-                    attributes.put("amount", intentResponseObject.OBIntentObject.Data.ControlParameters.MaximumIndividualAmount.Amount)
+                    paymentAmount = intentResponseObject.OBIntentObject.Data.ControlParameters.MaximumIndividualAmount.Amount
                 } else {
-                    attributes.put("amount", intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
+                    paymentAmount = intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount
                 }
-                logger.debug(SCRIPT_NAME + "amount: " + intentResponseObject.OBIntentObject.Data.Initiation.InstructedAmount.Amount)
+                logger.debug(SCRIPT_NAME + "Payment Amount: " + paymentAmount)
+                attributes.put("amount", paymentAmount)
 
                 attributes.put("version", splitUri[2])
                 logger.debug(SCRIPT_NAME + "version: " + splitUri[2])
             }
+            return next.handle(context, request)
 
         } catch (java.lang.Exception e) {
-            message = "Missing required parameters or headers: "
-            logger.error(SCRIPT_NAME + message + e)
+            message = "Missing required parameters or headers"
+            logger.error(SCRIPT_NAME + message, e)
             response = new Response(Status.BAD_REQUEST)
             response.entity = "{ \"error\":\"" + message + "\"}"
+            return newResultPromise(response)
         }
-        return next.handle(context, request)
     })
 } else {
     message = "Method " + request.getMethod() + " not supported";
@@ -192,5 +195,3 @@ if (request.getMethod() == "GET" || request.getMethod() == "POST") {
     response.entity = "{ \"error\":\"" + message + "\"}"
     return response
 }
-
-next.handle(context, request)

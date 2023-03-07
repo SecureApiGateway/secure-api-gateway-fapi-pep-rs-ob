@@ -304,7 +304,6 @@
     {
       "name": "IDMClientHandler",
       "type": "Chain",
-      "capture": "all",
       "config": {
         "filters": [
           {

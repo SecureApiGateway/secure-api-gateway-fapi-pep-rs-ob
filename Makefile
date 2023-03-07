@@ -16,9 +16,15 @@ endif
 	docker build docker/7.1.0/ig/ -t eu.gcr.io/${gcr-repo}/securebanking/gate/ig:${tag}
 	docker push eu.gcr.io/${gcr-repo}/securebanking/gate/ig:${tag}
 
-
 conf:
-	./bin/config.sh init
-
-
-
+ifndef env
+	$(warning no env supplied; dev assumed)
+	$(eval env=dev)
+endif
+	if [ "${env}" = "prod" ]; then \
+  		IG_MODE="production"; \
+  	else \
+  		IG_MODE="development"; \
+  	fi; \
+	echo "init config for env: ${env}, igmode: $$IG_MODE\n"; \
+	./bin/config.sh init --env ${env} --igmode $${IG_MODE}

@@ -5,6 +5,16 @@
     },
     "oauth2": {
       "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]
+    },
+    "urls": {
+      "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+      "rsBaseUri": "http://&{rs.internal.svc}:8080"
+    },
+    "vertxConfig": {
+      "maxHeaderSize": 16384,
+      "initialSettings": {
+        "maxHeaderListSize": 16384
+      }
     }
   },
   "handler": {
@@ -18,7 +28,7 @@
             "type": "Router",
             "config": {
               "scanInterval": "disabled",
-              "directory": "${openig.configDirectory}/routes-pod"
+              "directory": "${openig.configDirectory}/routes/routes-pod"
             }
           }
         },
@@ -29,7 +39,7 @@
             "type": "Router",
             "config": {
               "scanInterval": "disabled",
-              "directory": "${openig.configDirectory}/routes-service"
+              "directory": "${openig.configDirectory}/routes/routes-service"
             }
           }
         }
@@ -50,7 +60,18 @@
       "capture": [
         "request",
         "response"
-      ]
+      ],
+      "config": {
+        "vertx": "${vertxConfig}"
+      }
+    },
+    {
+      "name": "ReverseProxyHandlerNoCapture",
+      "type": "ReverseProxyHandler",
+      "comment": "ReverseProxyHandler with no capture decorator configuration",
+      "config": {
+        "vertx": "${vertxConfig}"
+      }
     },
     {
       "name": "JwtSession",
@@ -60,10 +81,147 @@
       "name" : "ForgeRockClientHandler",
       "type" : "Chain",
       "config" : {
-        "filters" : [ "TransactionIdOutboundFilter" ],
+        "filters" : [
+          "TransactionIdOutboundFilter"
+       ],
         "handler" : "ClientHandler"
       },
       "capture" : [ "response", "request" ]
+    },
+    {
+      "name": "FetchApiClientResourcesChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain will set the apiClient, apiClientJwkSet and trustedDirectory attributes in the context based on the client_id of the access_token",
+      "config" : {
+        "filters": [
+          {
+            "comment": "Add ApiClient data to the context attributes",
+            "name": "FetchApiClientFilter",
+            "type": "FetchApiClientFilter",
+            "config": {
+              "idmGetApiClientBaseUri": "&{urls.idmGetApiClientBaseUri}",
+              "clientHandler": "IDMClientHandler"
+            }
+          },
+          {
+            "comment": "Add TrustedDirectory configuration to the context attributes",
+            "name": "FetchTrustedDirectoryFilter",
+            "type": "FetchTrustedDirectoryFilter",
+            "config": {
+              "trustedDirectoryService": "TrustedDirectoriesService"
+            }
+          },
+          {
+            "comment": "Add the JWKS for the ApiClient to the context attributes",
+            "name": "FetchApiClientJwksFilter",
+            "type": "FetchApiClientJwksFilter",
+            "config": {
+              "jwkSetService": "OBJwkSetService"
+            }
+          },
+          {
+            "comment": "Validate the MTLS transport cert",
+            "name": "TransportCertValidationFilter",
+            "type": "TransportCertValidationFilter",
+            "config": {
+              "clientTlsCertHeader": "ssl-client-cert",
+              "transportCertValidator": "OBTransportCertValidator"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SBATFapiInteractionFilterChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",
+      "config" : {
+        "filters": [
+          {
+            "comment": "Add x-fapi-interaction-id header if one was not present in the request",
+            "name": "FapiInteractionIdFilter",
+            "type": "FapiInteractionIdFilter"
+          },
+          {
+            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext",
+            "name": "FapiTransactionIdFilter-1",
+            "type": "ScriptableFilter",
+            "config": {
+              "type": "application/x-groovy",
+              "file": "FapiTransactionIdFilter.groovy"
+            }
+          },
+          {
+            "comment": "Log any unhandled exceptions, installed after the FapiTransactionIdFilter so that the txId being logged is set to the x-fapi-interaction-id",
+            "name": "SapiLogAttachedExceptionFilter",
+            "type": "SapiLogAttachedExceptionFilter"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SBATReverseProxyHandlerIdentityPlatform",
+      "comment": "ReverseProxyHandler for calls to Identity Platform services (AM or IDM)",
+      "type": "Chain",
+      "config": {
+        "filters" : [
+          "TransactionIdOutboundFilter"
+       ],
+        "handler" : "ReverseProxyHandler"
+      }
+    },
+    {
+      "name": "SBATReverseProxyHandlerIdentityPlatformNoCapture",
+      "comment": "ReverseProxyHandler for calls to Identity Platform services (AM or IDM), with the capture decorator disabled",
+      "type": "Chain",
+      "config": {
+        "filters" : [
+          "TransactionIdOutboundFilter"
+        ],
+        "handler" : "ReverseProxyHandlerNoCapture"
+      }
+    },
+    {
+      "name": "SBATReverseProxyHandlerRs",
+      "comment": "ReverseProxyHandler for calls to the SBAT RS",
+      "type": "Chain",
+      "config": {
+        "filters": [
+          {
+            "comment": "Add x-ob-url header (used by RS)",
+            "name": "HeaderFilter-Add-x-ob-url",
+            "type": "HeaderFilter",
+            "config": {
+              "messageType": "REQUEST",
+              "add": {
+                "x-ob-url": [
+                  "https://&{ig.fqdn}${contexts.router.remainingUri}"
+                ]
+              }
+            }
+          },
+          "TransactionIdOutboundFilter"
+        ],
+        "handler": "ReverseProxyHandler"
+      }
+    },
+
+    {
+      "name": "RcsReverseProxyHandler",
+      "comment": "ReverseProxyHandler for calls to the RCS",
+      "type": "Chain",
+      "config": {
+        "filters": [
+          "TransactionIdOutboundFilter"
+        ],
+        "handler": {
+          "name": "RcsReverseProxyHandlerInner",
+          "type": "ReverseProxyHandler",
+          "config": {
+            "vertx": "${vertxConfig}"
+          }
+        }
+      }
     },
     {
       "name" : "AmService-OBIE",
@@ -71,28 +229,20 @@
       "config" : {
         "url" : "https://&{identity.platform.fqdn}/am",
         "realm" : "/&{am.realm}",
-        "ssoTokenHeader" : "4e3ac4710f8be28",
-        "version" : "6.5.1",
+        "version" : "7.2.0",
         "agent" : {
           "username" : "ig-agent",
-          "passwordSecretId" : "ig.agent.secret"
+          "passwordSecretId" : "ig.agent.password"
         },
-        "secretsProvider": {
-          "type": "Base64EncodedSecretStore",
-          "config": {
-            "secrets": {
-              "ig.agent.secret": "cGFzc3dvcmQ="
-            }
-          }
-        },
+        "secretsProvider": "SystemAndEnvSecretStore-IAM",
         "sessionCache" : {
           "enabled" : false
         },
         "notifications" : {
           "enabled" : false
         }
-     }
-   },
+      }
+    },
     {
       "name": "SystemAndEnvSecretStore-IAM",
       "type": "SystemAndEnvSecretStore",
@@ -127,6 +277,30 @@
         ]
       }
     },
+    {
+      "name": "SecretsProvider-ASPSP",
+      "type": "SecretsProvider",
+      "config": {
+        "stores": [
+          {
+            "name":"KeyStoreSecretStore-ASPSP",
+            "type": "KeyStoreSecretStore",
+            "config": {
+              "file": "&{ig.instance.dir}&{ig.ob.aspsp.signing.keystore.path}",
+              "storeType": "&{ig.ob.aspsp.signing.keystore.type}",
+              "storePassword": "ig.ob.aspsp.signing.keystore.storepass",
+              "keyEntryPassword": "ig.ob.aspsp.signing.keystore.keypass",
+              "secretsProvider": "SystemAndEnvSecretStore-IAM",
+              "mappings": [{
+                "secretId": "jwt.signer",
+                "aliases": [ "&{ig.ob.aspsp.signing.keystore.alias}" ]
+              }]
+            }
+          }
+        ]
+      }
+    },
+
     {
       "name": "IDMClientHandler",
       "type": "Chain",
@@ -199,16 +373,110 @@
       }
     },
     {
+      "name": "SecretKeyPropertyFormat-Gateway",
+      "type": "SecretKeyPropertyFormat",
+      "config": {
+        "format": "PLAIN",
+        "algorithm": "AES"
+      }
+    },
+    {
+      "name": "SystemAndEnvSecretStore-Gateway",
+      "type": "SystemAndEnvSecretStore",
+      "config": {
+        "mappings": [{
+          "secretId": "ig.gw.secret",
+          "format": "SecretKeyPropertyFormat-Gateway"
+        }]
+      }
+    },
+    {
+      "name": "TrustManager-OB",
+      "type": "TrustManager",
+      "config": {
+        "keystore": {
+          "type": "KeyStore",
+          "config": {
+            "url": "file://&{ig.instance.dir}&{ig.truststore.path}",
+            "type": "PKCS12",
+            "passwordSecretId": "ig.truststore.password",
+            "secretsProvider": "SystemAndEnvSecretStore-IAM"
+          }
+        }
+      }
+    },
+    {
+      "name": "OBClientHandler",
+      "type": "ClientHandler",
+      "capture": "all",
+      "config": {
+        "tls": {
+          "type": "ClientTlsOptions",
+          "config": {
+            "trustManager": "TrustManager-OB"
+          }
+        }
+      }
+    },
+    {
+      "name": "OBReverseProxyHandler",
+      "type": "ReverseProxyHandler",
+      "capture": [
+        "request",
+        "response"
+      ],
+      "config": {
+        "tls": {
+          "type": "ClientTlsOptions",
+          "config": {
+            "trustManager": "TrustManager-OB"
+          }
+        }
+      }
+    },
+    {
+      "name":"TestDirectorySigningKeyStore",
+      "type": "KeyStoreSecretStore",
+      "config": {
+        "file": "&{ig.instance.dir}&{ig.test.directory.signing.keystore.path}",
+        "storeType": "PKCS12",
+        "storePassword": "ig.test.directory.signing.keystore.storepass",
+        "keyEntryPassword": "ig.test.directory.signing.keystore.storepass",
+        "secretsProvider": "SystemAndEnvSecretStore-IAM",
+        "mappings": [{
+          "secretId": "jwt.signer",
+          "aliases": [ "&{ig.test.directory.signing.keystore.alias}" ]
+        }]
+      }
+    },
+    {
       "name": "OBJwkSetService",
       "type": "CaffeineCachingJwkSetService",
       "config": {
+        "handler": "OBClientHandler",
         "maxCacheEntries": 500,
-        "expireAfterWriteDuration": "1 hour"
+        "expireAfterWriteDuration": "30 minutes"
+      }
+    },
+    {
+      "name": "TrustedDirectoriesService",
+      "type": "TrustedDirectoriesService",
+      "comment": "Used to obtain meta information about a trusted directory by look up using the 'iss' field value",
+      "config": {
+        "enableIGTestTrustedDirectory": "${security.enableTestTrustedDirectory}",
+        "SecureApiGatewayJwksUri": "https://&{ig.fqdn}/jwkms/testdirectory/jwks"
       }
     },
     {
       "name": "RsaJwtSignatureValidator",
       "type": "RsaJwtSignatureValidator"
+    },
+    {
+      "name": "OBTransportCertValidator",
+      "type": "DefaultTransportCertValidator",
+      "config": {
+        "validKeyUse": "tls"
+      }
     }
   ],
   "monitor": true

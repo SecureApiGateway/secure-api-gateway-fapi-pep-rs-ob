@@ -12,13 +12,18 @@
         "type": "application/x-groovy",
         "file": "ApiProtection.groovy"
       }
-    }
-  ],
-  "connectors" : [
+    },
     {
-      "port": 8080,
-      "vertx": {
-          "maxHeaderSize": 16384
+      "name": "MetricsProtectionFilter",
+      "type": "ScriptableFilter",
+      "config": {
+        "type": "application/x-groovy",
+        "file": "BasicAuthResourceServerFilter.groovy",
+        "args": {
+          "realm": "/",
+          "username": "&{ig.metrics.username}",
+          "password": "&{ig.metrics.password}"
+        }
       }
     }
   ],

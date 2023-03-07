@@ -206,10 +206,10 @@ public class ApiClient {
                 ", softwareClientId='" + softwareClientId + '\'' +
                 ", clientName='" + clientName + '\'' +
                 ", jwksUri=" + jwksUri +
-                ", jwks=" + jwks.toJsonValue() +
+                ", jwks=" + jwks +
                 ", softwareStatementAssertion=" + softwareStatementAssertion +
                 ", organisation=" + organisation +
-                ", roles=" + roles.toString() +
+                ", roles=" + roles +
                 ", deleted=" + deleted +
                 '}';
     }

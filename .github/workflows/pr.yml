@@ -53,7 +53,10 @@ jobs:
 
       - name: Build Docker Image
         run: |
+          # Create development mode docker image
           make build-docker-ig tag=$PR_NUMBER
+          # Create production mode docker image
+          make build-docker-ig tag="$PR_NUMBER-prod" env="prod"
 
       - name: Create lowercase Github Username
         id: toLowerCase

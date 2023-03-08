@@ -13,4 +13,4 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          make docker tag=${{ github.event.release.tag_name }} gcr-repo=${{ secrets.RELEASE_REPO }}
+          make docker tag=${{ github.event.release.tag_name }} env="prod" gcr-repo=${{ secrets.RELEASE_REPO }}

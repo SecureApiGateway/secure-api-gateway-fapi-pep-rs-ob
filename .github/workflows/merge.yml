@@ -50,7 +50,7 @@ jobs:
 
       - name: docker build
         run: |
-          make build-docker-ig tag=${{ env.GIT_SHA_SHORT }}
+          make build-docker-ig tag=${{ env.GIT_SHA_SHORT }} env="prod"
           docker tag eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
           docker push eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
 

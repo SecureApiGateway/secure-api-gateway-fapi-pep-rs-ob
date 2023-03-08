@@ -2,7 +2,7 @@
   "comment": "Signing service for TPPs with test JWK set",
   "name": "73 - Test TPP signing service",
   "auditService": "AuditService-OB-Route",
-  "condition": "${matches(request.uri.path, '^/jwkms/apiclient/signclaims')}",
+  "condition": "${security.enableTestTrustedDirectory && matches(request.uri.path, '^/jwkms/apiclient/signclaims')}",
   "heap": [],
   "handler": {
     "type": "Chain",

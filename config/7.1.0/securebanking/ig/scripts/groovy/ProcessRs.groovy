@@ -7,9 +7,6 @@ SCRIPT_NAME = "[ProcessRs] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 next.handle(context, request).thenOnResult(response -> {
-    // Replace the configurable rsResponsePathToReplace with the igPathReplacement, this makes the API path externally callable.
-    response.entity = response.entity.getString().replace(rsResponsePathToReplace, igPathReplacement)
-
     try {
         JsonValue newEntity = response.entity.getJson();
 

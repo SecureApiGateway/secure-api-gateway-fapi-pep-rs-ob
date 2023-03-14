@@ -161,11 +161,15 @@
             "messageType": "REQUEST",
             "remove": [
               "host",
-              "X-Forwarded-Host"
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix"
             ],
             "add": {
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
               ]
             }
           }

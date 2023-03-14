@@ -39,11 +39,15 @@
             "messageType": "REQUEST",
             "remove": [
               "host",
-              "X-Forwarded-Host"
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix"
             ],
             "add": {
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
               ]
             }
           }
@@ -54,11 +58,7 @@
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ProcessRs.groovy",
-            "args": {
-              "rsResponsePathToReplace": "&{mtls.fqdn}",
-              "igPathReplacement": "&{mtls.fqdn}/rs"
-            }
+            "file": "ProcessRs.groovy"
           }
         }
       ],

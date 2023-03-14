@@ -26,7 +26,7 @@
               "routeArgKid": "&{ig.ob.aspsp.signing.kid}",
               "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
               "routeArgTrustedAnchor": "openbanking.org.uk",
-              "obAspspOrgId": "&{ig.ob.aspsp.org.id}"
+              "obAspspOrgId": "&{ob.aspsp.org.id}"
             }
           }
         },

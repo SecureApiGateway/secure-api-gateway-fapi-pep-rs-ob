@@ -193,9 +193,10 @@
             "type": "HeaderFilter",
             "config": {
               "messageType": "REQUEST",
+              "remove": ["x-ob-url"],
               "add": {
                 "x-ob-url": [
-                  "https://&{ig.fqdn}${contexts.router.remainingUri}"
+                  "https://&{mtls.fqdn}${contexts.router.remainingUri}"
                 ]
               }
             }

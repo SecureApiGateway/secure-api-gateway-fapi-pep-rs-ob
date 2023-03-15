@@ -11,7 +11,7 @@ next.handle(context, request).thenOnResult(response -> {
         JsonValue newEntity = response.entity.getJson();
 
         //Account and Transaction
-        JsonValue accountAndTransactionApi = response.entity.getJson().get("Data").get("AccountAndTransactionAPI");
+        List accountAndTransactionApi = response.entity.getJson().get("Data").get("AccountAndTransactionAPI").asList()
         for (JsonValue value : accountAndTransactionApi) {
             //Account Access Consents
             value.Links.links.add("CreateAccountAccessConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/aisp/account-access-consents");
@@ -23,7 +23,7 @@ next.handle(context, request).thenOnResult(response -> {
         }
 
         //Payment Initiation
-        JsonValue paymentInitiationAPI = response.entity.getJson().get("Data").get("PaymentInitiationAPI");
+        List paymentInitiationAPI = response.entity.getJson().get("Data").get("PaymentInitiationAPI").asList()
         for (JsonValue value : paymentInitiationAPI) {
             //Domestic Payments Consents
             value.Links.links.add("CreateDomesticPaymentConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-payment-consents");
@@ -91,7 +91,7 @@ next.handle(context, request).thenOnResult(response -> {
         response.entity = newEntity;
     }
     catch (Exception e) {
-        logger.error(SCRIPT_NAME + "The response entity doesn't have the expected format")
+        logger.error(SCRIPT_NAME + "The response entity doesn't have the expected format", e)
     }
 
     return response;

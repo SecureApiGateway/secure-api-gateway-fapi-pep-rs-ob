@@ -46,12 +46,11 @@ next.handle(context, request).thenOnResult(response -> {
     JsonValue auditEvent = auditEvent('OB-CONSENT-' + event).add('consent', consent)
 
     def fapiInfo = [:]
-    ['x-fapi-interaction-id', 'x-fapi-financial-id'].each { header ->
-        def values = request.headers.get(header)
-        if (values) {
-            fapiInfo.put( header, values.firstValue)
-        }
+    def values = request.headers.get('x-fapi-interaction-id')
+    if (values) {
+        fapiInfo.put( header, values.firstValue)
     }
+
 
     auditEvent = auditEvent.add('fapiInfo', fapiInfo);
 

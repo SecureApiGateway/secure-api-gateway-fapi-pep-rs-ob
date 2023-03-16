@@ -46,14 +46,6 @@ def callRsToValidateFile(String routeArgRsBaseURI, String version, String consen
     RSRequest.getHeaders().add("Content-Type", request.getHeaders().getFirst("Content-Type"));
     RSRequest.setEntity(request.entity.getString())
 
-    if (request.headers.get("x-fapi-financial-id") != null) {
-        RSRequest.putHeaders(request.headers.get("x-fapi-financial-id"))
-    } else {
-        // TODO fix until delete the mandatory 'x-fapi-financial-id' header, has been deleted from api v.3.1.2
-        // https://github.com/secureapigateway/secureapigateway/issues/817
-        RSRequest.getHeaders().add("x-fapi-financial-id", UUID.randomUUID().toString() )
-    }
-
     logger.debug(SCRIPT_NAME + "Entity to be send to RS file payment endpoint " + request.entity.getString())
 
     return http.send(RSRequest).thenAsync(RSResponse -> {

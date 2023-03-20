@@ -22,18 +22,6 @@
           }
         },
         {
-          "comment": "Extract client certificate details",
-          "name": "ParseCertificate",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ParseCertificate.groovy",
-            "args": {
-              "routeArgCertificateHeader": "ssl-client-cert"
-            }
-          }
-        },
-        {
           "comment": "Remove /rs base path for downstream RS",
           "type": "UriPathRewriteFilter",
           "config": {

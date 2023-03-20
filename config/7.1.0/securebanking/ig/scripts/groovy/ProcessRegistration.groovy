@@ -80,9 +80,6 @@ switch (method.toUpperCase()) {
         if (!attributes.clientCertificate) {
             return errorResponseFactory.invalidClientMetadataErrorResponse("No client certificate for registration")
         }
-        if (!attributes.clientCertificate.roles) {
-            return errorResponseFactory.invalidClientMetadataErrorResponse("No roles in client certificate for registration")
-        }
 
         if (registrationRequest.hasExpired()){
             logger.debug(SCRIPT_NAME + "Registration request JWT has expired")

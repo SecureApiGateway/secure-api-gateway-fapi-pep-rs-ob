@@ -35,18 +35,6 @@
           }
         },
         {
-          "comment": "Extract client certificate details",
-          "name": "ParseCertificate",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ParseCertificate.groovy",
-            "args": {
-              "routeArgCertificateHeader": "ssl-client-cert"
-            }
-          }
-        },
-        {
           "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",

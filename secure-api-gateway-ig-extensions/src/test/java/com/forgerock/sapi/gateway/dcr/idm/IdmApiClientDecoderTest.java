@@ -16,6 +16,7 @@
 package com.forgerock.sapi.gateway.dcr.idm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.forgerock.json.JsonValue.array;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -30,6 +31,7 @@ import org.forgerock.json.JsonValue;
 import org.forgerock.json.JsonValueException;
 import org.forgerock.json.jose.common.JwtReconstruction;
 import org.forgerock.json.jose.exceptions.InvalidJwtException;
+import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.json.jose.jws.JwsAlgorithm;
 import org.forgerock.json.jose.jws.JwsHeader;
 import org.forgerock.json.jose.jws.SignedJwt;
@@ -58,7 +60,7 @@ public class IdmApiClientDecoderTest {
                 field("description", "Blah blah blah"),
                 field("ssa", createTestSoftwareStatementAssertion().build()),
                 field("oauth2ClientId", clientId),
-                field("roles", "AISP, PISP, CBPII"),
+                field("roles", array("AISP", "PISP", "CBPII")),
                 field("jwks", DCRTestHelpers.getJwksJsonValue()),
                 field("deleted", false),
                 field("apiClientOrg", object(field("id", "98761234"),
@@ -96,8 +98,15 @@ public class IdmApiClientDecoderTest {
         if (jwksUri.isNotNull()) {
             assertEquals(jwksUri.asString(), actualApiClient.getJwksUri().toString());
         }
+
+        final JsonValue jwks = idmClientData.get("jwks");
+        if (jwks.isNotNull()) {
+            assertEquals(JWKSet.parse(jwks), actualApiClient.getJwks());
+        }
+
         assertEquals(idmClientData.get("apiClientOrg").get("id").asString(), actualApiClient.getOrganisation().getId());
         assertEquals(idmClientData.get("apiClientOrg").get("name").asString(), actualApiClient.getOrganisation().getName());
+        assertEquals(idmClientData.get("roles").asList(String.class), actualApiClient.getRoles());
 
         final String ssaStr = idmClientData.get("ssa").asString();
         final SignedJwt expectedSignedJwt = new JwtReconstruction().reconstructJwt(ssaStr, SignedJwt.class);
@@ -137,6 +146,18 @@ public class IdmApiClientDecoderTest {
         missingOrgId.get("apiClientOrg").remove("id");
         decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(missingOrgId));
         assertEquals("/apiClientOrg/id: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
+    }
+
+    @Test
+    void failToDecodeDueToRolesFieldInvalidType() {
+        final JsonValue invalidRoles = createIdmApiClientDataRequiredFieldsOnly("2323");
+        invalidRoles.put("roles", "ROLE1,ROLE2");
+        JsonValueException decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(invalidRoles));
+        assertEquals("/roles: Expecting a List of java.lang.String elements", decodeException.getMessage());
+
+        invalidRoles.put("roles", array(1,2,3));
+        decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(invalidRoles));
+        assertEquals("/roles: Expecting a List of java.lang.String elements", decodeException.getMessage());
     }
 
     @Test

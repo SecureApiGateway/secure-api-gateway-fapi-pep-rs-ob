@@ -80,9 +80,10 @@ public class IdmApiClientDecoder {
     }
 
     private List<String> decodeRoles(JsonValue jsonValue) {
-        String rolesString = jsonValue.asString();
-        String[] splitRoles = rolesString.split(",\\s");
-        return Arrays.asList(splitRoles);
+        if (!jsonValue.isList()) {
+            throw new JsonValueException(jsonValue, "Expecting a List of java.lang.String elements");
+        }
+        return jsonValue.asList(String.class);
     }
 
     /**

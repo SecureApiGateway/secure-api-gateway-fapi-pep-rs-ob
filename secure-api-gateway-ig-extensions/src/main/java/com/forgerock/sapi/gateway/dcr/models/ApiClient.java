@@ -174,12 +174,20 @@ public class ApiClient {
         return jwksUri;
     }
 
+    public JWKSet getJwks() {
+        return jwks;
+    }
+
     public SignedJwt getSoftwareStatementAssertion() {
         return softwareStatementAssertion;
     }
 
     public ApiClientOrganisation getOrganisation() {
         return organisation;
+    }
+
+    public List<String> getRoles() {
+        return roles;
     }
 
     public boolean isDeleted() {

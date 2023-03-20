@@ -34,18 +34,6 @@
           }
         },
         {
-          "comment": "Ensure client certificate includes AISP role",
-          "name": "CertificateRoleCheck",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CertificateRoleCheck.groovy",
-            "args": {
-              "routeArgRole": "AISP"
-            }
-          }
-        },
-        {
           "comment": "Remove /rs base path for downstream RS",
           "type": "UriPathRewriteFilter",
           "config": {
@@ -110,6 +98,18 @@
           }
         },
         "FetchApiClientResourcesChain",
+        {
+          "comment": "Ensure ApiClient includesAISP role",
+          "name": "ApiClientRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ApiClientRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "AISP"
+            }
+          }
+        },
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",

@@ -107,7 +107,7 @@
       "config" : {
         "filters": [
           {
-            "comment": "Add ApiClient data to the context attributes",
+            "comment": "Add ApiClient data to the context attributes.apiClient",
             "name": "FetchApiClientFilter",
             "type": "FetchApiClientFilter",
             "config": {
@@ -116,7 +116,7 @@
             }
           },
           {
-            "comment": "Add TrustedDirectory configuration to the context attributes",
+            "comment": "Add TrustedDirectory configuration to the context attributes.trustedDirectory",
             "name": "FetchTrustedDirectoryFilter",
             "type": "FetchTrustedDirectoryFilter",
             "config": {
@@ -124,7 +124,7 @@
             }
           },
           {
-            "comment": "Add the JWKS for the ApiClient to the context attributes",
+            "comment": "Add the JWKS for the ApiClient to the context attributes.apiClientJwkSet",
             "name": "FetchApiClientJwksFilter",
             "type": "FetchApiClientJwksFilter",
             "config": {

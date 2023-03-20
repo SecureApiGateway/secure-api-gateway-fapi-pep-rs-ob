@@ -138,7 +138,7 @@ public class ApiClient {
     private final ApiClientOrganisation organisation;
 
     /**
-     * The roles allowed by this client
+     * The roles allowed to be performed by this apiClient.
      */
     private final List<String> roles;
 

@@ -47,18 +47,6 @@
           }
         },
         {
-          "comment": "Ensure client certificate includes PISP role",
-          "name": "CertificateRoleCheck",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CertificateRoleCheck.groovy",
-            "args": {
-              "routeArgRole": "PISP"
-            }
-          }
-        },
-        {
           "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
@@ -99,6 +87,18 @@
           }
         },
         "FetchApiClientResourcesChain",
+        {
+          "comment": "Ensure ApiClient includesPISP role",
+          "name": "ApiClientRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ApiClientRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "PISP"
+            }
+          }
+        },
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",

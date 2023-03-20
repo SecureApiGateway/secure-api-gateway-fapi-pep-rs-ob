@@ -36,18 +36,6 @@
           }
         },
         {
-          "comment": "Make sure client certificate includes AISP role",
-          "name": "CertificateRoleCheck",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CertificateRoleCheck.groovy",
-            "args": {
-              "routeArgRole": "AISP"
-            }
-          }
-        },
-        {
           "comment": "Extract client certificate thumbprint for cert bound access tokens",
           "name": "CertificateThumbprintFilter-1",
           "type": "CertificateThumbprintFilter",
@@ -90,6 +78,18 @@
           }
         },
         "FetchApiClientResourcesChain",
+        {
+          "comment": "Make sure client certificate includes AISP role",
+          "name": "ApiClientRoleCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ApiClientRoleCheck.groovy",
+            "args": {
+              "routeArgRole": "AISP"
+            }
+          }
+        },
         {
           "comment": "Check grant type",
           "name": "Grant Type Verifier",

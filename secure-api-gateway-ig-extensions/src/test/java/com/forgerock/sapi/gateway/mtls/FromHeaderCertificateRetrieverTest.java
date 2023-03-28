@@ -68,7 +68,7 @@ class FromHeaderCertificateRetrieverTest {
         final CertificateException certificateException = assertThrows(CertificateException.class,
                 () -> headerCertificateRetrievesr.retrieveCertificate(new RootContext("test"), requestWithNoHeader));
 
-        assertEquals("No client cert could be found for header: clientCertHeader", certificateException.getMessage());
+        assertEquals("Client mTLS certificate not provided", certificateException.getMessage());
     }
 
     @Test

@@ -263,10 +263,11 @@ class TokenEndpointTransportCertValidationFilterTest {
         }
 
         private void validateResponseIsBadRequest(Response response, String expectedErrorMsg) {
-            assertEquals(Status.BAD_REQUEST, response.getStatus());
+            assertEquals(Status.UNAUTHORIZED, response.getStatus());
             try {
-                final Object responseJson = response.getEntity().getJson();
-                assertEquals(expectedErrorMsg, json(responseJson).get("error_description").asString());
+                final JsonValue jsonResponse = json(response.getEntity().getJson());
+                assertEquals(expectedErrorMsg, jsonResponse.get("error_description").asString());
+                assertEquals("invalid_client", jsonResponse.get("error").asString());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

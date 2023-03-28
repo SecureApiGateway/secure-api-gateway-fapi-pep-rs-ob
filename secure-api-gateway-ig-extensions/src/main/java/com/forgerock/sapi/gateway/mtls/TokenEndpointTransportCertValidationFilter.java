@@ -15,6 +15,9 @@
  */
 package com.forgerock.sapi.gateway.mtls;
 
+import static org.forgerock.json.JsonValue.field;
+import static org.forgerock.json.JsonValue.json;
+import static org.forgerock.json.JsonValue.object;
 import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
 import java.security.cert.CertificateException;
@@ -133,7 +136,7 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
              clientCertificate = certificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException e) {
             logger.error("Failed to resolve client mtls certificate", e);
-            return Promises.newResultPromise(TransportCertValidationFilter.createErrorResponse(e.getMessage()));
+            return Promises.newResultPromise(createErrorResponse(e.getMessage()));
         }
 
         // Defer cert validation until the response path, then we know that the client authenticated successfully
@@ -181,7 +184,7 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
                     transportCertValidator.validate(clientCertificate, jwkSet);
                 } catch (CertificateException ce) {
                     logger.error("Failed to validate that the supplied client certificate", ce);
-                    return TransportCertValidationFilter.createErrorResponse(ce.getMessage());
+                    return createErrorResponse(ce.getMessage());
                 }
                 // Successfully validated the client's cert, allow the original response to continue along the filter chain.
                 logger.debug("Transport cert validated successfully");
@@ -191,6 +194,17 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
                 return new Response(Status.INTERNAL_SERVER_ERROR);
             });
         };
+    }
+
+    /**
+     * Creates an error response conforming to spec: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+     *
+     * @param message String error message to use in the error_description response field
+     * @return Response object communicating an error as per the spec
+     */
+    private Response createErrorResponse(String message) {
+        return new Response(Status.UNAUTHORIZED).setEntity(json(object(field("error", "invalid_client"),
+                                                                       field("error_description", message))));
     }
 
     String getClientIdFromAccessToken(Object jsonValue) {

@@ -80,8 +80,7 @@ public class TransportCertValidationFilter implements Filter {
         this.transportCertValidator = transportCertValidator;
     }
 
-    // FIXME
-    static Response createErrorResponse(String message) {
+    private Response createErrorResponse(String message) {
         return new Response(Status.BAD_REQUEST).setEntity(json(object(field("error_description", message))));
     }
 

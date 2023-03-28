@@ -54,7 +54,7 @@ public class FromHeaderCertificateRetriever implements CertificateRetriever {
         final String headerValue = request.getHeaders().getFirst(certificateHeaderName);
         if (headerValue == null) {
             logger.debug("({}) No client cert could be found for header: {}", fapInteractionId, certificateHeaderName);
-            throw new CertificateException("No client cert could be found for header: " + certificateHeaderName);
+            throw new CertificateException("Client mTLS certificate not provided");
         }
         final String certPem;
         try {

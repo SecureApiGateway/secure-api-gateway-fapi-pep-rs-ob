@@ -43,7 +43,8 @@ class SoftwareStatementBuilderTest {
 
     private static final String ISSUER = "SSA_Issuer";
     private static final String ORG_ID = "Acme Inc.";
-    private static final String SOFTWARE_ID ="Acme App";
+    private static final String SOFTWARE_ID ="1234567890";
+    private static final String SOFTWARE_CLIENT_NAME = "Acme App";
     private static final String JWKS_URI = "https://jwks.com";
 
     public static final String TX_ID = "tx_id";
@@ -70,6 +71,7 @@ class SoftwareStatementBuilderTest {
         assertThat(softwareStatement).isNotNull();
         assertThat(softwareStatement.getOrgId()).isEqualTo(ORG_ID);
         assertThat(softwareStatement.getSoftwareId()).isEqualTo(SOFTWARE_ID);
+        assertThat(softwareStatement.getClientName()).isEqualTo(SOFTWARE_CLIENT_NAME);
         assertThat(softwareStatement.hasJwksUri()).isTrue();
         assertThat(softwareStatement.getJwksUri()).isEqualTo(new URL(JWKS_URI));
     }
@@ -87,6 +89,7 @@ class SoftwareStatementBuilderTest {
         assertThat(softwareStatement).isNotNull();
         assertThat(softwareStatement.getOrgId()).isEqualTo(ORG_ID);
         assertThat(softwareStatement.getSoftwareId()).isEqualTo(SOFTWARE_ID);
+        assertThat(softwareStatement.getClientName()).isEqualTo(SOFTWARE_CLIENT_NAME);
         assertThat(softwareStatement.hasJwksUri()).isFalse();
         JWKSet expectedJWkSet = JWKSet.parse(DCRTestHelpers.JWKS_JSON);
         assertThat(softwareStatement.getJwksSet()).isEqualTo(expectedJWkSet);
@@ -159,6 +162,23 @@ class SoftwareStatementBuilderTest {
         String ssaIssuer = (String)ssaClaims.get("iss");
         TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
         ssaClaims.remove(trustedDirectory.getSoftwareStatementSoftwareIdClaimName());
+        String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
+
+        // When
+        DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
+                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
+    }
+
+    @Test
+    void failNoSoftwareClientName_buildSoftwareStatement() {
+        // Given
+        Map<String, Object> ssaClaims = SoftwareStatementTestFactory.getValidJwksBasedSsaClaims(Map.of());
+        String ssaIssuer = (String)ssaClaims.get("iss");
+        TrustedDirectory trustedDirectory = trustedDirectoryService.getTrustedDirectoryConfiguration(ssaIssuer);
+        ssaClaims.remove(trustedDirectory.getSoftwareStatementClientNameClaimName());
         String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When

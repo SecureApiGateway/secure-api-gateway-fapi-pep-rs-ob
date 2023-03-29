@@ -78,6 +78,11 @@ public class TrustedDirectoryTestFactory {
         public String getSoftwareStatementRolesClaimName() {
             return "software_roles";
         }
+
+        @Override
+        public String getSoftwareStatementClientNameClaimName() {
+            return "software_client_name";
+        }
     };
 
     private static TrustedDirectory jwksBasedTrustedDirectory = new TrustedDirectory() {
@@ -124,6 +129,11 @@ public class TrustedDirectoryTestFactory {
         @Override
         public String getSoftwareStatementRolesClaimName() {
             return "software_roles";
+        }
+
+        @Override
+        public String getSoftwareStatementClientNameClaimName() {
+            return "software_client_name";
         }
     };
 

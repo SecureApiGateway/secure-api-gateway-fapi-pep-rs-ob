@@ -27,7 +27,8 @@ import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory
 
 public class SoftwareStatementTestFactory {
     private static final String ORG_ID = "Acme Inc.";
-    private static final String SOFTWARE_ID ="Acme App";
+    private static final String SOFTWARE_ID ="1234567890";
+    private static final String SOFTWARE_CLIENT_NAME = "Acme App";
     private static final String JWKS_URI = "https://jwks.com";
     private static final JsonValue JWKS_SET;
     private static final List<String> REDIRECT_URIS =
@@ -47,6 +48,7 @@ public class SoftwareStatementTestFactory {
         claims.put(directory.getSoftwareStatementJwksUriClaimName(), JWKS_URI);
         claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
         claims.put(directory.getSoftwareStatementRolesClaimName(), ROLES);
+        claims.put(directory.getSoftwareStatementClientNameClaimName(), SOFTWARE_CLIENT_NAME);
         claims.putAll(overrideSsaClaims);
         return claims;
     };
@@ -61,6 +63,7 @@ public class SoftwareStatementTestFactory {
         claims.put(directory.getSoftwareStatementJwksClaimName(), JWKS_SET.getObject());
         claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
         claims.put(directory.getSoftwareStatementRolesClaimName(), ROLES);
+        claims.put(directory.getSoftwareStatementClientNameClaimName(), SOFTWARE_CLIENT_NAME);
         claims.putAll(overrideSsaClaims);
         return claims;
     }

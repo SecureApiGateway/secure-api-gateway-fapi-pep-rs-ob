@@ -94,4 +94,9 @@ public interface TrustedDirectory {
      * @return the name of the claim in the software statement that holds the roles allocated to this software statement
      */
     String getSoftwareStatementRolesClaimName();
+
+    /**
+     * @return the name of the claim in the software statement that holds the name of the software client
+     */
+    String getSoftwareStatementClientNameClaimName();
 }

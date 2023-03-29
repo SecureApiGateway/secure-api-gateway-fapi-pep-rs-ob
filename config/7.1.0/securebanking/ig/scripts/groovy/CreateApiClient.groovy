@@ -161,7 +161,7 @@ def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
   def apiClientIdmObj = [
           "_id"           : oauth2ClientId,
           "id"            : softwareStatement.getSoftwareId(),
-          "name"          : softwareStatement.getSoftwareId(),
+          "name"          : softwareStatement.getClientName(),
           "ssa"           : softwareStatement.getB64EncodedJwtString(),
           "roles"         : softwareStatement.getRoles(),
           "oauth2ClientId": oauth2ClientId,

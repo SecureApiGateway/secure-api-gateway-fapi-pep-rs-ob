@@ -53,7 +53,9 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
 
     final static String softwareStatementRedirectUriClaimName = "software_redirect_uris";
 
-    final static String softwareStatementRolesClaimName = "software_roles";
+    static final String softwareStatementRolesClaimName = "software_roles";
+
+    static final String softwareStatementClientNameClaimName = "software_client_name";
 
     static {
         try {
@@ -106,5 +108,10 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
     @Override
     public String getSoftwareStatementRolesClaimName() {
         return softwareStatementRolesClaimName;
+    }
+
+    @Override
+    public String getSoftwareStatementClientNameClaimName() {
+        return softwareStatementClientNameClaimName;
     }
 }

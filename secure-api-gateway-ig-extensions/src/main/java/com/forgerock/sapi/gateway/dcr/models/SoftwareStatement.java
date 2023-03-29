@@ -44,6 +44,7 @@ public class SoftwareStatement extends SapiJwt {
     private final URL trustedDirectoryJwksUrl;
     private final String orgId;
     private final String softwareId;
+    private final String clientName;
     private final boolean hasJwksUri;
     private final URL jwksUri;
     private final JWKSet jwksSet;
@@ -59,6 +60,7 @@ public class SoftwareStatement extends SapiJwt {
         super(builder);
         this.orgId = builder.orgId;
         this.softwareId = builder.softwareId;
+        this.clientName = builder.clientName;
         this.hasJwksUri = builder.hasJwksUri;
         this.jwksUri = builder.jwksUri;
         this.jwksSet = builder.jwkSet;
@@ -94,6 +96,13 @@ public class SoftwareStatement extends SapiJwt {
      */
     public String getSoftwareId() {
         return softwareId;
+    }
+
+    /**
+     * @return the name of the software client, this is a human-readable name representing the piece of software that is registered
+     */
+    public String getClientName() {
+        return clientName;
     }
 
     /**
@@ -137,6 +146,7 @@ public class SoftwareStatement extends SapiJwt {
         private TrustedDirectory trustedDirectory;
         private String orgId;
         private String softwareId;
+        private String clientName;
         private boolean hasJwksUri;
         private URL jwksUri;
         private JWKSet jwkSet;
@@ -187,6 +197,7 @@ public class SoftwareStatement extends SapiJwt {
             }
             this.orgId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementOrgIdClaimName());
             this.softwareId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementSoftwareIdClaimName());
+            this.clientName = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementClientNameClaimName());
             this.trustedDirectoryJwksUrl = trustedDirectory.getDirectoryJwksUri();
             this.redirectUris = claimsSet.getRequiredUriListClaim(trustedDirectory.getSoftwareStatementRedirectUrisClaimName());
             this.roles = claimsSet.getRequiredStringListClaim(trustedDirectory.getSoftwareStatementRolesClaimName());

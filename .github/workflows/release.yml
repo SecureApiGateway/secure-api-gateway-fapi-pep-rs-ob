@@ -1,16 +1,56 @@
-name: Publish package to the ForgeRock artifactory
+name: create-release
+run-name: Create release '${{ inputs.release_version_number }}'
+# What it does:
+# - Call release-prepare workflow
+# - Call local repository release-publish-java-and-docker workflow
+# - Call release-publish-draft-and-pr
 on:
-  release:
-    types: [published]
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    name: Deploy release
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.ref }}
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Release notes"
+        required: false
+        type: string
+        default: ''
+      release_version_number:
+        description: "Provide release version number"
+        required: true
+        type: string
 
-      - name: Build Docker Image
-        run: |
-          make docker tag=${{ github.event.release.tag_name }} env="prod" gcr-repo=${{ secrets.RELEASE_REPO }}
+jobs:
+
+  release_prepare: # prepare for a release in scm, creates the tag and release branch with the proper release versions
+    name: Call local release prepare
+    uses: ./.github/workflows/release-prepare.yml
+    with:
+      release_version_number: ${{ inputs.release_version_number }}
+    secrets:
+      FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+      GPG_PRIVATE_KEY_BOT: ${{ secrets.GPG_PRIVATE_KEY_BOT }}
+      GPG_KEY_PASSPHRASE_BOT: ${{ secrets.GPG_KEY_PASSPHRASE_BOT }}
+      GIT_COMMIT_USERNAME_BOT: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
+      GIT_COMMIT_AUTHOR_EMAIL_BOT: ${{ secrets.GIT_COMMIT_AUTHOR_EMAIL_BOT }}
+
+  release_java_and_docker:
+    name: Call local publish java and docker
+    needs: [ release_prepare ]
+    uses: ./.github/workflows/release-publish-java-and-docker.yml
+    with:
+      release_version_number: ${{ inputs.release_version_number }}
+      release_tag_ref: ${{ needs.release_prepare.outputs.release_tag_ref }}
+    secrets:
+      FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+      GCR_CREDENTIALS_JSON: ${{ secrets.GCR_CREDENTIALS_JSON }}
+      GCR_RELEASE_REPO: ${{ secrets.GCR_RELEASE_REPO }}
+
+  release_draft_and_pr:
+    name: Call publish draft and PR
+    needs: [ release_prepare, release_java_and_docker ]
+    uses: SecureApiGateway/secure-api-gateway-parent/.github/workflows/release-publish-draft-and-pr.yml@master
+    with:
+      release_version_number: ${{ inputs.release_version_number }}
+      release_branch_ref: ${{ needs.release_prepare.outputs.release_branch_ref }}
+      release_tag_ref: ${{ needs.release_prepare.outputs.release_tag_ref }}
+      release_notes: ${{ inputs.notes }}

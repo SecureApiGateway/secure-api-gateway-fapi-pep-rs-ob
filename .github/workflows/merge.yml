@@ -1,8 +1,11 @@
-name: merge
+name: merge-master
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    paths-ignore:
+      - README.md
 
 env:
   SERVICE_NAME: ig
@@ -15,9 +18,60 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # Java version and maven settings with protected repository id
+      - uses: actions/setup-java@v3
+        name: set java and maven cache with protected repository
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          architecture: x64
+          cache: 'maven'
+          server-id: forgerock-private-releases # protected repo id to get the protected dependencies
+          server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
+
+      - name: Get version
+        id: get_version
+        run: |
+          echo "VERSION=$( mvn help:evaluate -Dexpression=project.version -q -DforceStdout )" >> $GITHUB_ENV
+          echo "MAVEN_SERVER_COMMUNITY=maven.forgerock.org-community" >> $GITHUB_ENV
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      - name: Context forgerock maven community repository
+        if: contains( env.VERSION, 'SNAPSHOT')
+        run: |
+          echo "MAVEN_SERVER_COMMUNITY=maven.forgerock.org-community-snapshots" >> $GITHUB_ENV
+
+      - name: Build maven
+        run: |
+          mvn clean install
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      # Override maven settings
+      - uses: actions/setup-java@v3
+        name: set java and maven cache with protected repository
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          architecture: x64
+          cache: 'maven'
+          server-id: ${{ env.MAVEN_SERVER_COMMUNITY }} # community repo to publish the java artifact
+          server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
+
+      - name: Deploy artifact package
+        run: mvn -B deploy -DskipTests -Ddockerfile.skip
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
       - uses: google-github-actions/auth@v0
         with:
-          credentials_json: ${{ secrets.GCR_KEY }}
+          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
@@ -26,33 +80,11 @@ jobs:
       - run: |
           gcloud auth configure-docker
 
-      - name: Setup defaults action java and maven properties
-        uses: actions/setup-java@v1
-        with:
-          java-version: "17"
-          architecture: x64
-          server-id: forgerock-private-releases # Value of the distributionManagement/repository/id field of the pom.xml
-          server-username: MAVEN_USERNAME # env variable for username in deploy
-          server-password: MAVEN_CENTRAL_TOKEN # env variable for token in deploy
-
-      - name: Cache Maven packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven2-${{ hashFiles('**/pom.xml') }}
-
-      - name: Build maven
-        run: |
-          mvn clean install
-        env:
-          MAVEN_USERNAME: ${{ secrets.FR_ARTIFACTORY_USER }}
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.FR_ARTIFACTORY_TOKEN }}
-
       - name: docker build
         run: |
-          make build-docker-ig tag=${{ env.GIT_SHA_SHORT }} env="prod"
-          docker tag eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
-          docker push eu.gcr.io/${{ secrets.DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
+          make docker tag=${{ env.GIT_SHA_SHORT }}
+          docker tag eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
+          docker push --all-tags eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}
 
       - name: 'run functional tests'
         uses: codefresh-io/codefresh-pipeline-runner@master

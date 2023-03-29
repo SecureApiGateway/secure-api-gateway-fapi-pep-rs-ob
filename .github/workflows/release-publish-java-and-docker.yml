@@ -1,0 +1,109 @@
+name: release-publish-java-and-docker
+run-name: Java and docker Release '${{ inputs.release_version_number }}'
+on:
+  workflow_call:
+    inputs:
+      release_version_number:
+        required: true
+        type: string
+      release_tag_ref:
+        required: true
+        type: string
+      java_version:
+        required: false
+        type: string
+        default: '17'
+      SERVICE_NAME:
+        required: false
+        type: string
+        default: 'gate/ig'
+    secrets:
+      FR_ARTIFACTORY_USER:
+        required: true
+      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD:
+        required: true
+      GCR_CREDENTIALS_JSON:
+        required: true
+      GCR_RELEASE_REPO:
+        required: true
+
+jobs:
+  build_deploy_java_and_docker:
+    name: Build and deploy java artifact and docker
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v3
+        id: checkout_tag
+        name: checkout release tag
+        with:
+          ref: ${{ inputs.release_tag_ref }} # branch created by maven release plugin prepare goal
+
+      # Java version and maven settings with protected repository id
+      - uses: actions/setup-java@v3
+        id: set_java_maven
+        name: set java and maven cache
+        with:
+          distribution: 'adopt'
+          java-version: ${{ inputs.java_version }}
+          architecture: x64
+          cache: 'maven'
+          server-id: forgerock-private-releases # protected repo id to get the protected dependencies
+          server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
+
+      - name: Build maven
+        run: |
+          mvn clean install
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      # Override maven settings
+      - uses: actions/setup-java@v3
+        id: override_maven_settings
+        name: set java and maven cache with protected repository
+        with:
+          distribution: 'adopt'
+          java-version: ${{ inputs.java_version }}
+          architecture: x64
+          cache: 'maven'
+          server-id: maven.forgerock.org-community # community repo to publish the java artifact
+          server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
+
+      # Deploy the java artifact
+      - name: Deploy release
+        id: deploy
+        run: |
+          mvn -B deploy -DskipTests -Ddockerfile.skip
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      - uses: google-github-actions/auth@v0
+        id: gcloud_auth
+        with:
+          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
+
+      - name: Set up Cloud SDK
+        id: gcloud_sdk
+        uses: google-github-actions/setup-gcloud@v0
+
+      - name: Set up docker auth
+        id: gcloud_docker_auth
+        run: |
+          gcloud auth configure-docker
+
+      - name: prepare context
+        id: prepare_context
+        run: |
+          echo "GIT_SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        id: build_docker
+        run: |
+          make docker tag=${{ env.GIT_SHA_SHORT }} repo=${{ secrets.GCR_RELEASE_REPO }}
+          docker tag eu.gcr.io/${{ secrets.GCR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.GCR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:latest
+          docker tag eu.gcr.io/${{ secrets.GCR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.GCR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ inputs.release_version_number }}
+          docker push --all-tags eu.gcr.io/${{ secrets.GCR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}

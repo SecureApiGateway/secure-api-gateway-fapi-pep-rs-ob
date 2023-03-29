@@ -18,9 +18,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # set java and cache
+      - uses: actions/setup-java@v3
+        id: set_java_maven
+        name: set java and maven cache
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          architecture: x64
+          cache: 'maven'
+          server-id: forgerock-private-releases # protected release repo
+          server-username: FR_ARTIFACTORY_USER # env variable for username to authentication protected repo
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable encrypted password to authentication protected repo
+
       - uses: google-github-actions/auth@v0
         with:
-          credentials_json: ${{ secrets.GCR_KEY }}
+          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
@@ -29,34 +42,19 @@ jobs:
       - run: |
           gcloud auth configure-docker
 
-      - name: Setup defaults action java and maven properties
-        uses: actions/setup-java@v1
-        with:
-          java-version: "17"
-          architecture: x64
-          server-id: forgerock-private-releases # Value of the distributionManagement/repository/id field of the pom.xml
-          server-username: MAVEN_USERNAME # env variable for username in deploy
-          server-password: MAVEN_CENTRAL_TOKEN # env variable for token in deploy
-
-      - name: Cache Maven packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven2-${{ hashFiles('**/pom.xml') }}
-
       - name: Build maven
         run: |
           mvn clean install
         env:
-          MAVEN_USERNAME: ${{ secrets.FR_ARTIFACTORY_USER }}
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.FR_ARTIFACTORY_TOKEN }}
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
       - name: Build Docker Image
         run: |
           # Create development mode docker image
-          make build-docker-ig tag=$PR_NUMBER
+          make docker tag=$PR_NUMBER env="dev"
           # Create production mode docker image
-          make build-docker-ig tag="$PR_NUMBER-prod" env="prod"
+          make docker tag="$PR_NUMBER-prod"
 
       - name: Create lowercase Github Username
         id: toLowerCase

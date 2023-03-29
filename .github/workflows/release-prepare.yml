@@ -1,0 +1,120 @@
+name: release-prepare
+run-name: Prepare Release '${{ inputs.release_version_number }}'
+on:
+  workflow_call:
+    inputs:
+      release_version_number:
+        required: true
+        type: string
+      java_version:
+        required: false
+        type: string
+        default: '14'
+    outputs:
+      release_branch_ref:
+        description: "Release branch"
+        value: ${{ jobs.release_prepare.outputs.release_branch_ref }}
+      release_tag_ref:
+        description: "Release tag"
+        value: ${{ jobs.release_prepare.outputs.release_tag_ref }}
+    secrets:
+      GPG_PRIVATE_KEY_BOT:
+        required: true
+      GPG_KEY_PASSPHRASE_BOT:
+        required: true
+      GIT_COMMIT_USERNAME_BOT:
+        required: true
+      GIT_COMMIT_AUTHOR_EMAIL_BOT:
+        required: true
+      FR_ARTIFACTORY_USER:
+        required: true
+      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD:
+        required: true
+env:
+  # Set the environment with secrets provided by the caller (secrets section)
+  GIT_AUTHOR_NAME: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
+  GIT_AUTHOR_EMAIL: ${{ secrets.GIT_COMMIT_AUTHOR_EMAIL_BOT }}
+  GIT_COMMITTER_NAME: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
+  GIT_COMMITTER_EMAIL: ${{ secrets.GIT_COMMIT_AUTHOR_EMAIL_BOT }}
+
+jobs:
+  release_prepare:
+    name: Release prepare
+    runs-on: ubuntu-latest
+    # Map the job outputs to step outputs
+    outputs:
+      release_branch_ref: ${{ steps.create_release_context.outputs.release_branch }}
+      release_tag_ref: ${{ steps.create_release_context.outputs.release_tag }}
+
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v3
+        id: checkout_master
+        name: checkout master
+
+      # set java and cache
+      - uses: actions/setup-java@v3
+        id: set_java_maven
+        name: set java and maven cache
+        with:
+          distribution: 'adopt'
+          java-version: ${{ inputs.java_version }}
+          architecture: x64
+          cache: 'maven'
+          server-id: forgerock-private-releases # protected repo id to get the protected dependencies
+          server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
+
+      # https://github.com/crazy-max/ghaction-import-gpg
+      # https://httgp.com/signing-commits-in-github-actions/
+      # Prepare the environment to sign the commits
+      - name: Import GPG key
+        id: gpg
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY_BOT }}
+          passphrase: ${{ secrets.GPG_KEY_PASSPHRASE_BOT }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      # Create branch context variable
+      - name: Create release context
+        id: create_release_context
+        run: |
+          echo "release_branch=release/${{ inputs.release_version_number }}" >> $GITHUB_OUTPUT
+          echo "release_tag=v${{ inputs.release_version_number }}" >> $GITHUB_OUTPUT
+
+      # create the release branch with release version number provided
+      - name: create release branch
+        id: create_release_branch
+        run: |
+          echo "Release branch: ${{ steps.create_release_context.outputs.release_branch }}"
+          git checkout -b ${{ steps.create_release_context.outputs.release_branch }}
+
+      # push the branch to remote repository
+      - name: push branch
+        id: push_branch
+        run: |
+          git push -f --set-upstream origin ${{ steps.create_release_context.outputs.release_branch }}
+
+      # Release prepare
+      # - Change the version in the POM from x-SNAPSHOT to the new version provided for the release_version_number input
+      # - Transform the SCM information in the POM to include the final destination of the tag
+      # - Commit the modified POM
+      # - Tag the code in the SCM with a version name (v${{ inputs.release_version_number }})
+      # See in the pom file the configuration '<tagNameFormat>v@{project.version}</tagNameFormat>'
+      # - Bump the version in the POM to a new value, the next development iteration (y-SNAPSHOT)
+      # - Commit the modified POM
+      - name: release prepare
+        id: maven_release
+        run: |
+          mvn -B release:clean release:prepare -DreleaseVersion=${{ inputs.release_version_number }}
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      # pushing changes done by the release prepare step (development snapshot version)
+      - name: push development snapshot version
+        id: push
+        run: |
+          git push

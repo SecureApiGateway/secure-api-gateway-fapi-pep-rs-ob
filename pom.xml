@@ -55,7 +55,7 @@
         <mycila-license-maven-plugin.version>4.2</mycila-license-maven-plugin.version>
         <maven-surfire-plugin.version>3.0.0</maven-surfire-plugin.version>
         <legal.path.header>legal/LICENSE-HEADER.txt</legal.path.header>
-        <nimbus-jose.version>9.26</nimbus-jose.version>
+        <nimbus-jose.version>9.31</nimbus-jose.version>
     </properties>
     <inceptionYear>2020</inceptionYear>
     <dependencyManagement>

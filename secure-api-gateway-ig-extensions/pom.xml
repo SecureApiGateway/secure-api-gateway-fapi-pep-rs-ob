@@ -31,6 +31,7 @@
 
     <properties>
         <legal.path.header>../legal/LICENSE-HEADER.txt</legal.path.header>
+
     </properties>
 
     <dependencies>
@@ -57,7 +58,6 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-            <version>9.26</version>
             <scope>provided</scope>
         </dependency>
 

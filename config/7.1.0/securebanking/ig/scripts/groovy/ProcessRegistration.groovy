@@ -317,8 +317,8 @@ private void validateRegistrationRedirectUris(RegistrationRequest registrationRe
  * <a href="https://openbankinguk.github.io/dcr-docs-pub/v3.3/dynamic-client-registration.html#obclientregistrationrequest1">
  * data dictionary for OBClientRegistrationRequest1 </a>
  * it is stated that:
- * "scope 	1..1 	scope 	Scopes the client is asking for (if not specified, default scopes are assigned by the AS).
- * This consists of a list scopes separated by spaces. 	String(256)"
+ * "scope     1..1     scope     Scopes the client is asking for (if not specified, default scopes are assigned by the AS).
+ * This consists of a list scopes separated by spaces.     String(256)"
  *
  * In the Open Banking issued SSA we can find no scopes defined, however, we do have 'software_roles' which is an array
  * of strings containing AISP, PISP, or a subset thereof, or ASPSP. We must check that the scopes requested are allowed

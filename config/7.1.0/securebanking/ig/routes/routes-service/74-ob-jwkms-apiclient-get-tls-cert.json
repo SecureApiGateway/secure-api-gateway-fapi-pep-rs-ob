@@ -8,7 +8,10 @@
     "type": "ScriptableHandler",
     "config": {
       "type": "application/x-groovy",
-      "file": "JwkmsGetTlsCert.groovy"
+      "file": "JwkmsGetTlsCert.groovy",
+      "args": {
+        "keyType": "tls"
+      }
     }
   }
 }

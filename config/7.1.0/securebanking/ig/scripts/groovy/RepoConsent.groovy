@@ -47,52 +47,14 @@ def buildPatchRequest(incomingRequest, intentType) {
         ]);
     }
 
-    // Payments Intent: Update Debtor account and accountId
-    if (incomingRequest.data && incomingRequest.data.debtorAccount) {
-        if(incomingRequest.data.debtorAccount.accounts[0]) {
-            if(incomingRequest.data.debtorAccount.accounts[0].schemeName) {
-                body.push([
-
-                        "operation": "add",
-                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SchemeName",
-                        "value"    : incomingRequest.data.debtorAccount.accounts[0].schemeName
-                ])
-            }
-            if(incomingRequest.data.debtorAccount.accounts[0].identification) {
-                body.push([
-
-                        "operation": "add",
-                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Identification",
-                        "value"    : incomingRequest.data.debtorAccount.accounts[0].identification
-                ])
-            }
-            if(incomingRequest.data.debtorAccount.accounts[0].name) {
-                body.push([
-
-                        "operation": "add",
-                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/Name",
-                        "value"    : incomingRequest.data.debtorAccount.accounts[0].name
-                ])
-            }
-            if(incomingRequest.data.debtorAccount.accounts[0].secondaryIdentification) {
-                body.push([
-
-                        "operation": "add",
-                        "field"    : "OBIntentObject/Data/Initiation/DebtorAccount/SecondaryIdentification",
-                        "value"    : incomingRequest.data.debtorAccount.accounts[0].secondaryIdentification
-                ])
-            }
-        }
-
-        if(incomingRequest.data.debtorAccount.accountId) {
-            body.push([
-
-                    "operation": "add",
-                    "field"    : "AccountId",
-                    "value"    : incomingRequest.data.debtorAccount.accountId
-            ])
-        }
+    if(incomingRequest.accountId) {
+        body.push([
+                "operation": "add",
+                "field"    : "AccountId",
+                "value"    : incomingRequest.accountId
+        ])
     }
+
     logger.debug(SCRIPT_NAME + "Patch request body:\n" + body + "\n")
 
     return body

@@ -12,6 +12,16 @@ logger.debug(SCRIPT_NAME + "Running...")
 
 def intentId = JsonValue.json(Json.readJson(contexts.oauth2.accessToken.info.claims)).get("id_token").get("openbanking_intent_id").get("value").asString()
 logger.info(SCRIPT_NAME + "Intent Id value: " + intentId)
+
+if (!intentId) {
+    Response response = new Response(Status.BAD_REQUEST)
+    response.headers['Content-Type'] = "application/json"
+    String message = 'Cannot parse openbanking_intent_id claim from the provided access token'
+    logger.error(SCRIPT_NAME + message)
+    response.entity = "{ \"error\":\"" + message + "\"}"
+    return response
+}
+
 attributes.put('openbanking_intent_id', intentId)
 
 next.handle(context, request)

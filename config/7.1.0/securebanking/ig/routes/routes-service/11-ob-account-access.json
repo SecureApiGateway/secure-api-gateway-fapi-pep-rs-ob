@@ -111,6 +111,15 @@
           }
         },
         {
+          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
+          "name": "SaveIntentIdOnAttributesContext",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SaveIntentIdOnAttributesContext.groovy"
+          }
+        },
+        {
           "comment": "Check consent authorised via AM authz policy",
           "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
           "type": "PolicyEnforcementFilter",
@@ -132,7 +141,7 @@
                 "${attributes.tppId}"
               ],
               "intent_id": [
-                "${toJson(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value}"
+                "${attributes.openbanking_intent_id}"
               ]
             },
             "amService": "AmService-OBIE",
@@ -168,7 +177,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
+              "consentIdLocator": "${attributes.openbanking_intent_id}",
               "role": "AISP",
               "event": "EXEC"
             }

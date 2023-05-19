@@ -120,6 +120,24 @@
           }
         },
         {
+          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
+          "name": "SaveIntentIdOnAttributesContext",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SaveIntentIdOnAttributesContext.groovy"
+          }
+        },
+        {
+          "comment": "Check the consent submitted to match the consent from the access token",
+          "name": "ConsentIdValidator",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ConsentIdValidator.groovy"
+          }
+        },
+        {
           "comment": "Check incoming detached signature and save to route state. If the detached signature is for an unencoded payload, validation performed as well",
           "name": "ProcessDetachedSig",
           "type": "ScriptableFilter",
@@ -160,15 +178,6 @@
           "config": {
             "type": "application/x-groovy",
             "file": "EncodeInitiation.groovy"
-          }
-        },
-        {
-          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
-          "name": "SaveIntentIdOnAttributesContext",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "SaveIntentIdOnAttributesContext.groovy"
           }
         },
         {
@@ -247,7 +256,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "new groovy.json.JsonSlurper().parseText(contexts.oauth2.accessToken.info.claims).id_token.openbanking_intent_id.value",
+              "consentIdLocator": "${attributes.openbanking_intent_id}",
               "role": "PISP",
               "event": "EXEC"
             }

@@ -67,6 +67,14 @@ Map<String, String> getGenericError(Status status, String responseBody) {
     if(responseObj.Code){
       errorCode = responseObj.Errors[0].ErrorCode
       message = responseObj.Errors[0].Message
+      path = responseObj.Errors[0].Path
+      if (path) {
+        return [
+                ErrorCode: errorCode,
+                Message: message,
+                Path: path
+        ]
+      }
     }
     if (responseObj.error) {
       message += " [" + responseObj.error + "]"

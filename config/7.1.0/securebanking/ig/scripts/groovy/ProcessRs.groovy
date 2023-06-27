@@ -84,8 +84,6 @@ next.handle(context, request).thenOnResult(response -> {
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
             value.Links.links.add("DeleteDomesticVRPConsent", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
             value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}");
-            value.Links.links.add("GetDomesticVRPConsentsConsentIdFundsConfirmation", "https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}/funds-confirmation");
-            value.Links.linkValues.add("https://" + request.getHeaders().getFirst('X-Forwarded-Host') + "/rs/open-banking/" + value.Version.asString() + "/pisp/domestic-vrp-consents/{ConsentId}/funds-confirmation");
         }
 
         response.entity = newEntity;

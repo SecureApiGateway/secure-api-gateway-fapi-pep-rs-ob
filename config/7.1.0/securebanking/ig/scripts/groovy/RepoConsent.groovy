@@ -79,7 +79,8 @@ def convertIDMResponse(intentResponseObject, intentType) {
                     "OBIntentObject"       : intentResponseObject.OBIntentObject,
                     "resourceOwnerUsername": intentResponseObject.user ? intentResponseObject.user._id : null,
                     "oauth2ClientId"       : intentResponseObject.apiClient.oauth2ClientId,
-                    "oauth2ClientName"     : intentResponseObject.apiClient.name
+                    "oauth2ClientName"     : intentResponseObject.apiClient.name,
+                    "accountId"            : intentResponseObject.AccountId
             ]
     }
 
@@ -153,7 +154,7 @@ if(intentType){
     return response
 }
 
-def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,account,apiClient/oauth2ClientId,apiClient/name";
+def requestUri = routeArgIdmBaseUri + "/openidm/managed/" + intentObject + "/" + intentId + "?_fields=_id,OBIntentObject,user/_id,accounts,apiClient/oauth2ClientId,apiClient/name,AccountId";
 
 if (request.getMethod() == "GET") {
     Request intentRequest = new Request();

@@ -188,19 +188,6 @@
           }
         },
         {
-          "comment": "Adjust URL for downstream resource server",
-          "name": "TranslateDomesticPaymentFundsConfirmationResource",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "TranslatePaymentFundsConfirmationResource.groovy",
-            "args": {
-              "routeArgAmountQueryParameter": "amount",
-              "routeArgVersionQueryParameter": "version"
-            }
-          }
-        },
-        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {

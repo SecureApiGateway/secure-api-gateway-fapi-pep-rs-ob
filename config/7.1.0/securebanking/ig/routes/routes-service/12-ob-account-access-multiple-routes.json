@@ -120,56 +120,7 @@
           }
         },
         {
-          "comment": "Check consent authorised via AM authz policy",
-          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type": "PolicyEnforcementFilter",
-          "config": {
-            "pepRealm": "/&{am.realm}",
-            "application": "Open Banking",
-            "claimsSubject": {
-              "sub": "${contexts.oauth2.accessToken.info.sub}",
-              "intent_type": "aisp"
-            },
-            "environment": {
-              "sub": [
-                "${contexts.oauth2.accessToken.info.sub}"
-              ],
-              "tpp_client_id": [
-                "${contexts.oauth2.accessToken.info.aud}"
-              ],
-              "tpp_cert_id": [
-                "${attributes.tppId}"
-              ],
-              "intent_id": [
-                "${attributes.openbanking_intent_id}"
-              ]
-            },
-            "amService": "AmService-OBIE",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnPolicyValidationError.groovy"
-              }
-            }
-          }
-        },
-        {
-          "comment": "Check permissions and accounts in authz response from AM",
-          "name": "TranslateAccountsResource",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "TranslateAccountsResource.groovy",
-            "args": {
-              "routeArgUserResourceOwnerHeader": "x-ob-user-id",
-              "routeArgAccountIdsHeader": "x-ob-account-ids",
-              "routeArgPermissionsHeader": "x-ob-permissions"
-            }
-          }
-        },
-        {
-          "comment": "Prepare consent audit trailß",
+          "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -192,14 +143,22 @@
             "remove": [
               "host",
               "X-Forwarded-Host",
-              "X-Forwarded-Prefix"
+              "X-Forwarded-Prefix",
+              "x-api-client-id",
+              "x-intent-id"
             ],
             "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
               ],
               "X-Forwarded-Prefix": [
                 "/rs"
+              ],
+              "x-intent-id": [
+                "${attributes.openbanking_intent_id}"
               ]
             }
           }

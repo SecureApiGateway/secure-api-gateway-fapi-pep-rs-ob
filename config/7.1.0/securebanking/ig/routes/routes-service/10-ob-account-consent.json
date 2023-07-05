@@ -2,7 +2,7 @@
   "comment": "Open Banking Account Access Consents",
   "name": "10 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{identity.platform.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
   "handler": {
     "type": "Chain",
@@ -91,20 +91,6 @@
           }
         },
         {
-          "commment": "Prepare account consent for IDM - change request URL and add CREST action",
-          "name": "ProcessAccountConsent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessAccountConsent.groovy",
-            "args": {
-              "routeArgObjAccountAccessConsent": "accountAccessIntent",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgConsentIdPrefix": "AAC_"
-            }
-          }
-        },
-        {
           "comment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {
@@ -120,14 +106,49 @@
           }
         },
         {
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
           "comment": "Add Host header for downstream IDM",
-          "name": "HeaderFilter-ChangeHostToIDM",
+          "name": "HeaderFilter-RS",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
             "remove": [
-              "host"
-            ]
+              "host",
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
+            ],
+            "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "X-Forwarded-Host": [
+                "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
+              ]
+            }
           }
         },
         {

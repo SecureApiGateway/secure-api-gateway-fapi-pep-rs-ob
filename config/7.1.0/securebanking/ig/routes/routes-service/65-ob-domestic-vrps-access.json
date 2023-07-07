@@ -151,9 +151,13 @@
             "remove": [
               "host",
               "X-Forwarded-Host",
-              "X-Forwarded-Prefix"
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
             ],
             "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
               ],

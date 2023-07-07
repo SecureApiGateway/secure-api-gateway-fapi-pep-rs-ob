@@ -1,7 +1,7 @@
 {
   "name": "62 - Open Banking RS Domestic VRP Consent",
   "auditService": "AuditService-OB-Route",
-  "baseURI": "https://&{identity.platform.fqdn}",
+  "baseURI": "${urls.rsBaseUri}",
   "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrp-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
@@ -114,58 +114,12 @@
           }
         },
         {
-          "comment": "Check incoming idempotency key header",
-          "name": "ValidateIdempotencyKey",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "clientHandler": "IDMClientHandler",
-            "file": "CheckIdempotencyKey.groovy",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "idempotencyArgFieldToFilter": "IdempotencyKey",
-              "idempotencyArgExpirationFieldToFilter": "IdempotencyKeyExpirationTime",
-              "intentArgObject": "domesticVrpPaymentIntent"
-            }
-          }
-        },
-        {
           "comment": "Check VRPType",
           "name": "VRPTypeVerifier",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "VRPTypeVerifier.groovy"
-          }
-        },
-        {
-          "comment": "Validate debtor account in RS",
-          "other": "ValidateDebtorAccountInRS",
-          "name": "ValidateDebtorAccountInRS",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ValidateDebtorAccountInRS.groovy",
-            "clientHandler": "ForgeRockClientHandler",
-            "args": {
-              "routeArgRsBaseURI": "${urls.rsBaseUri}"
-            }
-          }
-        },
-        {
-          "comment": "Prepare request for IDM",
-          "name": "ProcessPaymentConsent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessPaymentConsent.groovy",
-            "args": {
-              "routeArgObjIntent": "domesticVrpPaymentIntent",
-              "routeArgObIntentObjectType": "OBDomesticVRPConsentResponse",
-              "routeArgObjApiClient": "apiClient",
-              "routeArgConsentIdPrefix": "DVRP_",
-              "routeArgSetConsentStatus": "AwaitingAuthorisation"
-            }
           }
         },
         {
@@ -184,28 +138,49 @@
           }
         },
         {
-          "comment": "Add host header for downstream services",
-          "name": "HeaderFilter-ChangeHostToIDM",
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Add headers required by RS",
+          "name": "HeaderFilter-RS",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
             "remove": [
-              "host"
-            ]
-          }
-        },
-        {
-          "comment": "Add access token to IDM request",
-          "type": "ClientCredentialsOAuth2ClientFilter",
-          "config": {
-            "clientId": "&{ig.client.id}",
-            "clientSecretId": "ig.client.secret",
-            "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
-            "scopes": [
-              "fr:idm:*"
+              "host",
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
             ],
-            "handler": "TokenRequestHandler"
+            "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "X-Forwarded-Host": [
+                "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
+              ]
+            }
           }
         }
       ],

@@ -128,58 +128,6 @@
           }
         },
         {
-          "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
-          "name": "GetResourceOwnerIdFromConsent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "GetResourceOwnerIdFromConsent.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgObjUser": "&{user.object}"
-            }
-          }
-        },
-        {
-          "comment": "Check payment request against authorised consent, via AM policy engine",
-          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type": "PolicyEnforcementFilter",
-          "config": {
-            "pepRealm": "/&{am.realm}",
-            "application": "Open Banking",
-            "claimsSubject": {
-              "sub": "${attributes.resourceOwnerUsername}",
-              "intent_type": "pisp"
-            },
-            "environment": {
-              "sub": [
-                "${contexts.oauth2.accessToken.info.sub}"
-              ],
-              "tpp_client_id": [
-                "${contexts.oauth2.accessToken.info.aud}"
-              ],
-              "tpp_cert_id": [
-                "${attributes.tppId}"
-              ],
-              "intent_id": [
-                "${split(request.uri.path, '/')[5]}"
-              ],
-              "request_method": [
-                "${request.method}"
-              ]
-            },
-            "amService": "AmService-OBIE",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnPolicyValidationError.groovy"
-              }
-            }
-          }
-        },
-        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
@@ -203,9 +151,13 @@
             "remove": [
               "host",
               "X-Forwarded-Host",
-              "X-Forwarded-Prefix"
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
             ],
             "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
               ],

@@ -1,7 +1,8 @@
 {
   "name": "59 - Open Banking File Payment Consent file submission",
   "auditService": "AuditService-OB-Route",
-  "condition": "${request.method == 'POST' and matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents/.*/file')}",
+  "baseURI": "${urls.rsBaseUri}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents/.*/file')}",
   "handler": {
     "type": "Chain",
     "config": {
@@ -113,45 +114,48 @@
           }
         },
         {
-          "comment": "Check incoming idempotency key header",
-          "name": "ValidateIdempotencyKey",
-          "type": "ScriptableFilter",
+          "comment": "Adjust URL for downstream resource server",
+          "type": "UriPathRewriteFilter",
           "config": {
-            "type": "application/x-groovy",
-            "clientHandler": "IDMClientHandler",
-            "file": "CheckIdempotencyKey.groovy",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "idempotencyArgFieldToFilter": "FileIdempotencyKey",
-              "idempotencyArgExpirationFieldToFilter": "FileIdempotencyKeyExpirationTime",
-              "intentArgObject": "filePaymentsIntent"
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
             }
           }
         },
         {
-          "comment": "Validate file against the consent previously submitted",
-          "name": "Validate File",
-          "type": "ScriptableFilter",
+          "comment": "Add headers required by RS",
+          "name": "HeaderFilter-RS",
+          "type": "HeaderFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "ValidateFileConsent.groovy",
-            "clientHandler": "ForgeRockClientHandler",
-            "args": {
-              "routeArgRsBaseURI": "${urls.rsBaseUri}"
-            }
-          }
-        },
-        {
-          "comment": "Patch IDM with the payment file",
-          "name": "Patch File Consent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "PatchFileConsent.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgObjIntent": "filePaymentsIntent"
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
+            ],
+            "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.sub}"
+              ],
+              "X-Forwarded-Host": [
+                "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
+              ]
             }
           }
         }

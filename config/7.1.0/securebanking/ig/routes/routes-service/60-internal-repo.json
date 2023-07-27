@@ -30,22 +30,6 @@
                 }
               },
               {
-                "comment": "Fetch Open Banking consent from IDM",
-                "condition": "${matches(request.uri.path, '^/repo/consents')}",
-                "handler": {
-                  "type": "ScriptableHandler",
-                  "config": {
-                    "type": "application/x-groovy",
-                    "clientHandler": "IDMClientHandler",
-                    "file": "RepoConsent.groovy",
-                    "args": {
-                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-                      "routeArgObjUser": "&{user.object}"
-                    }
-                  }
-                }
-              },
-              {
                 "comment": "Fetch user information from IDM",
                 "condition": "${matches(request.uri.path, '^/repo/users')}",
                 "handler": {

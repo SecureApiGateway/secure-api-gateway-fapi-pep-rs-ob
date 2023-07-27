@@ -14,19 +14,6 @@
       "filters": [
         "SBATFapiInteractionFilterChain",
         {
-          "comment": "Change the payment intent status to Consumed",
-          "name": "ConsumeThePaymentIntent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ConsumeThePaymentIntent.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}"
-            }
-          }
-        },
-        {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
           "type": "ScriptableFilter",

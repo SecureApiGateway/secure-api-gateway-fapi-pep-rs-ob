@@ -51,7 +51,6 @@ next.handle(context, request).thenOnResult(response -> {
         fapiInfo.put( header, values.firstValue)
     }
 
-
     auditEvent = auditEvent.add('fapiInfo', fapiInfo);
 
     // Send the event

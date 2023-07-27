@@ -151,15 +151,6 @@
           }
         },
         {
-          "comment": "Check Frequency parameter in standing order payload",
-          "name": "CheckFrequencyValue",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "CheckFrequencyValue.groovy"
-          }
-        },
-        {
           "comment": "Adjust URL for downstream resource server",
           "type": "UriPathRewriteFilter",
           "config": {
@@ -190,73 +181,6 @@
           }
         },
         {
-          "comment": "Check payment request against authorised consent, via AM policy engineß",
-          "name": "PolicyEnforcementFilter-OBIE Assets Authorization Filter",
-          "type": "PolicyEnforcementFilter",
-          "config": {
-            "pepRealm": "/&{am.realm}",
-            "application": "Open Banking",
-            "claimsSubject": {
-              "sub": "${contexts.oauth2.accessToken.info.sub}",
-              "intent_type": "pisp"
-            },
-            "environment": {
-              "sub": [
-                "${contexts.oauth2.accessToken.info.sub}"
-              ],
-              "tpp_client_id": [
-                "${contexts.oauth2.accessToken.info.aud}"
-              ],
-              "tpp_cert_id": [
-                "${attributes.tppId}"
-              ],
-              "intent_id": [
-                "${attributes.openbanking_intent_id}"
-              ],
-              "initiation": [
-                "${attributes.initiationRequest}"
-              ],
-              "request_method": [
-                "${request.method}"
-              ]
-            },
-            "amService": "AmService-OBIE",
-            "failureHandler": {
-              "type": "ScriptableHandler",
-              "config": {
-                "type": "application/x-groovy",
-                "file": "ReturnPolicyValidationError.groovy"
-              }
-            }
-          }
-        },
-        {
-          "comment": "Fetch Open Banking consent from IDM to get the resource owner id",
-          "name": "GetResourceOwnerIdFromConsent",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "GetResourceOwnerIdFromConsent.groovy",
-            "clientHandler": "IDMClientHandler",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgObjUser": "&{user.object}"
-            }
-          }
-        },
-        {
-          "comment": "Adjust URL for downstream resource server",
-          "name": "TranslatePaymentResource",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "TranslatePaymentResource.groovy",
-            "args": {
-              "routeArgAccountIdHeader": "x-ob-account-id"
-            }
-          }
-        },
-        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
@@ -280,9 +204,13 @@
             "remove": [
               "host",
               "X-Forwarded-Host",
-              "X-Forwarded-Prefix"
+              "X-Forwarded-Prefix",
+              "x-api-client-id"
             ],
             "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
               ],

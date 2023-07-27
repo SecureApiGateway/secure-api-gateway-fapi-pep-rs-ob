@@ -114,15 +114,6 @@
           }
         },
         {
-          "comment": "Check VRPType",
-          "name": "VRPTypeVerifier",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "VRPTypeVerifier.groovy"
-          }
-        },
-        {
           "comment": "Prepare audit trail for consent",
           "type": "ScriptableFilter",
           "config": {

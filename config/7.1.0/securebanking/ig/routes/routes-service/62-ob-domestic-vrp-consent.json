@@ -184,7 +184,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandlerIdentityPlatform"
+      "handler": "FRReverseProxyHandler"
     }
   }
 }

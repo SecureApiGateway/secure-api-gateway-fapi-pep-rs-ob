@@ -166,7 +166,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandlerIdentityPlatform"
+      "handler": "FRReverseProxyHandler"
     }
   }
 }

@@ -62,7 +62,7 @@
           }
         }
       ],
-      "handler": "SBATReverseProxyHandlerRs"
+      "handler": "FRReverseProxyHandler"
     }
   }
 }

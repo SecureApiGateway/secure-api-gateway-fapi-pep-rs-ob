@@ -64,7 +64,7 @@
           }
         }
       ],
-      "handler": "RcsReverseProxyHandler"
+      "handler": "FRReverseProxyHandler"
     }
   }
 }

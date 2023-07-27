@@ -172,19 +172,8 @@
       }
     },
     {
-      "name": "SBATReverseProxyHandlerIdentityPlatform",
-      "comment": "ReverseProxyHandler for calls to Identity Platform services (AM or IDM)",
-      "type": "Chain",
-      "config": {
-        "filters" : [ 
-          "TransactionIdOutboundFilter"
-       ],
-        "handler" : "ReverseProxyHandler"
-      }
-    },
-    {
-      "name": "SBATReverseProxyHandlerIdentityPlatformNoCapture",
-      "comment": "ReverseProxyHandler for calls to Identity Platform services (AM or IDM), with the capture decorator disabled",
+      "name": "FRReverseProxyHandlerNoCapture",
+      "comment": "ReverseProxyHandler for calls to the FR services, with the capture decorator disabled",
       "type": "Chain",
       "config": {
         "filters" : [
@@ -194,46 +183,14 @@
       }
     },
     {
-      "name": "SBATReverseProxyHandlerRs",
-      "comment": "ReverseProxyHandler for calls to the SBAT RS",
+      "name": "FRReverseProxyHandler",
+      "comment": "ReverseProxyHandler for calls to the FR services",
       "type": "Chain",
       "config": {
         "filters": [
-          {
-            "comment": "Add x-ob-url header (used by RS)",
-            "name": "HeaderFilter-Add-x-ob-url",
-            "type": "HeaderFilter",
-            "config": {
-              "messageType": "REQUEST",
-              "remove": ["x-ob-url"],
-              "add": {
-                "x-ob-url": [
-                  "https://&{mtls.fqdn}${contexts.router.remainingUri}"
-                ]
-              }
-            }
-          },
           "TransactionIdOutboundFilter"
         ],
         "handler": "ReverseProxyHandler"
-      }
-    },
-
-    {
-      "name": "RcsReverseProxyHandler",
-      "comment": "ReverseProxyHandler for calls to the RCS",
-      "type": "Chain",
-      "config": {
-        "filters": [
-          "TransactionIdOutboundFilter"
-        ],
-        "handler": {
-          "name": "RcsReverseProxyHandlerInner",
-          "type": "ReverseProxyHandler",
-          "config": {
-            "vertx": "${vertxConfig}"
-          }
-        }
       }
     },
     {
@@ -432,6 +389,7 @@
     },
     {
       "name": "OBReverseProxyHandler",
+      "comment": "ReverseProxyHandler for calls to OB Directory services",
       "type": "ReverseProxyHandler",
       "capture": [
         "request",

@@ -136,6 +136,18 @@
           }
         },
         {
+          "comment": "Check the consentId in the uri path matches the access_token",
+          "name": "RequestPathConsentIdValidator",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "RequestPathConsentIdValidator.groovy",
+            "args": {
+              "routeArgConsentIdPathElementIndex": 4
+            }
+          }
+        },
+        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {

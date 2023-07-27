@@ -117,11 +117,11 @@
         },
         {
           "comment": "Check the consent submitted to match the consent from the access token",
-          "name": "ConsentIdValidator",
+          "name": "RequestEntityConsentIdValidator",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
-            "file": "ConsentIdValidator.groovy"
+            "file": "RequestEntityConsentIdValidator.groovy"
           }
         },
         {

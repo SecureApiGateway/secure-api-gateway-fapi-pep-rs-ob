@@ -51,15 +51,6 @@
               ]
             }
           }
-        },
-        {
-          "comment": "Adjust RS endpoints to IG protected URLs",
-          "name": "FilterRSUrls",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "ProcessRs.groovy"
-          }
         }
       ],
       "handler": "FRReverseProxyHandler"

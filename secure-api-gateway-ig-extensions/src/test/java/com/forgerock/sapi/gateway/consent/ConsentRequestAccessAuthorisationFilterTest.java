@@ -22,6 +22,7 @@ import static org.forgerock.json.JsonValue.object;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -45,6 +46,7 @@ import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.util.ReflectionUtils;
 
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter.ExceptionHandler;
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter.Heaplet;
@@ -121,7 +123,17 @@ class ConsentRequestAccessAuthorisationFilterTest {
         // SessionInfo.username is mapped to SsoTokenContext.info.uid
         final JsonValue rawSessionInfo = json(object(field("username", uid)));
         final SessionInfo sessionInfo = new SessionInfo("dummyToken", rawSessionInfo);
-        return SsoTokenContext.fromSessionInfo(parent, sessionInfo, "loginEndpoint");
+        // Create SsoTokenContext object using reflection
+        return ReflectionUtils.findMethod(SsoTokenContext.class, "fromSessionInfo", Context.class, SessionInfo.class, String.class)
+                              .map(method -> {
+                                    try {
+                                        method.setAccessible(true);
+                                        return (SsoTokenContext) method.invoke(null, parent, sessionInfo, "loginEndpoint");
+                                    } catch (IllegalAccessException | InvocationTargetException e) {
+                                        throw new RuntimeException("Failed to create SsoTokenContext using reflection", e);
+                                    }
+                              })
+                              .orElseThrow(() -> new IllegalStateException("Failed to create SsoTokenContext using reflection - unable to find fromSessionInfo method"));
     }
 
     private static JwtValidationContext createMockJwtValidationContext(String username) {

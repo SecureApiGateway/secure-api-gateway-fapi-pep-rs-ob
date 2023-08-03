@@ -19,7 +19,7 @@ make build-docker tag=my-new-image
   - [secure-api-gateway-ig-extensions](../secure-api-gateway-ig-extensions) jar
   - Other libs found in the config dir
 - Helper bash scripts
-  - [import-pem-certs.sh](7.1.0/ig/bin/import-pem-certs.sh) used to import PEM certificates into the truststore
+  - [import-pem-certs.sh](7.2.0/ig/bin/import-pem-certs.sh) used to import PEM certificates into the truststore
 
 ### import-pem-certs.sh
 

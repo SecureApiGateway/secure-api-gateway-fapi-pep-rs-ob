@@ -1,4 +1,4 @@
-FROM gcr.io/forgerock-io/ig:7.1.0
+FROM gcr.io/forgerock-io/ig:7.2.0
 
 # Switching back to forgerock user, app will run as this
 USER forgerock

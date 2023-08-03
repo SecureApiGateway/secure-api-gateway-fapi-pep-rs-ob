@@ -6,7 +6,7 @@ ifndef tag
 	$(warning no tag supplied; latest assumed)
 	$(eval tag=latest)
 endif
-	docker build docker/7.1.0/ig/ -t eu.gcr.io/${repo}/securebanking/${service}:${tag}
+	docker build docker/7.2.0/ig/ -t eu.gcr.io/${repo}/securebanking/${service}:${tag}
 	docker push eu.gcr.io/${repo}/securebanking/${service}:${tag}
 
 conf:

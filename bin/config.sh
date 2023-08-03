@@ -28,7 +28,7 @@ _positionals=()
 # Profile defaults to cdk if not provided
 _arg_profile="${_PROFILE:-securebanking}"
 _arg_environment="${_ENVIRONMENT:-dev}"
-_arg_version="${_VERSION:-7.1.0}"
+_arg_version="${_VERSION:-7.2.0}"
 _arg_ig_mode=${_IGMODE:-development}
 _IGMODES=(production development)
 
@@ -46,7 +46,7 @@ print_help()
 	printf '\t%s\n' "-p, --profile: Select configuration source (default: 'securebanking')"
 	printf '\t%s\n' "-e, --env: Select configuration environment source (default: 'dev')"
 	printf '\t%s\n' "-igm, --igmode: Select configuration environment source values['production', 'development'(default)]"
-	printf '\t%s\n' "-v, --version: Select configuration version (default: '7.1.0')"
+	printf '\t%s\n' "-v, --version: Select configuration version (default: '7.2.0')"
 	printf '\t%s\n' "-h, --help: Prints help"
 	printf '\n%s\n' "example: config.sh -e dev -igm development init"
 }

@@ -46,7 +46,7 @@
         <!-- https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html -->
         <release.java.version>11</release.java.version>
         <copyright-current-year>2022</copyright-current-year>
-        <openig.version>7.1.0</openig.version>
+        <openig.version>7.2.0</openig.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version>

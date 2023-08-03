@@ -2,7 +2,7 @@
 This is an extension module for IG, it contains Filters and helper classes which can be called from Filters to handle
 common tasks which are required to build a secure API gateway.
 
-To install this module the jar needs to be placed into [config/7.1.0/securebanking/ig/lib](../config/7.1.0/securebanking/ig/lib).
+To install this module the jar needs to be placed into [config/7.2.0/securebanking/ig/lib](../config/7.2.0/securebanking/ig/lib).
 
 Further documentation can be found on the wiki:
 https://github.com/SecureApiGateway/SecureApiGateway/wiki/IG-Extensions-Java-Module

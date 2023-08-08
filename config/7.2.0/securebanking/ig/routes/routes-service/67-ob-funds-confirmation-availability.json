@@ -1,8 +1,12 @@
 {
-  "name": "66 - Open Banking RS Funds confirmation Consent",
+  "name": "67 - Open Banking Funds Confirmation Availability",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmation-consents')}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmations')}",
+  "capture": [
+    "response",
+    "request"
+  ],
   "handler": {
     "type": "Chain",
     "config": {
@@ -15,6 +19,27 @@
           "config": {
             "type": "application/x-groovy",
             "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
+          "comment": "Remove /rs base path for downstream RS",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
           }
         },
         {
@@ -33,19 +58,22 @@
           }
         },
         {
-          "comment": "Check certificate bound access token",
+          "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
           "name": "OAuth2ResourceServerFilter-OB",
           "type": "OAuth2ResourceServerFilter",
           "config": {
             "scopes": [
-              "fundsconfirmations"
+              "fundsconfirmations",
+              "openid"
             ],
             "requireHttps": false,
             "realm": "OpenIG",
             "accessTokenResolver": {
+              "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
               "type": "ConfirmationKeyVerifierAccessTokenResolver",
               "config": {
                 "delegate": {
+                  "name": "token-resolver-1",
                   "type": "StatelessAccessTokenResolver",
                   "config": {
                     "secretsProvider": "SecretsProvider-AmJWK",
@@ -78,12 +106,30 @@
             "type": "application/x-groovy",
             "file": "GrantTypeVerifier.groovy",
             "args": {
-              "allowedGrantType": "client_credentials"
+              "allowedGrantType": "authorization_code"
             }
           }
         },
         {
-          "comment": "Prepare audit trail for consent",
+          "comment": "Gets the intent id from the access token claims and saves it on the attributes context",
+          "name": "SaveIntentIdOnAttributesContext",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SaveIntentIdOnAttributesContext.groovy"
+          }
+        },
+        {
+          "comment": "Check the consent submitted to match the consent from the access token",
+          "name": "RequestEntityConsentIdValidator",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "RequestEntityConsentIdValidator.groovy"
+          }
+        },
+        {
+          "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
@@ -91,36 +137,15 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "response.entity.getJson().OBIntentObject.Data.ConsentId",
+              "consentIdLocator": "${attributes.openbanking_intent_id}",
               "role": "CBPII",
-              "event": "CREATE"
+              "event": "EXEC"
             }
           }
         },
         {
-          "comment": "Adjust URL for downstream resource server",
-          "type": "UriPathRewriteFilter",
-          "config": {
-            "mappings": {
-              "/rs": "/"
-            },
-            "failureHandler": {
-              "type": "StaticResponseHandler",
-              "config": {
-                "status": 500,
-                "headers": {
-                  "Content-Type": [
-                    "text/plain"
-                  ]
-                },
-                "entity": "Invalid URL produced"
-              }
-            }
-          }
-        },
-        {
-          "comment": "Add headers required by RS",
-          "name": "HeaderFilter-RS",
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-ChangeHostToRS",
           "type": "HeaderFilter",
           "config": {
             "messageType": "REQUEST",
@@ -128,17 +153,21 @@
               "host",
               "X-Forwarded-Host",
               "X-Forwarded-Prefix",
-              "x-api-client-id"
+              "x-api-client-id",
+              "x-intent-id"
             ],
             "add": {
               "x-api-client-id": [
-                "${contexts.oauth2.accessToken.info.sub}"
+                "${contexts.oauth2.accessToken.info.aud}"
               ],
               "X-Forwarded-Host": [
                 "&{mtls.fqdn}"
               ],
               "X-Forwarded-Prefix": [
                 "/rs"
+              ],
+              "x-intent-id": [
+                "${attributes.openbanking_intent_id}"
               ]
             }
           }

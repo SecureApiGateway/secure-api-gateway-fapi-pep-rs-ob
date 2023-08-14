@@ -61,11 +61,20 @@ public class TestHandlers {
     }
 
     /**
+     * Handler which always returns the same response object as supplied via the constructor
+     */
+    public static class FixedResponseHandler extends TestHandler {
+        public FixedResponseHandler(Response response) {
+            super((ctxt, req) -> Promises.newResultPromise(response));
+        }
+    }
+
+    /**
      * Handler which always returns a 200 response.
      */
-    public static class TestSuccessResponseHandler extends TestHandler {
+    public static class TestSuccessResponseHandler extends FixedResponseHandler {
         public TestSuccessResponseHandler() {
-            super((ctxt, req) -> Promises.newResultPromise(new Response(Status.OK)));
+            super(new Response(Status.OK));
         }
     }
 }

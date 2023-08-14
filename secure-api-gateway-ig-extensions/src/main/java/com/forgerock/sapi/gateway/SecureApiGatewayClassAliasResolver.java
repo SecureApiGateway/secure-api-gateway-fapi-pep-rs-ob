@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.forgerock.openig.alias.ClassAliasResolver;
 
+import com.forgerock.sapi.gateway.am.ReSignIdTokenFilter;
 import com.forgerock.sapi.gateway.common.exception.SapiLogAttachedExceptionFilterHeaplet;
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
@@ -55,6 +56,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("ConsentRequestAccessAuthorisationFilter", ConsentRequestAccessAuthorisationFilter.class);
         ALIASES.put("TokenEndpointTransportCertValidationFilter", TokenEndpointTransportCertValidationFilter.class);
         ALIASES.put("SapiLogAttachedExceptionFilter", SapiLogAttachedExceptionFilterHeaplet.class);
+        ALIASES.put("ReSignIdTokenFilter", ReSignIdTokenFilter.class);
     }
 
     /**

@@ -74,9 +74,8 @@
             "type": "application/x-groovy",
             "file": "ProcessRegistration.groovy",
             "args": {
-              "comment": "TODO: use env variable",
               "routeArgObJwksHosts": [
-                "keystore.openbankingtest.org.uk"
+                "&{hosts.obJwks}"
               ],
               "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",

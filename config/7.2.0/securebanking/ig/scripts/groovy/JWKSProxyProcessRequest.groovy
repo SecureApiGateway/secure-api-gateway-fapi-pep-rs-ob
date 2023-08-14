@@ -1,8 +1,6 @@
 // e.g. https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks ->
 //        https://obdemo.nightly.forgerock.financial/jwkms/jwksproxy/keystore.openbankingtest.org.uk/keystore/openbanking.jwks
 
-import groovy.json.JsonSlurper;
-
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
 SCRIPT_NAME = "[JWKSProxyProcessRequest] (" + fapiInteractionId + ") - ";
@@ -29,14 +27,7 @@ if (!routeArgObJwksHosts) {
   return(errorResponse(Status.INTERNAL_SERVER_ERROR,"No authorised jwks hosts configured"));
 }
 
-def slurper = new JsonSlurper()
-def authorisedHosts = slurper.parseText(routeArgObJwksHosts);
-
-if (!authorisedHosts) {
-  return(errorResponse(Status.INTERNAL_SERVER_ERROR,"Could not parse authorised jwks hosts"));
-}
-
-if (!authorisedHosts.asList().contains(targetHost)) {
+if (!routeArgObJwksHosts.asList().contains(targetHost)) {
   return(errorResponse(Status.FORBIDDEN,"Host " + targetHost + " not permitted"));
 }
 

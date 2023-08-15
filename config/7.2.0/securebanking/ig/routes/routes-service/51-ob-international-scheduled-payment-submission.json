@@ -159,15 +159,6 @@
           }
         },
         {
-          "comment": "Encode the payment request for safe transmission to the policy engine",
-          "name": "EncodeInitiation",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "EncodeInitiation.groovy"
-          }
-        },
-        {
           "comment": "Prepare consent audit trail",
           "type": "ScriptableFilter",
           "config": {

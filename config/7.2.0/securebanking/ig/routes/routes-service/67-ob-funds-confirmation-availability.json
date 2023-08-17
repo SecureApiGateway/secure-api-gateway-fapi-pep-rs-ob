@@ -137,7 +137,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "${attributes.openbanking_intent_id}",
+              "consentIdLocator": "contexts.attributes.openbanking_intent_id",
               "role": "CBPII",
               "event": "EXEC"
             }

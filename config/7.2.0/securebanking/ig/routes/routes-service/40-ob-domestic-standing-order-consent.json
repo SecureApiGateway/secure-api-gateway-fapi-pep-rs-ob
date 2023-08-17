@@ -123,7 +123,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "response.entity.getJson().OBIntentObject.Data.ConsentId",
+              "consentIdLocator": "response.entity.getJson().Data.ConsentId",
               "role": "PISP",
               "event": "CREATE"
             }

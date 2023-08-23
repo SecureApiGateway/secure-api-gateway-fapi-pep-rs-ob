@@ -224,19 +224,6 @@
       }
     },
     {
-      "name": "TokenRequestHandler",
-      "type": "ScriptableHandler",
-      "config": {
-        "type": "application/x-groovy",
-        "args": {
-          "userId": "&{ig.idm.user}",
-          "password": "&{ig.idm.password}"
-        },
-        "file": "SettingNewEntity.groovy",
-        "clientHandler": "ForgeRockClientHandler"
-      }
-    },
-    {
       "name": "SecretsProvider-AmJWK",
       "type": "SecretsProvider",
       "config": {
@@ -289,7 +276,19 @@
               "scopes": [
                 "fr:idm:*"
               ],
-              "handler": "TokenRequestHandler"
+              "handler": {
+                "name": "TokenRequestHandler",
+                "type": "ScriptableHandler",
+                "config": {
+                  "type": "application/x-groovy",
+                  "args": {
+                    "userId": "&{ig.idm.user}",
+                    "password": "&{ig.idm.password}"
+                  },
+                  "file": "SetIdmPasswordGrantCredentials.groovy",
+                  "clientHandler": "ForgeRockClientHandler"
+                }
+              }
             }
           }
         ],

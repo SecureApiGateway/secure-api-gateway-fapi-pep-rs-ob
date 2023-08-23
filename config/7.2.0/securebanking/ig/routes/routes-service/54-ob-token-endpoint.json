@@ -37,7 +37,7 @@
             "scopes": [
               "trusted_gateway"
             ],
-            "handler": "TokenRequestHandler"
+            "handler": "ForgeRockClientHandler"
           }
         },
         {

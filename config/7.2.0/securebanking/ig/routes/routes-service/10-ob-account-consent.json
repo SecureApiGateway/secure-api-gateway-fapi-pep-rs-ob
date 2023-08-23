@@ -150,20 +150,6 @@
               ]
             }
           }
-        },
-        {
-          "comment": "Obtain access token from authz server and add request's Authorization header",
-          "type": "ClientCredentialsOAuth2ClientFilter",
-          "config": {
-            "clientId": "&{ig.client.id}",
-            "clientSecretId": "ig.client.secret",
-            "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
-            "scopes": [
-              "fr:idm:*"
-            ],
-            "handler": "TokenRequestHandler"
-          }
         }
       ],
       "handler": "FRReverseProxyHandler"

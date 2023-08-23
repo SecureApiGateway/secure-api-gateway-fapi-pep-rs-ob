@@ -133,9 +133,9 @@
                 "secretsProvider": "SystemAndEnvSecretStore-IAM",
                 "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
                 "scopes": [
-                  "dynamic_client_registration fr:idm:*"
+                  "dynamic_client_registration"
                 ],
-                "handler": "TokenRequestHandler"
+                "handler": "ForgeRockClientHandler"
               }
             }
           }

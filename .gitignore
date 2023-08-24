@@ -41,3 +41,4 @@ docker/7.2.0/ig/scripts/
 /docker/gatling/gradle/
 **/.java-version
 !/config/7.2.0/securebanking/ig/lib/*
+/config/7.2.0/securebanking/ig/lib/secure-api-gateway-ig-extensions-*.jar

@@ -1,0 +1,143 @@
+{
+  "name": "68 - Open Banking Aggregated polling API",
+  "auditService": "AuditService-OB-Route",
+  "baseURI": "${urls.rsBaseUri}",
+  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/events$')}",
+  "capture": [
+    "response",
+    "request"
+  ],
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "comment": "Ensure OB compliant response",
+          "name": "ObResponseCheck",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "ObResponseCheck.groovy"
+          }
+        },
+        {
+          "comment": "Remove /rs base path for downstream RS",
+          "type": "UriPathRewriteFilter",
+          "config": {
+            "mappings": {
+              "/rs": "/"
+            },
+            "failureHandler": {
+              "type": "StaticResponseHandler",
+              "config": {
+                "status": 500,
+                "headers": {
+                  "Content-Type": [
+                    "text/plain"
+                  ]
+                },
+                "entity": "Invalid URL produced"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
+              "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
+              "config": {
+                "delegate": {
+                  "name": "token-resolver-1",
+                  "type": "StatelessAccessTokenResolver",
+                  "config": {
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "FetchApiClientResourcesChain",
+        {
+          "comment": "The access token required for accessing the API must have at last one scope of 'allowedScopes'",
+          "name": "Token Scopes Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "VerifyAccessTokenScopes.groovy",
+            "args": {
+              "allowedScopes": ["payments", "accounts", "fundsconfirmations"]
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "client_credentials"
+            }
+          }
+        },
+        {
+          "comment": "Add host header for downstream resource server",
+          "name": "HeaderFilter-ChangeHostToRS",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "X-Forwarded-Prefix",
+              "x-api-client-id",
+              "x-intent-id"
+            ],
+            "add": {
+              "x-api-client-id": [
+                "${contexts.oauth2.accessToken.info.aud}"
+              ],
+              "X-Forwarded-Host": [
+                "&{mtls.fqdn}"
+              ],
+              "X-Forwarded-Prefix": [
+                "/rs"
+              ],
+              "x-intent-id": [
+                "${attributes.openbanking_intent_id}"
+              ]
+            }
+          }
+        }
+      ],
+      "handler": "FRReverseProxyHandler"
+    }
+  }
+}

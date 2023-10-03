@@ -156,14 +156,14 @@ public class ReSignIdTokenFilter implements Filter {
                             return newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                         }
 
-                        return signingManager.newSigningHandler(signingKeyPurpose).thenAsync(signingHandler -> {
+                        return signingManager.newSigningHandler(signingKeyPurpose).then(signingHandler -> {
                             final String resignedIdTokenJwtString = reSignJwt(signedJwt, signingHandler);
                             logger.debug("id_token re-signed: {}", resignedIdTokenJwtString);
                             idTokenAccessor.setIdToken(resignedIdTokenJwtString);
-                            return newResultPromise(response);
+                            return response;
                         }, nsse -> {
                             logger.error("Failed to create signingHandler", nsse);
-                            return newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
+                            return new Response(Status.INTERNAL_SERVER_ERROR);
                         });
                     });
                 }, e -> {

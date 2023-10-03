@@ -134,7 +134,7 @@ import com.forgerock.sapi.gateway.mtls.FromHeaderCertificateRetriever;
  * The header value must contain a PEM encoded, then URL encoded, x509 certificate.
  * This configuration is REQUIRED.
  * <p>
- * supportedSigningAlogrithms configures which JWS algorithms are supported for signing, see DEFAULT_SUPPORTED_JWS_ALGORITHMS for the default
+ * supportedSigningAlgorithms configures which JWS algorithms are supported for signing, see DEFAULT_SUPPORTED_JWS_ALGORITHMS for the default
  * values if this config is omitted.
  * <p>
  * supportedTokenEndpointAuthMethods configures which OAuth2 token_endpoint_auth_method values are accepted,

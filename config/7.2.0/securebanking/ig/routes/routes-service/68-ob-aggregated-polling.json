@@ -22,6 +22,19 @@
           }
         },
         {
+          "comment": "Sign events from the RS response",
+          "name": "SignEvents",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "SignEventsResponse.groovy",
+            "args": {
+              "signer": "${heap['CompactSerializationJwsSigner-RSASSA-PSS']}",
+              "aspspOrgId": "&{ob.aspsp.org.id}"
+            }
+          }
+        },
+        {
           "comment": "Remove /rs base path for downstream RS",
           "type": "UriPathRewriteFilter",
           "config": {

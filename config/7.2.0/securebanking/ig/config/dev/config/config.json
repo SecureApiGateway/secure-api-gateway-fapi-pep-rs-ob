@@ -434,6 +434,16 @@
       "config": {
         "validKeyUse": "tls"
       }
+    },
+    {
+      "name": "CompactSerializationJwsSigner-RSASSA-PSS",
+      "type": "CompactSerializationJwsSigner",
+      "config": {
+        "algorithm": "PS256",
+        "signingKeyId": "jwt.signer",
+        "kid": "&{ig.ob.aspsp.signing.kid}",
+        "secretsProvider": "SecretsProvider-ASPSP"
+      }
     }
   ],
   "monitor": true

@@ -31,6 +31,7 @@ import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
 import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
 import com.forgerock.sapi.gateway.jws.RsaJwtSignatureValidator;
+import com.forgerock.sapi.gateway.jws.signer.CompactSerializationJwsSigner;
 import com.forgerock.sapi.gateway.mtls.DefaultTransportCertValidator;
 import com.forgerock.sapi.gateway.mtls.TokenEndpointTransportCertValidationFilter;
 import com.forgerock.sapi.gateway.mtls.TransportCertValidationFilter;
@@ -57,6 +58,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("TokenEndpointTransportCertValidationFilter", TokenEndpointTransportCertValidationFilter.class);
         ALIASES.put("SapiLogAttachedExceptionFilter", SapiLogAttachedExceptionFilterHeaplet.class);
         ALIASES.put("ReSignIdTokenFilter", ReSignIdTokenFilter.class);
+        ALIASES.put("CompactSerializationJwsSigner", CompactSerializationJwsSigner.class);
     }
 
     /**

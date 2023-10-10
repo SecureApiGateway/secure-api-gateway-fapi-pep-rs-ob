@@ -14,23 +14,6 @@
       "filters": [
         "SBATFapiInteractionFilterChain",
         {
-          "comment": "Sign event notification from the request",
-          "name": "SignEvents",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "SignEventNotifications.groovy",
-            "args": {
-              "routeArgAlgorithm": "PS256",
-              "routeArgSecretId": "jwt.signer",
-              "routeArgKid": "&{ig.ob.aspsp.signing.kid}",
-              "routeArgSecretsProvider": "${heap['SecretsProvider-ASPSP']}",
-              "routeArgTrustedAnchor": "openbanking.org.uk",
-              "obAspspOrgId": "&{ob.aspsp.org.id}"
-            }
-          }
-        },
-        {
           "comment": "Ensure the response is Open Banking compliant",
           "name": "ObResponseCheck",
           "type": "ScriptableFilter",

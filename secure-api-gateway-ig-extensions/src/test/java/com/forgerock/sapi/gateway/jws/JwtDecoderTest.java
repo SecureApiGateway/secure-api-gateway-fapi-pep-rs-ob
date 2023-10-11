@@ -30,7 +30,7 @@ class JwtDecoderTest {
     private static JwtDecoder jwtDecoder;
 
     @BeforeAll
-    static private void setup(){
+    public static void setup(){
         jwtDecoder = new JwtDecoder();
     }
 

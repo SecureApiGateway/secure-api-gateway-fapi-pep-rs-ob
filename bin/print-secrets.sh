@@ -42,7 +42,7 @@ backup_restore_info () {
 # Get major version by presence of a version specific secret.
 get_version () {
     if ( secret=$(kubectl get secret ds-env-secrets 2>/dev/null) ); then
-        version="7.2.0"
+        version="7.3.0"
     else
         echo "Can't find any secrets"
         exit 1
@@ -60,7 +60,7 @@ if [[ "$#" > 0 ]]; then
             ;;
 
             "idmadmin")
-                [[ "$version" == "7.2.0" ]] && echo "openidm-admin" && exit 0
+                [[ "$version" == "7.3.0" ]] && echo "openidm-admin" && exit 0
             ;;
 
             "dsadmin")

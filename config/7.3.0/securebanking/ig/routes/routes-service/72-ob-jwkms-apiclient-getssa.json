@@ -30,7 +30,7 @@
           "name": "AddCertificateToAttributesContextFilter",
           "type": "AddCertificateToAttributesContextFilter",
           "config": {
-            "clientTlsCertHeader": "ssl-client-cert"
+            "certificateRetriever": "HeaderCertificateRetriever"
           }
         },
         {

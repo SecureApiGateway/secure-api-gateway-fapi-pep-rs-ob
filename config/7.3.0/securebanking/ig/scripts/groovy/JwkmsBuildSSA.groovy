@@ -3,6 +3,28 @@ import org.forgerock.json.jose.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import org.forgerock.json.JsonValueFunctions.*
 
+import javax.naming.ldap.LdapName
+import javax.naming.ldap.Rdn
+
+class CertificateParserHelper {
+    private static final OID_ORGANIZATIONAL_IDENTIFIER = "2.5.4.97"
+    private static final TYPE_ORGANIZATIONAL_IDENTIFIER = "OI"
+
+    static parseDN(String dn) {
+        def result = [:]
+        LdapName ln = new LdapName(dn);
+
+        for(Rdn rdn : ln.getRdns()) {
+            def rdnType = rdn.getType();
+            // LdapName doesn't know about OrganizationalIdentifier
+            if (rdnType == ("OID." + OID_ORGANIZATIONAL_IDENTIFIER)) {
+                rdnType = TYPE_ORGANIZATIONAL_IDENTIFIER
+            }
+            result.put(rdnType,rdn.getValue());
+        }
+        return result;
+    }
+}
 
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
@@ -32,8 +54,8 @@ if (!attributes.clientCertificate) {
     return response
 }
 
-
-if (!attributes.clientCertificate.subjectDNComponents.CN) {
+def subjectDNComponents = CertificateParserHelper.parseDN(attributes.clientCertificate.getSubjectDN().toString())
+if (!subjectDNComponents.CN) {
     message = "No CN in cert"
     logger.error(SCRIPT_NAME + message)
     response.status = Status.BAD_REQUEST
@@ -42,7 +64,7 @@ if (!attributes.clientCertificate.subjectDNComponents.CN) {
 }
 
 
-def  organizationalIdentifier = attributes.clientCertificate.subjectDNComponents.OI
+def  organizationalIdentifier = subjectDNComponents.OI
 
 if (!organizationalIdentifier) {
     message = "No org identifier in cert"
@@ -63,7 +85,7 @@ if (oiComponents.length != 3) {
 }
 
 def org_id = oiComponents[2]
-def org_name = attributes.clientCertificate.subjectDNComponents.CN;
+def org_name = subjectDNComponents.CN;
 
 
 def payload = [

@@ -408,7 +408,7 @@ private void addSoftwareStatementToResponse(response, ssa) {
 }
 
 private boolean tlsClientCertExistsInJwkSet(jwkSet) {
-    def tlsClientCert = attributes.clientCertificate.certificate
+    def tlsClientCert = attributes.clientCertificate
     // RSAKey.parse produces a JWK, we can then extract the cert from the x5c field
     def tlsClientCertX5c = RSAKey.parse(tlsClientCert).getX509CertChain().get(0).toString()
     for (JWK jwk : jwkSet.getJWKsAsList()) {

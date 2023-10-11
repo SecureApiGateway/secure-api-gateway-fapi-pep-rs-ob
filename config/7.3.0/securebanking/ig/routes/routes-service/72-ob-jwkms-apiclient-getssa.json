@@ -26,15 +26,11 @@
       "filters": [
         "SBATFapiInteractionFilterChain",
         {
-          "comment": "Extract certificate details for organizational claims in SSA",
-          "name": "ParseCertificate",
-          "type": "ScriptableFilter",
+          "comment": "Add the client's MTLS transport cert to the attributes context",
+          "name": "AddCertificateToAttributesContextFilter",
+          "type": "AddCertificateToAttributesContextFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "ParseCertificate.groovy",
-            "args": {
-              "routeArgCertificateHeader": "ssl-client-cert"
-            }
+            "clientTlsCertHeader": "ssl-client-cert"
           }
         },
         {

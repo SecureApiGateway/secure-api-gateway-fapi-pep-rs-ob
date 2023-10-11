@@ -27,15 +27,11 @@
           }
         },
         {
-          "comment": "Extract MTLS client certificate details",
-          "name": "ParseCertificate",
-          "type": "ScriptableFilter",
+          "comment": "Add the client's MTLS transport cert to the attributes context",
+          "name": "AddCertificateToAttributesContextFilter",
+          "type": "AddCertificateToAttributesContextFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "ParseCertificate.groovy",
-            "args": {
-              "routeArgCertificateHeader": "ssl-client-cert"
-            }
+            "certificateRetriever": "HeaderCertificateRetriever"
           }
         },
         {
@@ -61,7 +57,7 @@
           "name": "FAPIAdvancedDCRValidationFilter",
           "type": "FAPIAdvancedDCRValidationFilter",
           "config": {
-            "clientTlsCertHeader": "ssl-client-cert",
+            "certificateRetriever": "ContextCertificateRetriever",
             "supportedSigningAlgorithms": ["PS256"],
             "supportedTokenEndpointAuthMethods": ["tls_client_auth", "private_key_jwt"]
           }

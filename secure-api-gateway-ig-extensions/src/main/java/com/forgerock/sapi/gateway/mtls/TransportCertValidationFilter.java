@@ -28,6 +28,7 @@ import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
+import org.forgerock.json.JsonValue;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
+import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
 import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
 
 /**
@@ -50,7 +52,7 @@ import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
  * This filter depends on the {@link JWKSet} containing the keys for this {@link ApiClient} being present in
  * the {@link AttributesContext}.
  *
- * The certificate for the request is supplied by the pluggable certificateRetriever, see {@link FromHeaderCertificateRetriever}
+ * The certificate for the request is supplied by the pluggable certificateRetriever, see {@link HeaderCertificateRetriever}
  * for an example implementation (this is the default configured by the {@link Heaplet})
  *
  * Once the {@link X509Certificate} and JWKSet have been obtained, then the filter delegates to a {@link TransportCertValidator}
@@ -122,8 +124,13 @@ public class TransportCertValidationFilter implements Filter {
      * Heaplet used to create {@link TransportCertValidationFilter} objects
      *
      * Mandatory fields:
-     *  - clientTlsCertHeader: the name of the Request Header which contains the client's TLS cert
      *  - transportCertValidator: the name of a {@link TransportCertValidator} object on the heap to use to validate the certs
+     *
+     * Optional fields:
+     * - certificateRetriever: a {@link CertificateRetriever} object heap reference used to retrieve the client's
+     *                         certificate to validate.
+     * - clientTlsCertHeader: (Deprecated - Use certificateRetriever config instead)
+     *                        the name of the Request Header which contains the client's TLS cert
      *
      * Example config:
      * {
@@ -131,19 +138,32 @@ public class TransportCertValidationFilter implements Filter {
      *           "name": "TransportCertValidationFilter",
      *           "type": "TransportCertValidationFilter",
      *           "config": {
-     *             "clientTlsCertHeader": "ssl-client-cert",
+     *             "certificateRetriever": "HeaderCertificateRetriever",
      *             "transportCertValidator": "TransportCertValidator"
      *           }
      * }
      */
     public static class Heaplet extends GenericHeaplet {
 
+        private final Logger logger = LoggerFactory.getLogger(getClass());
+
         @Override
         public Object create() throws HeapException {
-            final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
+            final CertificateRetriever certificateRetriever;
+            // certificateRetriever configuration is preferred to the deprecated clientTlsCertHeader configuration
+            final JsonValue certificateRetrieverConfig = config.get("certificateRetriever");
+            if (certificateRetrieverConfig.isNotNull()) {
+                certificateRetriever = certificateRetrieverConfig.as(requiredHeapObject(heap, CertificateRetriever.class));
+            } else {
+                // Fallback to the config which only configures the HeaderCertificateRetriever
+                final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
+                logger.warn("{} config option clientTlsCertHeader is deprecated, use certificateRetriever instead. " +
+                                "This option needs to contain a value which is a reference to a {} object on the heap",
+                        TransportCertValidationFilter.class.getSimpleName(), CertificateRetriever.class);
+                certificateRetriever = new HeaderCertificateRetriever(clientCertHeaderName);
+            }
             final TransportCertValidator transportCertValidator = config.get("transportCertValidator").required()
                                                                         .as(requiredHeapObject(heap, TransportCertValidator.class));
-            final CertificateRetriever certificateRetriever = new FromHeaderCertificateRetriever(clientCertHeaderName);
             return new TransportCertValidationFilter(certificateRetriever, transportCertValidator);
         }
     }

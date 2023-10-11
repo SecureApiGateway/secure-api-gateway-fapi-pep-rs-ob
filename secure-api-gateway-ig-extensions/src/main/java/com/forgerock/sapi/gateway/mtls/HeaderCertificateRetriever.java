@@ -24,6 +24,8 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import org.forgerock.http.protocol.Request;
+import org.forgerock.openig.heap.GenericHeaplet;
+import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.Context;
 import org.forgerock.util.Reject;
 import org.slf4j.Logger;
@@ -33,17 +35,17 @@ import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 /**
  * CertificateRetriever implementation that retrieves the client's mTLS certificate from a HTTP Request Header.
- *
+ * <p>
  * The certificateHeaderName field determines which header the cert is retrieved from.
  * The header value is expected to be a PEM encoded then URL encoded X509 certificate.
  */
-public class FromHeaderCertificateRetriever implements CertificateRetriever {
+public class HeaderCertificateRetriever implements CertificateRetriever {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String certificateHeaderName;
 
-    public FromHeaderCertificateRetriever(String certificateHeaderName) {
+    public HeaderCertificateRetriever(String certificateHeaderName) {
         Reject.ifBlank(certificateHeaderName, "certificateHeaderName must be provided");
         this.certificateHeaderName = certificateHeaderName;
     }
@@ -75,5 +77,27 @@ public class FromHeaderCertificateRetriever implements CertificateRetriever {
             throw new CertificateException("client tls cert must be in X.509 format");
         }
         return (X509Certificate) certificate;
+    }
+
+    /**
+     * Heaplet responsible for creating {@link HeaderCertificateRetriever} objects
+     * <p>
+     * Required config:
+     * - clientTlsCertHeader String the name of the header which contains the certificate
+     * <p>
+     * Example config:
+     * {
+     *       "name": "HeaderCertificateRetriever",
+     *       "type": "HeaderCertificateRetriever",
+     *       "config": {
+     *         "certificateHeaderName": "ssl-client-cert"
+     *       }
+     * }
+     */
+    public static class Heaplet extends GenericHeaplet {
+        @Override
+        public Object create() throws HeapException {
+            return new HeaderCertificateRetriever(config.get("certificateHeaderName").required().asString());
+        }
     }
 }

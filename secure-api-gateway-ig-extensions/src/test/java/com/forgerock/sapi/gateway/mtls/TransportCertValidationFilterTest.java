@@ -68,7 +68,7 @@ class TransportCertValidationFilterTest {
      * JWKSet containing TEST_TLS_CERT plus others
      */
     private static JWKSet TEST_JWKS;
-    private final FromHeaderCertificateRetriever certificateResolver = new FromHeaderCertificateRetriever(CERTIFICATE_HEADER_NAME);
+    private final HeaderCertificateRetriever certificateResolver = new HeaderCertificateRetriever(CERTIFICATE_HEADER_NAME);
     private final DefaultTransportCertValidator certValidator = new DefaultTransportCertValidator("tls");
 
     @BeforeAll
@@ -165,7 +165,19 @@ class TransportCertValidationFilterTest {
         }
 
         @Test
-        void successfullyCreatesFilter() throws Exception {
+        void successfullyCreatesFilterWithCertificateRetriever() throws Exception {
+            final Name test = Name.of("test");
+            final HeapImpl heap = new HeapImpl(test);
+            heap.put("HeaderCertificateRetriever", new HeaderCertificateRetriever(CERTIFICATE_HEADER_NAME));
+            heap.put("TransportCertValidator", certValidator);
+            final JsonValue config = json(object(field("certificateRetriever", "HeaderCertificateRetriever"),
+                                                 field("transportCertValidator", "TransportCertValidator")));
+            final TransportCertValidationFilter filter = (TransportCertValidationFilter) new Heaplet().create(test, config, heap);
+            testValidCert(filter);
+        }
+
+        @Test
+        void successfullyCreatesFilterWithDeprecatedConfig() throws Exception {
             final Name test = Name.of("test");
             final HeapImpl heap = new HeapImpl(test);
             heap.put("TransportCertValidator", certValidator);

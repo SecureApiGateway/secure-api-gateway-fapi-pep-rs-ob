@@ -297,6 +297,48 @@ class TokenEndpointTransportCertValidationFilterTest {
             heap.put("trustedDirectoryService", (TrustedDirectoryService) issuer -> new TrustedDirectoryOpenBankingTest());
             heap.put("jwkSetService", new MockJwkSetService(Map.of(apiClientJwksUrl, clientJwks)));
             heap.put("transportCertValidator", new DefaultTransportCertValidator());
+            heap.put("headerCertificateRetriever", new HeaderCertificateRetriever(certHeader));
+
+            final JsonValue config = json(object(field("idmClientHandler", "clientHandler"),
+                                                 field("idmGetApiClientBaseUri", idmBaseUri),
+                                                 field("trustedDirectoryService", "trustedDirectoryService"),
+                                                 field("jwkSetService", "jwkSetService"),
+                                                 field("transportCertValidator", "transportCertValidator"),
+                                                 field("certificateRetriever", "headerCertificateRetriever")));
+            final TokenEndpointTransportCertValidationFilter filter = (TokenEndpointTransportCertValidationFilter) transportCertValidationFilterHeaplet.create(Name.of("test"), config, heap);
+
+            final TestHandler responseHandler = createResponseWithValidAccessToken();
+
+
+            final Request request = HeaderCertificateRetrieverTest.createRequestWithCertHeader(clientCert, certHeader);
+
+            final Promise<Response, NeverThrowsException> responsePromise = filter.filter(new RootContext("root"), request, responseHandler);
+            final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
+
+            assertEquals(Status.OK, response.getStatus());
+            assertTrue(responseHandler.hasBeenInteractedWith());
+        }
+
+        @Test
+        public void testFilterCreatedFromHeapletWithDeprecatedClientTlsCertHeaderConfig() throws Exception {
+            final Pair<X509Certificate, JWKSet> certAndJwks = CryptoUtils.generateTestTransportCertAndJwks("tls");
+            final X509Certificate clientCert = certAndJwks.getFirst();
+            final JWKSet clientJwks = certAndJwks.getSecond();
+            final String certHeader = "ssl-client-cert";
+
+            final Heaplet transportCertValidationFilterHeaplet = new Heaplet();
+            final HeapImpl heap = new HeapImpl(Name.of("heap"));
+
+            final URL apiClientJwksUrl = new URL("https://localhost/apiClient.jwks");
+            final JsonValue idmClientData = createIdmApiClientDataAllFields(testClientId, apiClientJwksUrl.toString());
+
+            final String idmBaseUri = "https://localhost/idm/getApiClient/";
+            final MockApiClientTestDataIdmHandler mockApiClientTestDataIdmHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, testClientId, idmClientData);
+
+            heap.put("clientHandler", mockApiClientTestDataIdmHandler);
+            heap.put("trustedDirectoryService", (TrustedDirectoryService) issuer -> new TrustedDirectoryOpenBankingTest());
+            heap.put("jwkSetService", new MockJwkSetService(Map.of(apiClientJwksUrl, clientJwks)));
+            heap.put("transportCertValidator", new DefaultTransportCertValidator());
 
             final JsonValue config = json(object(field("idmClientHandler", "clientHandler"),
                                                 field("idmGetApiClientBaseUri", idmBaseUri),
@@ -309,7 +351,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             final TestHandler responseHandler = createResponseWithValidAccessToken();
 
 
-            final Request request = FromHeaderCertificateRetrieverTest.createRequestWithCertHeader(clientCert, certHeader);
+            final Request request = HeaderCertificateRetrieverTest.createRequestWithCertHeader(clientCert, certHeader);
 
             final Promise<Response, NeverThrowsException> responsePromise = filter.filter(new RootContext("root"), request, responseHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);

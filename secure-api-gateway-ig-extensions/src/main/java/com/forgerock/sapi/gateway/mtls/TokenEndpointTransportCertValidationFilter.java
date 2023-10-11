@@ -47,7 +47,6 @@ import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.DefaultApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.JwkSetService;
@@ -226,7 +225,7 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
      * Heaplet used to create {@link TransportCertValidationFilter} objects
      *
      * Mandatory fields:
-     *  - clientTlsCertHeader: the name of the Request Header which contains the client's TLS cert
+     *
      *  - idmClientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to query IDM)
      *  - idmGetApiClientBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
      *                            to be appended to this uri (and some query params).
@@ -235,8 +234,12 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
      *  - transportCertValidator: the name of a {@link TransportCertValidator} object on the heap to use to validate the certs
      *
      *  Optional config:
+     * - certificateRetriever: a {@link CertificateRetriever} object heap reference used to retrieve the client's
+     *                         certificate to validate.
+     * - clientTlsCertHeader: (Deprecated - Use certificateRetriever config instead)
+     *                        the name of the Request Header which contains the client's TLS cert
      *  - accessTokenClientIdClaim: the name of the claim in the access_token that contains the clientId. The clientId is then used to
-     *  fetch the ApiClient (and ApiClient's JWKS). Defaults to "aud"
+     *                              fetch the ApiClient (and ApiClient's JWKS). Defaults to "aud"
      *
      * Example config:
      * {
@@ -254,6 +257,8 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
      * }
      */
     public static class Heaplet extends GenericHeaplet {
+
+        private final Logger logger = LoggerFactory.getLogger(getClass());
 
         @Override
         public Object create() throws HeapException {
@@ -277,8 +282,19 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
             final TransportCertValidator transportCertValidator = config.get("transportCertValidator").required()
                     .as(requiredHeapObject(heap, TransportCertValidator.class));
 
-            final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
-            final CertificateRetriever certificateRetriever = new FromHeaderCertificateRetriever(clientCertHeaderName);
+            final CertificateRetriever certificateRetriever;
+            // certificateRetriever configuration is preferred to the deprecated clientTlsCertHeader configuration
+            final JsonValue certificateRetrieverConfig = config.get("certificateRetriever");
+            if (certificateRetrieverConfig.isNotNull()) {
+                certificateRetriever = certificateRetrieverConfig.as(requiredHeapObject(heap, CertificateRetriever.class));
+            } else {
+                // Fallback to the config which only configures the HeaderCertificateRetriever
+                final String clientCertHeaderName = config.get("clientTlsCertHeader").required().asString();
+                logger.warn("{} config option clientTlsCertHeader is deprecated, use certificateRetriever instead. " +
+                                "This option needs to contain a value which is a reference to a {} object on the heap",
+                        TokenEndpointTransportCertValidationFilter.class.getSimpleName(), CertificateRetriever.class);
+                certificateRetriever = new HeaderCertificateRetriever(clientCertHeaderName);
+            }
 
             final String accessTokenClientIdClaim =  config.get("accessTokenClientIdClaim")
                                                            .defaultTo(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM).asString();

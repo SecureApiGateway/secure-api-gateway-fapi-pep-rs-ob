@@ -139,7 +139,7 @@
             "name": "TransportCertValidationFilter",
             "type": "TransportCertValidationFilter",
             "config": {
-              "clientTlsCertHeader": "ssl-client-cert",
+              "certificateRetriever": "HeaderCertificateRetriever",
               "transportCertValidator": "OBTransportCertValidator"
             }
           }
@@ -444,6 +444,17 @@
         "kid": "&{ig.ob.aspsp.signing.kid}",
         "secretsProvider": "SecretsProvider-ASPSP"
       }
+    },
+    {
+      "name": "HeaderCertificateRetriever",
+      "type": "HeaderCertificateRetriever",
+      "config": {
+        "certificateHeaderName": "ssl-client-cert"
+      }
+    },
+    {
+      "name": "ContextCertificateRetriever",
+      "type": "ContextCertificateRetriever"
     }
   ],
   "monitor": true

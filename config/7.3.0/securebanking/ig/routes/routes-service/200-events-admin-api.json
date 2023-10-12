@@ -3,7 +3,7 @@
   "name": "200 - Open Banking events admin API",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/admin/data/events')}",
+  "condition": "${find(request.uri.path, '^/rs/admin/data/events')}",
   "capture": [
     "response",
     "request"

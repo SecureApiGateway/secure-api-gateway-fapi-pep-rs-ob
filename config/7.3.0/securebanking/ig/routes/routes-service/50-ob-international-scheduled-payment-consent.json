@@ -2,7 +2,7 @@
   "name": "50 - Open Banking RS International Scheduled Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-scheduled-payment-consents((?!funds-confirmation).)*$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-scheduled-payment-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {

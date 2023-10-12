@@ -2,7 +2,7 @@
   "name": "60 - Internal Repo Route for Remote Consent Service",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
-  "condition": "${matches(request.uri.path, '^/repo/')}",
+  "condition": "${find(request.uri.path, '^/repo/')}",
   "handler": {
     "type": "Chain",
     "config": {
@@ -15,7 +15,7 @@
             "onRequest": [
               {
                 "comment": "Fetch OAuth2 client details from IDM",
-                "condition": "${matches(request.uri.path, '^/repo/apiclients')}",
+                "condition": "${find(request.uri.path, '^/repo/apiclients')}",
                 "handler": {
                   "type": "ScriptableHandler",
                   "config": {
@@ -31,7 +31,7 @@
               },
               {
                 "comment": "Fetch user information from IDM",
-                "condition": "${matches(request.uri.path, '^/repo/users')}",
+                "condition": "${find(request.uri.path, '^/repo/users')}",
                 "handler": {
                   "type": "ScriptableHandler",
                   "config": {

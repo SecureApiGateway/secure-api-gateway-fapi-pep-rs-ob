@@ -2,7 +2,7 @@
   "name": "48 - Open Banking RS International Payment Funds Confirmation",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-payment-consents/.*/funds-confirmation$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-payment-consents/.*/funds-confirmation$')}",
   "capture": [
     "response",
     "request"

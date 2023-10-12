@@ -2,7 +2,7 @@
   "name": "55 - Open Banking RS International Standing Order Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-standing-order-consents((?!funds-confirmation).)*$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/international-standing-order-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {

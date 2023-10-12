@@ -2,7 +2,7 @@
   "name": "66 - Open Banking RS Funds confirmation Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmation-consents')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmation-consents')}",
   "handler": {
     "type": "Chain",
     "config": {

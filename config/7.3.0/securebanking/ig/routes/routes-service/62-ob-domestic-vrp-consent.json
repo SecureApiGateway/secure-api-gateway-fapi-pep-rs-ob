@@ -2,7 +2,7 @@
   "name": "62 - Open Banking RS Domestic VRP Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrp-consents((?!funds-confirmation).)*$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrp-consents((?!funds-confirmation).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {

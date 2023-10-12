@@ -3,7 +3,7 @@
   "name": "99 - OBIE AS General",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
-  "condition": "${matches(request.uri.path, '^/am')}",
+  "condition": "${find(request.uri.path, '^/am')}",
   "handler": {
     "type": "Chain",
     "config": {

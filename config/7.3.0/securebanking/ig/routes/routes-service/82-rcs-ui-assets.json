@@ -2,7 +2,7 @@
   "comment": "PSU access to RCS UI, ensure PSU is authenticated - this route matches the UI assets and has capturing turned off",
   "name": "82 - RCS UI Access assets",
   "auditService": "AuditService-OB-Route",
-  "condition": "${matches(request.uri.path, '^/rcs/ui/')}",
+  "condition": "${find(request.uri.path, '^/rcs/ui/')}",
   "baseURI": "http://&{rcs.ui.internal.svc}:8080",
   "handler": {
     "type": "Chain",

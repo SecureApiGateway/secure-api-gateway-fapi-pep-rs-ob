@@ -3,7 +3,7 @@
   "name": "10 - Open Banking Account Access Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
   "handler": {
     "type": "Chain",
     "config": {

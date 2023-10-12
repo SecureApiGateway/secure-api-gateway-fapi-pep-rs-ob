@@ -3,7 +3,7 @@
   "name": "41 - Open Banking Domestic Standing Orders Submission",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-orders$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-standing-orders$')}",
   "capture": [
     "response",
     "request"

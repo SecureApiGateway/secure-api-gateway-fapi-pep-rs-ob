@@ -2,7 +2,7 @@
   "name": "67 - Open Banking Funds Confirmation Availability",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmations')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmations')}",
   "capture": [
     "response",
     "request"

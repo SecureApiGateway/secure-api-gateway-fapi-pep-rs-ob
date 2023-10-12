@@ -2,7 +2,7 @@
   "name": "58 - Open Banking RS File Payment Consent",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents((?!file).)*$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents((?!file).)*$')}",
   "handler": {
     "type": "Chain",
     "config": {

@@ -3,7 +3,7 @@
   "name": "01 - Open Banking RS Metadata",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/discovery')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {
     "type": "Chain",
     "config": {

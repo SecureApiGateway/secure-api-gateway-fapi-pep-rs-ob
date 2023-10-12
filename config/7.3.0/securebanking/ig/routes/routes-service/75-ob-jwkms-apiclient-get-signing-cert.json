@@ -2,7 +2,7 @@
   "comment": "Convert incoming JWK set to PEM encoded Signing client cert and key",
   "name" : "75 - API Client Onboarding - Extract Signing Cert",
   "auditService": "AuditService-OB-Route",
-  "condition" : "${security.enableTestTrustedDirectory && matches(request.uri.path, '^/jwkms/apiclient/getsigcert')}",
+  "condition" : "${security.enableTestTrustedDirectory && find(request.uri.path, '^/jwkms/apiclient/getsigcert')}",
   "handler":     {
     "name": "JwkmsIssueCert",
     "type": "ScriptableHandler",

@@ -2,7 +2,7 @@
   "name": "12 - Open Banking Account Access multiple routes",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/(aisp/balances|aisp/transactions|aisp/beneficiaries|aisp/direct-debits|aisp/standing-orders|aisp/products|aisp/offers|aisp/party|aisp/scheduled-payments|aisp/statements)')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/(aisp/balances|aisp/transactions|aisp/beneficiaries|aisp/direct-debits|aisp/standing-orders|aisp/products|aisp/offers|aisp/party|aisp/scheduled-payments|aisp/statements)')}",
   "capture": [
     "response",
     "request"

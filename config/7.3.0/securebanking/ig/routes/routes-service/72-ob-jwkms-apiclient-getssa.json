@@ -2,7 +2,7 @@
   "comment": "Create SSA for test TPP clients to use in OIDC dynamic registration",
   "name": "72 - API client onboarding - generate test SSA",
   "auditService": "AuditService-OB-Route",
-  "condition": "${security.enableTestTrustedDirectory && matches(request.uri.path, '^/jwkms/apiclient/getssa')}",
+  "condition": "${security.enableTestTrustedDirectory && find(request.uri.path, '^/jwkms/apiclient/getssa')}",
   "heap": [
     {
       "name":"TestDirectorySigningKeyStore",

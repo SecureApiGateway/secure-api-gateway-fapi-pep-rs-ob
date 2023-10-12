@@ -2,7 +2,7 @@
   "name": "30 - Open Banking RS Payment Consent Funds Confirmation",
   "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
-  "condition": "${matches(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents/.*/funds-confirmation$')}",
+  "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-payment-consents/.*/funds-confirmation$')}",
   "capture": [
     "response",
     "request"

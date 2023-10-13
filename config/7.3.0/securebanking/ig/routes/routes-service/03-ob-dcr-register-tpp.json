@@ -124,14 +124,27 @@
               "comment": "Fetch access token for dynamic client registration - IG credentials to talk to AM",
               "type": "ClientCredentialsOAuth2ClientFilter",
               "config": {
-                "clientId": "&{ig.client.id}",
-                "clientSecretId": "ig.client.secret",
-                "secretsProvider": "SystemAndEnvSecretStore-IAM",
                 "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
                 "scopes": [
                   "dynamic_client_registration"
                 ],
-                "handler": "ForgeRockClientHandler"
+                "endpointHandler": {
+                  "name": "ClientCredentialsOAuth2ClientFilterHandler",
+                  "type": "Chain",
+                  "config": {
+                    "handler": "ForgeRockClientHandler",
+                    "filters": [
+                      {
+                        "type": "ClientSecretBasicAuthenticationFilter",
+                        "config": {
+                          "clientId": "&{ig.client.id}",
+                          "clientSecretId": "ig.client.secret",
+                          "secretsProvider": "SystemAndEnvSecretStore-IAM"
+                        }
+                      }
+                    ]
+                  }
+                }
               }
             }
           }

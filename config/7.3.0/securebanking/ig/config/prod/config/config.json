@@ -257,24 +257,37 @@
           {
             "type": "ClientCredentialsOAuth2ClientFilter",
             "config": {
-              "clientId": "&{ig.client.id}",
-              "clientSecretId": "ig.client.secret",
-              "secretsProvider": "SystemAndEnvSecretStore-IAM",
               "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
               "scopes": [
                 "fr:idm:*"
               ],
-              "handler": {
-                "name": "TokenRequestHandler",
-                "type": "ScriptableHandler",
+              "endpointHandler": {
+                "name": "ClientCredentialsOAuth2ClientFilterHandler",
+                "type": "Chain",
                 "config": {
-                  "type": "application/x-groovy",
-                  "args": {
-                    "userId": "&{ig.idm.user}",
-                    "password": "&{ig.idm.password}"
+                  "handler": {
+                    "name": "TokenRequestHandler",
+                    "type": "ScriptableHandler",
+                    "config": {
+                      "type": "application/x-groovy",
+                      "args": {
+                        "userId": "&{ig.idm.user}",
+                        "password": "&{ig.idm.password}"
+                      },
+                      "file": "SetIdmPasswordGrantCredentials.groovy",
+                      "clientHandler": "ForgeRockClientHandler"
+                    }
                   },
-                  "file": "SetIdmPasswordGrantCredentials.groovy",
-                  "clientHandler": "ForgeRockClientHandler"
+                  "filters": [
+                    {
+                      "type": "ClientSecretBasicAuthenticationFilter",
+                      "config": {
+                        "clientId": "&{ig.client.id}",
+                        "clientSecretId": "ig.client.secret",
+                        "secretsProvider": "SystemAndEnvSecretStore-IAM"
+                      }
+                    }
+                  ]
                 }
               }
             }

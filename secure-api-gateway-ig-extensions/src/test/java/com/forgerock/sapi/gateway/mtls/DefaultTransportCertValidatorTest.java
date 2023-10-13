@@ -15,6 +15,7 @@
  */
 package com.forgerock.sapi.gateway.mtls;
 
+import static com.forgerock.sapi.gateway.util.CryptoUtils.generateExpiredX509Cert;
 import static com.forgerock.sapi.gateway.util.CryptoUtils.generateRsaKeyPair;
 import static com.forgerock.sapi.gateway.util.CryptoUtils.generateX509Cert;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,13 +88,7 @@ class DefaultTransportCertValidatorTest {
 
     @Test
     void failsWhenCertIsExpired() {
-        final Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -5);
-        final Date certStartDate = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        final Date certEndDate = calendar.getTime();
-
-        final X509Certificate expiredCert = generateX509Cert(generateRsaKeyPair(), "CN=abc", certStartDate, certEndDate);
+        final X509Certificate expiredCert = generateExpiredX509Cert(generateRsaKeyPair(), "CN=abc");
         final CertificateException certificateException = Assertions.assertThrows(CertificateException.class,
                 () -> new DefaultTransportCertValidator("blah").validate(expiredCert, TEST_JWKS));
         assertThat(certificateException.getMessage()).contains("certificate expired on");

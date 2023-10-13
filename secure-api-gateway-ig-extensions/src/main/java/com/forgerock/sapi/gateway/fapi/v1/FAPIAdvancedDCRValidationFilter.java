@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -258,12 +259,20 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
             return next.handle(context, request);
         }
 
+        final X509Certificate x509Certificate;
         try {
-            clientCertificateRetriever.retrieveCertificate(context, request);
+            x509Certificate = clientCertificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException ce) {
             LOGGER.debug("({}), FAPI Validation failed due to client certificate error", FAPIUtils.getFapiInteractionIdForDisplay(context), ce);
             return Promises.newResultPromise(errorResponseFactory.errorResponse(context, DCRErrorCode.INVALID_CLIENT_METADATA,
                     "MTLS client certificate is missing or malformed"));
+        }
+        try {
+            x509Certificate.checkValidity();
+        } catch (CertificateException ce) {
+            LOGGER.debug("({}), FAPI Validation failed due to client certificate validity date check failure", FAPIUtils.getFapiInteractionIdForDisplay(context), ce);
+            return Promises.newResultPromise(errorResponseFactory.errorResponse(context, DCRErrorCode.INVALID_CLIENT_METADATA,
+                    "MTLS client certificate has expired or cannot be used yet"));
         }
 
         try {

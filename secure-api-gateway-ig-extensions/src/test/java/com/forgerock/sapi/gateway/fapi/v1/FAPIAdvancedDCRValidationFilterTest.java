@@ -15,6 +15,10 @@
  */
 package com.forgerock.sapi.gateway.fapi.v1;
 
+import static com.forgerock.sapi.gateway.util.CryptoUtils.convertToPem;
+import static com.forgerock.sapi.gateway.util.CryptoUtils.generateExpiredX509Cert;
+import static com.forgerock.sapi.gateway.util.CryptoUtils.generateRsaKeyPair;
+import static com.forgerock.sapi.gateway.util.CryptoUtils.generateX509Cert;
 import static org.forgerock.json.JsonValue.array;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
@@ -27,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -75,29 +80,7 @@ class FAPIAdvancedDCRValidationFilterTest {
 
     private static final String CERT_HEADER_NAME = "x-cert";
 
-    // Self signed test cert generated using openssl
-    private static final String TEST_CERT_PEM = "-----BEGIN CERTIFICATE-----\n" +
-            "MIIDrTCCApWgAwIBAgIUJDeIu5DTsX49pI41PBFIXNeSOh8wDQYJKoZIhvcNAQEL\n" +
-            "BQAwZjELMAkGA1UEBhMCVUsxEDAOBgNVBAgMB0JyaXN0b2wxEDAOBgNVBAcMB0Jy\n" +
-            "aXN0b2wxEDAOBgNVBAoMB0ZSIFRlc3QxDTALBgNVBAsMBFRlc3QxEjAQBgNVBAMM\n" +
-            "CXVuaXQudGVzdDAeFw0yMjEyMDExMzU3MDFaFw0zMjExMjgxMzU3MDFaMGYxCzAJ\n" +
-            "BgNVBAYTAlVLMRAwDgYDVQQIDAdCcmlzdG9sMRAwDgYDVQQHDAdCcmlzdG9sMRAw\n" +
-            "DgYDVQQKDAdGUiBUZXN0MQ0wCwYDVQQLDARUZXN0MRIwEAYDVQQDDAl1bml0LnRl\n" +
-            "c3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCi+Cg15QLYZ5wLEvPo\n" +
-            "2Lsdny3AlHcPsPPYT4bmH0iIwOudZZEmwM44Kqh4yhwupu1WMa1fTkM+IjnrJ70o\n" +
-            "HtwCUNA5yXfq+wjhlbl4+hdgautegtUqIqwzfMPtvDNXw5NRJXN6TwPzt4IYkj/P\n" +
-            "Hm8myrOkg2ebUrazQPoHRVtCjc29vko5aYHecXTl787CXKWnwgV8f3hjAln8T+zw\n" +
-            "szlAKjTxuF7MYSs9k2/AtLe998ZwZ4PYg8Qa/NTMAD/5Y2hWG95loe3kIh8YP+SJ\n" +
-            "Ga/SXMSJulR3noPR++tmwBkDptHouKBs0uG3rdIHC2OnPFOk9akJTxCXsEivRfO2\n" +
-            "pL/PAgMBAAGjUzBRMB0GA1UdDgQWBBS92afFuqfj7I7tnKZdn/xMbxZ7JzAfBgNV\n" +
-            "HSMEGDAWgBS92afFuqfj7I7tnKZdn/xMbxZ7JzAPBgNVHRMBAf8EBTADAQH/MA0G\n" +
-            "CSqGSIb3DQEBCwUAA4IBAQBjKNlzLesmGii3eXXxjfyz1zFMsHxWSPmHEjedtB43\n" +
-            "zMs2/XWr0DFRh6B+pUg/c/J4t6rdTJb4HDUJRQwXF6jmSCAaPSF5hkKzI9RwPFC2\n" +
-            "NvpcLiGbbCJdDQJ+n/0cJlofxMaMthb8/Dw2Dp/LRtMlju22abn/hwijxbBw0kj8\n" +
-            "P34GPGP7j2ysoyNFARbbNWmn+Ym+A0LCM1/jvg92snniHLmeOZ4vdhOh8RwEl19u\n" +
-            "6qpEGVrEFERZQ5TEnmp8/8mhs2RoWxavo9ZTia96p/A3PjI5n5663EQybMbFp0x5\n" +
-            "ut3B6FJ1svFmln3Tq53bbd3iPXMwDZzqVubBkJnsmfib\n" +
-            "-----END CERTIFICATE-----\n";
+    private static final String TEST_CERT_PEM = convertToPem(generateX509Cert(generateRsaKeyPair(), "CN=fapitest"));
 
     private static RSASSASigner RSA_SIGNER;
     private static Map<String, Object> VALID_REG_REQUEST_OBJ;
@@ -455,6 +438,25 @@ class FAPIAdvancedDCRValidationFilterTest {
             final Response response = responsePromise.get(1, TimeUnit.SECONDS);
             Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
             validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA, "MTLS client certificate is missing or malformed");
+        }
+
+        @Test
+        void invalidRequestExpiredCert() throws Exception {
+            final TransactionIdContext context = new TransactionIdContext(null, new TransactionId("1234"));
+            final Request request = new Request().setMethod("POST");
+            request.addHeaders(new GenericHeader(CERT_HEADER_NAME, URLEncoder.encode(
+                    convertToPem(generateExpiredX509Cert(generateRsaKeyPair(), "CN=test")), Charset.defaultCharset())));
+
+            final Map<String, Object> validRegRequestObj = VALID_REG_REQUEST_OBJ;
+            final String signedJwt = createSignedJwt(validRegRequestObj);
+            request.getEntity().setString(signedJwt);
+
+            final Promise<Response, NeverThrowsException> responsePromise = fapiValidationFilter.filter(context, request, successHandler);
+
+            final Response response = responsePromise.get(1, TimeUnit.SECONDS);
+            Assertions.assertFalse(response.getStatus().isSuccessful(), "Request must fail");
+            validateErrorResponse(response, DCRErrorCode.INVALID_CLIENT_METADATA,
+                    "MTLS client certificate has expired or cannot be used yet");
         }
 
         @Test

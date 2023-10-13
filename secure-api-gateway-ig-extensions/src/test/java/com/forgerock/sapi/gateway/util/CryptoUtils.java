@@ -139,6 +139,16 @@ public class CryptoUtils {
         }
     }
 
+    public static X509Certificate generateExpiredX509Cert(KeyPair keyPair, String subjectDN) {
+        final Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, -5);
+        final Date certStartDate = calendar.getTime();
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        final Date certEndDate = calendar.getTime();
+
+        return generateX509Cert(keyPair, subjectDN, certStartDate, certEndDate);
+    }
+
     /**
      * Convert an X509Certificate to a PEM string representation
      */

@@ -65,6 +65,11 @@ public class TrustedDirectoryTestFactory {
         }
 
         @Override
+        public String getSoftwareStatementOrgNameClaimName() {
+            return "org_name";
+        }
+
+        @Override
         public String getSoftwareStatementSoftwareIdClaimName() {
             return "software_id";
         }
@@ -114,6 +119,11 @@ public class TrustedDirectoryTestFactory {
         @Override
         public String getSoftwareStatementOrgIdClaimName() {
             return "org_id";
+        }
+
+        @Override
+        public String getSoftwareStatementOrgNameClaimName() {
+            return "org_name";
         }
 
         @Override

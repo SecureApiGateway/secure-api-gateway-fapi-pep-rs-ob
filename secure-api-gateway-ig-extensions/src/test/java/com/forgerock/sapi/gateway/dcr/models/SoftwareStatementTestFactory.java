@@ -26,7 +26,8 @@ import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryTestFactory;
 
 public class SoftwareStatementTestFactory {
-    private static final String ORG_ID = "Acme Inc.";
+    private static final String ORG_ID = "0015800001041RACME";
+    private static final String ORG_NAME= "Acme Inc.";
     private static final String SOFTWARE_ID ="1234567890";
     private static final String SOFTWARE_CLIENT_NAME = "Acme App";
     private static final String JWKS_URI = "https://jwks.com";
@@ -44,6 +45,7 @@ public class SoftwareStatementTestFactory {
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", directory.getIssuer());
         claims.put(directory.getSoftwareStatementOrgIdClaimName(), ORG_ID);
+        claims.put(directory.getSoftwareStatementOrgNameClaimName(), ORG_NAME);
         claims.put(directory.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID);
         claims.put(directory.getSoftwareStatementJwksUriClaimName(), JWKS_URI);
         claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);
@@ -59,6 +61,7 @@ public class SoftwareStatementTestFactory {
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", directory.getIssuer());
         claims.put(directory.getSoftwareStatementOrgIdClaimName(), ORG_ID);
+        claims.put(directory.getSoftwareStatementOrgNameClaimName(), ORG_NAME);
         claims.put(directory.getSoftwareStatementSoftwareIdClaimName(), SOFTWARE_ID);
         claims.put(directory.getSoftwareStatementJwksClaimName(), JWKS_SET.getObject());
         claims.put(directory.getSoftwareStatementRedirectUrisClaimName(), REDIRECT_URIS);

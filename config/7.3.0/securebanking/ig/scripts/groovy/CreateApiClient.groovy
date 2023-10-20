@@ -179,8 +179,8 @@ def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
 }
 
 def buildApiClientOrganisationIdmObject(SoftwareStatement softwareStatement) {
-  def organisationName = softwareStatement.getOrgId()
   def organisationIdentifier = softwareStatement.getOrgId()
+  def organisationName = softwareStatement.getOrgName() != null ? softwareStatement.getOrgName() : organisationIdentifier
   return [
           "_id" : organisationIdentifier,
           "id"  : organisationIdentifier,

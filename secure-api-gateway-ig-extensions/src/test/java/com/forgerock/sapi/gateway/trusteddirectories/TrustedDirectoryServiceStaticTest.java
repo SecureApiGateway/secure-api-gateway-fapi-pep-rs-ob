@@ -59,6 +59,7 @@ class TrustedDirectoryServiceStaticTest {
         assertThat(directoryConfig.softwareStatementHoldsJwksUri()).isEqualTo(false);
         assertThat(directoryConfig.getSoftwareStatementJwksUriClaimName()).isNull();
         assertThat(directoryConfig.getSoftwareStatementOrgIdClaimName()).isEqualTo("org_id");
+        assertThat(directoryConfig.getSoftwareStatementOrgNameClaimName()).isEqualTo("org_name");
         assertThat(directoryConfig.getSoftwareStatementSoftwareIdClaimName()).isEqualTo("software_id");
         assertThat(directoryConfig.getSoftwareStatementClientNameClaimName()).isEqualTo("software_client_name");
     }

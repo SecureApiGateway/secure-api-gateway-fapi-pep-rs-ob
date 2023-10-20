@@ -149,7 +149,7 @@ switch (method.toUpperCase()) {
         }
 
         def apiClientOrgId = softwareStatement.getOrgId()
-        def apiClientOrgName = apiClientOrgId
+        def apiClientOrgName = softwareStatement.getOrgName() !=null ? softwareStatement.getOrgName() : apiClientOrgId
         logger.debug(SCRIPT_NAME + "Inbound details from SSA: apiClientOrgName: {} apiClientOrgCertId: {}",
                 apiClientOrgName,
                 apiClientOrgId

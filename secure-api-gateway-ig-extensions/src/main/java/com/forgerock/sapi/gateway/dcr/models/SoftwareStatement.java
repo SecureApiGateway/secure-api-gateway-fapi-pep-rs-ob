@@ -43,6 +43,7 @@ public class SoftwareStatement extends SapiJwt {
     // The jwks_uri of the trusted directory against which the Software Statement signature may be validated
     private final URL trustedDirectoryJwksUrl;
     private final String orgId;
+    private final String orgName;
     private final String softwareId;
     private final String clientName;
     private final boolean hasJwksUri;
@@ -59,6 +60,7 @@ public class SoftwareStatement extends SapiJwt {
     public SoftwareStatement(Builder builder) {
         super(builder);
         this.orgId = builder.orgId;
+        this.orgName = builder.orgName;
         this.softwareId = builder.softwareId;
         this.clientName = builder.clientName;
         this.hasJwksUri = builder.hasJwksUri;
@@ -89,6 +91,13 @@ public class SoftwareStatement extends SapiJwt {
      */
     public String getOrgId() {
         return orgId;
+    }
+
+    /**
+     * @return the name of the Organisation in the Trusted Directory that issued the software statement
+     */
+    public String getOrgName() {
+        return orgName;
     }
 
     /**
@@ -145,6 +154,7 @@ public class SoftwareStatement extends SapiJwt {
         private final TrustedDirectoryService trustedDirectoryService;
         private TrustedDirectory trustedDirectory;
         private String orgId;
+        private String orgName;
         private String softwareId;
         private String clientName;
         private boolean hasJwksUri;
@@ -196,6 +206,7 @@ public class SoftwareStatement extends SapiJwt {
                 this.jwkSet = getJwkSet(transactionId);
             }
             this.orgId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementOrgIdClaimName());
+            this.orgName = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementOrgNameClaimName());
             this.softwareId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementSoftwareIdClaimName());
             this.clientName = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementClientNameClaimName());
             this.trustedDirectoryJwksUrl = trustedDirectory.getDirectoryJwksUri();

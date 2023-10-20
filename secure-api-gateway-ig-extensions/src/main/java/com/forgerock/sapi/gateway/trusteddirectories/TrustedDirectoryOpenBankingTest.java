@@ -46,6 +46,11 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
      */
     final static String softwareStatementOrgIdClaimName = "org_id";
     /*
+     * The name of the claim in the Open Banking Test Directory issued software statement that holds the
+     * organisation name
+     */
+    final static String softwareStatementOrgNameClaimName = "org_name";
+    /*
      * The name of the claim in the Open Banking Test Directory issued software statement that holds a uid for the
      * software statement
      */
@@ -93,6 +98,11 @@ public class TrustedDirectoryOpenBankingTest implements TrustedDirectory {
     @Override
     public String getSoftwareStatementOrgIdClaimName() {
         return softwareStatementOrgIdClaimName;
+    }
+
+    @Override
+    public String getSoftwareStatementOrgNameClaimName() {
+        return softwareStatementOrgNameClaimName;
     }
 
     @Override

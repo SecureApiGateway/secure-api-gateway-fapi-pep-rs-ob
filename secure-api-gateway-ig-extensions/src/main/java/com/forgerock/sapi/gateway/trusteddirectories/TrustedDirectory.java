@@ -80,6 +80,13 @@ public interface TrustedDirectory {
 
     /**
      *
+     * @return the name of the claim in the software statement that holds the organisation name
+     * to which the Software Statement belongs
+     */
+    String getSoftwareStatementOrgNameClaimName();
+
+    /**
+     *
      * @return the name of the claim in the software statement that holds a unique identifier for the software statement
      */
     String getSoftwareStatementSoftwareIdClaimName();

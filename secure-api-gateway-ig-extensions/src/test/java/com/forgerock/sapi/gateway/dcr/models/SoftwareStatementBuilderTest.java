@@ -42,7 +42,8 @@ class SoftwareStatementBuilderTest {
     private final JwtDecoder jwtDecoder = new JwtDecoder();
 
     private static final String ISSUER = "SSA_Issuer";
-    private static final String ORG_ID = "Acme Inc.";
+    private static final String ORG_ID = "0015800001041RACME";
+    private static final String ORG_NAME = "Acme Inc.";
     private static final String SOFTWARE_ID ="1234567890";
     private static final String SOFTWARE_CLIENT_NAME = "Acme App";
     private static final String JWKS_URI = "https://jwks.com";
@@ -70,6 +71,7 @@ class SoftwareStatementBuilderTest {
         // Then
         assertThat(softwareStatement).isNotNull();
         assertThat(softwareStatement.getOrgId()).isEqualTo(ORG_ID);
+        assertThat(softwareStatement.getOrgName()).isEqualTo(ORG_NAME);
         assertThat(softwareStatement.getSoftwareId()).isEqualTo(SOFTWARE_ID);
         assertThat(softwareStatement.getClientName()).isEqualTo(SOFTWARE_CLIENT_NAME);
         assertThat(softwareStatement.hasJwksUri()).isTrue();
@@ -88,6 +90,7 @@ class SoftwareStatementBuilderTest {
         // Then
         assertThat(softwareStatement).isNotNull();
         assertThat(softwareStatement.getOrgId()).isEqualTo(ORG_ID);
+        assertThat(softwareStatement.getOrgName()).isEqualTo(ORG_NAME);
         assertThat(softwareStatement.getSoftwareId()).isEqualTo(SOFTWARE_ID);
         assertThat(softwareStatement.getClientName()).isEqualTo(SOFTWARE_CLIENT_NAME);
         assertThat(softwareStatement.hasJwksUri()).isFalse();

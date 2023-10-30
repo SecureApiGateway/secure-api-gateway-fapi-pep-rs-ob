@@ -1,6 +1,6 @@
 {
   "comment": "Authorise access to token endpoint",
-  "name": "54 - Open Banking OAuth2 token endpoint",
+  "name": "05 - Open Banking OAuth2 token endpoint",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${find(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/access_token')}",

@@ -1,6 +1,6 @@
 {
   "comment": "Passthrough for any unprotected AM endpoints (such as the XUI)",
-  "name": "99 - OBIE AS General",
+  "name": "99 - OBIE AS pass-through",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${find(request.uri.path, '^/am')}",

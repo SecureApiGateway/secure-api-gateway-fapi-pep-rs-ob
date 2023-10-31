@@ -36,6 +36,7 @@ import org.forgerock.util.Reject;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.forgerock.util.promise.Promises;
+import org.forgerock.util.promise.ResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +87,22 @@ public class FetchApiClientFilter implements Filter {
         return (ApiClient) context.asContext(AttributesContext.class).getAttributes().get(API_CLIENT_ATTR_KEY);
     }
 
+    /**
+     * Creates a ResultHandler responsible for adding the ApiClient result to the Attributes Context.
+     * <p>
+     * A new handler needs to be created per result.
+     *
+     * @param context Context to add the ApiClient to
+     * @param logger  Logger to log debug information
+     * @return ResultHandler which adds an ApiClient result to a Context.
+     */
+    public static ResultHandler<ApiClient> createAddApiClientToContextResultHandler(Context context, Logger logger) {
+        return apiClient -> {
+            logger.debug("Adding apiClient: {} to AttributesContext[\"{}\"]", apiClient, API_CLIENT_ATTR_KEY);
+            context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_ATTR_KEY, apiClient);
+        };
+    }
+
     public FetchApiClientFilter(ApiClientService apiClientService, String accessTokenClientIdClaim) {
         Reject.ifNull(apiClientService, "apiClientService must be provided");
         Reject.ifBlank(accessTokenClientIdClaim, "accessTokenClientIdClaim must be provided");
@@ -103,11 +120,10 @@ public class FetchApiClientFilter implements Filter {
         }
         final String clientId = (String)info.get(accessTokenClientIdClaim);
 
-        return apiClientService.getApiClient(clientId).thenOnResult(apiClient -> {
-            logger.debug("Adding apiClient: {} to AttributesContext[\"{}\"]", apiClient, API_CLIENT_ATTR_KEY);
-            context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_ATTR_KEY, apiClient);
-        }).thenAsync(apiClient -> next.handle(context, request),
-                     this::handleApiClientServiceException, this::handleUnexpectedException);
+        return apiClientService.getApiClient(clientId)
+                               .thenOnResult(createAddApiClientToContextResultHandler(context, logger))
+                               .thenAsync(apiClient -> next.handle(context, request),
+                                          this::handleApiClientServiceException, this::handleUnexpectedException);
     }
 
     private Promise<Response, NeverThrowsException> handleApiClientServiceException(ApiClientServiceException ex) {
@@ -148,20 +164,35 @@ public class FetchApiClientFilter implements Filter {
      *            }
      * }
      */
-    public static class Heaplet extends GenericHeaplet {
+    public static class Heaplet extends BaseFetchApiClientHeaplet {
         @Override
         public Object create() throws HeapException {
-            final Handler clientHandler = config.get("clientHandler").as(requiredHeapObject(heap, Handler.class));
-            final Client httpClient = new Client(clientHandler);
+            final String accessTokenClientIdClaim = config.get("accessTokenClientIdClaim")
+                                                          .defaultTo(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM)
+                                                          .asString();
+            return new FetchApiClientFilter(createApiClientService(), accessTokenClientIdClaim);
+        }
+    }
 
+    static abstract class BaseFetchApiClientHeaplet extends GenericHeaplet {
+
+        protected ApiClientService createApiClientService() throws HeapException {
+            return new IdmApiClientService(createHttpClient(), getIdmGetApiClientBaseUri(), new IdmApiClientDecoder());
+        }
+
+        private Client createHttpClient() throws HeapException {
+            final Handler clientHandler = config.get("clientHandler").as(requiredHeapObject(heap, Handler.class));
+            return new Client(clientHandler);
+        }
+
+        private String getIdmGetApiClientBaseUri() {
             String idmGetApiClientBaseUri = config.get("idmGetApiClientBaseUri").required().asString();
             if (!idmGetApiClientBaseUri.endsWith("/")) {
                 idmGetApiClientBaseUri = idmGetApiClientBaseUri + '/';
             }
-            final String accessTokenClientIdClaim = config.get("accessTokenClientIdClaim").defaultTo(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM).asString();
-
-            final ApiClientService apiClientService = new IdmApiClientService(httpClient, idmGetApiClientBaseUri, new IdmApiClientDecoder());
-            return new FetchApiClientFilter(apiClientService, accessTokenClientIdClaim);
+            return idmGetApiClientBaseUri;
         }
+
     }
+
 }

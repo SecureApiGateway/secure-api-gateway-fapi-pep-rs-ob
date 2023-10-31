@@ -30,9 +30,18 @@ public interface TrustedDirectoryService {
      * no value is held for the issuer.
      */
     default TrustedDirectory getTrustedDirectoryConfiguration(ApiClient apiClient) {
-        final JwtClaimsSet ssaClaims = apiClient.getSoftwareStatementAssertion().getClaimsSet();
-        final String issuer = ssaClaims.getIssuer();
-        return getTrustedDirectoryConfiguration(issuer);
+        return getTrustedDirectoryConfiguration(getTrustedDirectoryIssuerName(apiClient));
+    }
+
+    /**
+     * Helper method to get the issuer name of the TrustedDirectory for an ApiClient instance.
+     * An ApiClient has been created from a Software Statement issued by a Trusted Directory.
+     *
+     * @param apiClient ApiClient to get {@link TrustedDirectory} for
+     * @return The issuer name of the {@code TrustedDirectory} associated with the ApiClient's Software Statement
+     */
+    static String getTrustedDirectoryIssuerName(ApiClient apiClient) {
+        return apiClient.getSoftwareStatementAssertion().getClaimsSet().getIssuer();
     }
 
     /**

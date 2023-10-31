@@ -45,7 +45,7 @@ import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter.Heaplet;
 import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 
-class FetchTrustedDirectoryFilterTest {
+public class FetchTrustedDirectoryFilterTest {
 
     private final String secureApiGatewayJwksUri = "https://test-bank.com";
     private TrustedDirectoryService trustedDirectoryService;
@@ -56,7 +56,7 @@ class FetchTrustedDirectoryFilterTest {
         trustedDirectoryService = new TrustedDirectoryServiceStatic(true, secureApiGatewayJwksUrl);
     }
 
-    private static ApiClient createApiClient(String issuer) {
+    public static ApiClient createApiClient(String issuer) {
         final JwtClaimsSet ssaClaims = new JwtClaimsSet();
         ssaClaims.setIssuer(issuer);
         final SignedJwt ssaSignedJwt = new SignedJwt(new JwsHeader(), ssaClaims, new byte[0], new byte[0]);

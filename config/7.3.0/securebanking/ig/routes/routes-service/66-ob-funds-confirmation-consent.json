@@ -7,6 +7,10 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Ensure OB compliant response",

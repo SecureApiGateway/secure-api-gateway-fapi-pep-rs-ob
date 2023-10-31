@@ -8,6 +8,10 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Enforce response content type as application/json",

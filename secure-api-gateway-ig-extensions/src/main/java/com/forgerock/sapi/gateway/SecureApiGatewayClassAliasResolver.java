@@ -23,6 +23,7 @@ import org.forgerock.openig.alias.ClassAliasResolver;
 import com.forgerock.sapi.gateway.am.ReSignIdTokenFilter;
 import com.forgerock.sapi.gateway.common.exception.SapiLogAttachedExceptionFilterHeaplet;
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter;
+import com.forgerock.sapi.gateway.dcr.idm.AuthorizeResponseFetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.request.RegistrationRequestEntityValidatorFilter;
 import com.forgerock.sapi.gateway.dcr.sigvalidation.RegistrationRequestJwtSignatureValidationFilter;
@@ -32,6 +33,8 @@ import com.forgerock.sapi.gateway.jwks.RestJwkSetService;
 import com.forgerock.sapi.gateway.jwks.cache.caffeine.CaffeineCachingJwkSetService;
 import com.forgerock.sapi.gateway.jws.RsaJwtSignatureValidator;
 import com.forgerock.sapi.gateway.jws.signer.CompactSerializationJwsSigner;
+import com.forgerock.sapi.gateway.metrics.RouteMetricsFilter;
+import com.forgerock.sapi.gateway.metrics.TokenEndpointMetricsContextSupplier;
 import com.forgerock.sapi.gateway.mtls.AddCertificateToAttributesContextFilter;
 import com.forgerock.sapi.gateway.mtls.DefaultTransportCertValidator;
 import com.forgerock.sapi.gateway.mtls.ContextCertificateRetriever;
@@ -65,6 +68,9 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("AddCertificateToAttributesContextFilter", AddCertificateToAttributesContextFilter.class);
         ALIASES.put("ContextCertificateRetriever", ContextCertificateRetriever.class);
         ALIASES.put("HeaderCertificateRetriever", HeaderCertificateRetriever.class);
+        ALIASES.put("RouteMetricsFilter", RouteMetricsFilter.class);
+        ALIASES.put("AuthoriseResponseFetchApiClientFilter", AuthorizeResponseFetchApiClientFilter.class);
+        ALIASES.put("TokenEndpointMetricsContextSupplier", TokenEndpointMetricsContextSupplier.class);
     }
 
     /**

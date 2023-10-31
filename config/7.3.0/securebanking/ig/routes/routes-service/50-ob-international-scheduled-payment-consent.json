@@ -7,6 +7,10 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Add a detached signature to the response",

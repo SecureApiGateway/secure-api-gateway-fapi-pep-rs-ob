@@ -49,6 +49,8 @@ import org.forgerock.json.jose.exceptions.InvalidJwtException;
 import org.forgerock.json.jose.jwk.JWKSet;
 import org.forgerock.openig.heap.HeapImpl;
 import org.forgerock.openig.heap.Name;
+import org.forgerock.services.context.AttributesContext;
+import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
 import org.forgerock.util.Pair;
 import org.forgerock.util.promise.NeverThrowsException;
@@ -60,6 +62,7 @@ import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
+import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient.ApiClientBuilder;
@@ -126,7 +129,7 @@ class TokenEndpointTransportCertValidationFilterTest {
         @Test
         void failsWhenCertNotFound() throws Exception {
             final TestSuccessResponseHandler handler = new TestSuccessResponseHandler();
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), handler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), handler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
 
             validateResponseIsBadRequest(response, "invalid cert");
@@ -138,7 +141,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             // next handler in chain returns forbidden response
             final TestHandler nextHandler = new TestHandler(Handlers.forbiddenHandler());
             mockCertificateResolverValidCert();
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.FORBIDDEN, response.getStatus());
         }
@@ -153,7 +156,7 @@ class TokenEndpointTransportCertValidationFilterTest {
 
             mockCertificateResolverValidCert();
 
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
@@ -170,7 +173,7 @@ class TokenEndpointTransportCertValidationFilterTest {
 
             mockCertificateResolverValidCert();
 
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
@@ -182,7 +185,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             mockCertificateResolverValidCert();
             doReturn(Promises.newExceptionPromise(new Exception("boom"))).when(mockApiClientService).getApiClient(eq(testClientId));
 
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
@@ -194,7 +197,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             mockCertificateResolverValidCert();
             mockApiClientReturnsTestApiClient();
 
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
@@ -204,12 +207,12 @@ class TokenEndpointTransportCertValidationFilterTest {
             final TestHandler nextHandler = createResponseWithValidAccessToken();
 
             mockCertificateResolverValidCert();
-            mockApiClientReturnsTestApiClient();;
+            mockApiClientReturnsTestApiClient();
             mockTrustedDirectoryServiceReturndTestTrustedDirectory();
 
             doReturn(Promises.newExceptionPromise(new FailedToLoadJWKException("boom"))).when(mockApiClientJwkSetService).getJwkSet(eq(testApiClient), eq(testTrustedDirectory));
 
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
@@ -226,7 +229,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             final JWKSet clientJwks = new JWKSet();
             doReturn(Promises.newResultPromise(clientJwks)).when(mockApiClientJwkSetService).getJwkSet(eq(testApiClient), eq(testTrustedDirectory));
             doThrow(new CertificateException("Cert has expired")).when(mockTransportCertValidator).validate(eq(clientCert), eq(clientJwks));
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(createContext(), new Request(), nextHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
             validateResponseIsBadRequest(response, "Cert has expired");
         }
@@ -241,11 +244,14 @@ class TokenEndpointTransportCertValidationFilterTest {
 
             final JWKSet clientJwks = new JWKSet();
             doReturn(Promises.newResultPromise(clientJwks)).when(mockApiClientJwkSetService).getJwkSet(eq(testApiClient), eq(testTrustedDirectory));
-            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(new RootContext("root"), new Request(), nextHandler);
-            final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
+            final Context context = createContext();
+            final Promise<Response, NeverThrowsException> responsePromise = transportCertValidationFilter.filter(context, new Request(), nextHandler);
+            final Response response = responsePromise.getOrThrow(1, TimeUnit.MILLISECONDS);
 
             assertEquals(Status.OK, response.getStatus());
             assertTrue(nextHandler.hasBeenInteractedWith());
+
+            assertEquals(testApiClient, FetchApiClientFilter.getApiClientFromContext(context));
         }
 
         private X509Certificate mockCertificateResolverValidCert() throws Exception {
@@ -272,6 +278,10 @@ class TokenEndpointTransportCertValidationFilterTest {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static AttributesContext createContext() {
+        return new AttributesContext(new RootContext("root"));
     }
 
     @Nested
@@ -312,7 +322,7 @@ class TokenEndpointTransportCertValidationFilterTest {
 
             final Request request = HeaderCertificateRetrieverTest.createRequestWithCertHeader(clientCert, certHeader);
 
-            final Promise<Response, NeverThrowsException> responsePromise = filter.filter(new RootContext("root"), request, responseHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = filter.filter(createContext(), request, responseHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
 
             assertEquals(Status.OK, response.getStatus());
@@ -353,7 +363,7 @@ class TokenEndpointTransportCertValidationFilterTest {
 
             final Request request = HeaderCertificateRetrieverTest.createRequestWithCertHeader(clientCert, certHeader);
 
-            final Promise<Response, NeverThrowsException> responsePromise = filter.filter(new RootContext("root"), request, responseHandler);
+            final Promise<Response, NeverThrowsException> responsePromise = filter.filter(createContext(), request, responseHandler);
             final Response response = responsePromise.get(1, TimeUnit.MILLISECONDS);
 
             assertEquals(Status.OK, response.getStatus());

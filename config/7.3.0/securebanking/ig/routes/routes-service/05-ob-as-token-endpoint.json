@@ -8,6 +8,16 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter",
+          "config": {
+            "metricsContextSupplier": {
+              "name": "TokenEndpointMetricsContextSupplier",
+              "type": "TokenEndpointMetricsContextSupplier"
+            }
+          }
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Add host to downstream request",

@@ -15,6 +15,7 @@
  */
 package com.forgerock.sapi.gateway.mtls;
 
+import static com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.createAddApiClientToContextResultHandler;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -47,6 +48,7 @@ import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.DefaultApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.JwkSetService;
@@ -148,23 +150,26 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
                                .getJsonAsync()
                                .thenCatchAsync(ioe -> Promises.newExceptionPromise(new Exception("Failed to get response entity json", ioe)))
                                .then(this::getClientIdFromAccessToken)
-                               .thenAsync(this::getApiClient)
+                               .thenAsync(clientId -> getApiClient(context, clientId))
                                .thenAsync(validateApiClientTransportCert(clientCertificate, response),
                                           ex -> {
                                             // Top level exception handler
-                                            logger.error("({}) Failed to validate client mtls cert", ex);
+                                            logger.error("({}) Failed to validate client mtls cert",
+                                                         FAPIUtils.getFapiInteractionIdForDisplay(context), ex);
                                             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           },
                                           rte -> {
-                                              logger.error("({}) Failed to validate client mtls cert", rte);
+                                              logger.error("({}) Failed to validate client mtls cert",
+                                                           FAPIUtils.getFapiInteractionIdForDisplay(context),rte);
                                               return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           });
             }
         });
     }
 
-    private Promise<ApiClient, Exception> getApiClient(String clientId) {
+    private Promise<ApiClient, Exception> getApiClient(Context context, String clientId) {
         return apiClientService.getApiClient(clientId)
+                               .thenOnResult(createAddApiClientToContextResultHandler(context, logger))
                                .thenCatchAsync(ae -> Promises.newExceptionPromise(new Exception("Failed to get ApiClient due to exception", ae)));
     }
 

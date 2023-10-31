@@ -86,7 +86,7 @@ class FetchApiClientFilterTest {
         callFilterValidateSuccessBehaviour(accessToken, idmClientData, filter);
     }
 
-    private static ApiClientService createApiClientService(Client client, String idmBaseUri) {
+    public static ApiClientService createApiClientService(Client client, String idmBaseUri) {
         return new IdmApiClientService(client, idmBaseUri, new IdmApiClientDecoder());
     }
 

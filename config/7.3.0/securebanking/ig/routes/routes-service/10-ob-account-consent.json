@@ -8,6 +8,10 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Add x-fapi-interaction-id header if one was not present in the request",

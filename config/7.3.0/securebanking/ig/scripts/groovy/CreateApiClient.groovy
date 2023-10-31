@@ -1,5 +1,6 @@
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest
 import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement
+import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder
 import groovy.json.JsonOutput
 
 import static org.forgerock.util.promise.Promises.newResultPromise
@@ -15,6 +16,9 @@ import static org.forgerock.util.promise.Promises.newResultPromise
  * may already exist, in which case only the apiClient is created. In both cases, the apiClient is linked to the apiClientOrg
  *
  * Get, Put, Delete operations are also supported for existing IDM apiClient objects
+ *
+ * Java class: com.forgerock.sapi.gateway.dcr.models.ApiClient is used to represent an ApiClient. This filter adds
+ * an instance of this class to the attributes context so that other filter in the chain can use it.
  */
 
 /**
@@ -64,13 +68,14 @@ switch(method.toUpperCase()) {
         Request patchSetApiClientDeleted = new Request()
         patchSetApiClientDeleted.setMethod('POST')
         patchSetApiClientDeleted.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId
-                + "?_action=patch")
+                + "?_action=patch&_fields=apiClientOrg/*,*")
         patchSetApiClientDeleted.setEntity([["operation": "replace",
                                              "field"    : "deleted",
                                              "value"    : true]])
         logger.info("Marking IDM object: " + routeArgObjApiClient + " as deleted for client_id: " + apiClientId)
         return http.send(patchSetApiClientDeleted).thenAsync(idmResponse -> {
           if (idmResponse.status.isSuccessful()) {
+            decodeApiClientObjectFromResponseAndStoreInAttributes(idmResponse)
             logger.debug("IDM object successfully marked as deleted client_id: " + apiClientId)
             return newResultPromise(new Response(Status.NO_CONTENT))
           }
@@ -165,6 +170,7 @@ def buildApiClientIdmObject(oauth2ClientId, softwareStatement) {
           "ssa"           : softwareStatement.getB64EncodedJwtString(),
           "roles"         : softwareStatement.getRoles(),
           "oauth2ClientId": oauth2ClientId,
+          "deleted"       : false,
           "apiClientOrg"  : ["_ref": "managed/" + routeArgObjApiClientOrg + "/" + softwareStatement.getOrgId()]
   ]
 
@@ -210,7 +216,7 @@ def createApiClientOrganisation(apiClientOrgIdmObject) {
 def createApiClient(apiClientIdmObject) {
   Request apiClientRequest = new Request()
   apiClientRequest.setMethod('POST')
-  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create")
+  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "?_action=create&_fields=apiClientOrg/*,*")
   apiClientRequest.setEntity(apiClientIdmObject)
   logger.debug(SCRIPT_NAME + "Attempting to create {} in IDM", routeArgObjApiClient)
   return http.send(apiClientRequest).then(apiClientResponse -> {
@@ -218,6 +224,7 @@ def createApiClient(apiClientIdmObject) {
       logger.error(SCRIPT_NAME + "unexpected IDM response when attempting to create {}, status: {}, entity: {}", routeArgObjApiClient, apiClientResponse.status, apiClientResponse.entity)
       return new Response(Status.INTERNAL_SERVER_ERROR)
     } else {
+      decodeApiClientObjectFromResponseAndStoreInAttributes(apiClientResponse)
       logger.debug(SCRIPT_NAME + "successfully created apiClient")
       return apiClientResponse
     }
@@ -227,7 +234,7 @@ def createApiClient(apiClientIdmObject) {
 def updateApiClient(apiClientIdmObject) {
   Request apiClientRequest = new Request()
   apiClientRequest.setMethod('PUT')
-  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientIdmObject["_id"])
+  apiClientRequest.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientIdmObject["_id"] + "?_fields=apiClientOrg/*,*")
   apiClientRequest.setEntity(apiClientIdmObject)
   logger.debug(SCRIPT_NAME + "Attempting to update {} _id: {} in IDM", routeArgObjApiClient, apiClientIdmObject["_id"])
   return http.send(apiClientRequest).then(apiClientResponse -> {
@@ -235,6 +242,7 @@ def updateApiClient(apiClientIdmObject) {
       logger.error(SCRIPT_NAME + "unexpected IDM response when attempting to update {}, status: {}, entity: {}", routeArgObjApiClient, apiClientResponse.status, apiClientResponse.entity)
       return new Response(Status.INTERNAL_SERVER_ERROR)
     } else {
+      decodeApiClientObjectFromResponseAndStoreInAttributes(apiClientResponse)
       logger.debug(SCRIPT_NAME + "successfully updated apiClient")
       return apiClientResponse
     }
@@ -244,22 +252,34 @@ def updateApiClient(apiClientIdmObject) {
 def getApiClient(apiClientId) {
   Request getApiClient = new Request()
   getApiClient.setMethod('GET')
-  getApiClient.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId)
+  getApiClient.setUri(routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjApiClient + "/" + apiClientId + "?_fields=apiClientOrg/*,*")
   logger.info("Retrieving IDM object: " + routeArgObjApiClient + " for client_id: " + apiClientId)
   return http.send(getApiClient).then(apiClientResponse -> {
     if (!apiClientResponse.status.isSuccessful()) {
       logger.error(SCRIPT_NAME + "unexpected IDM response when attempting to get {}, status: {}, entity: {}", routeArgObjApiClient, apiClientResponse.status, apiClientResponse.entity)
       return new Response(Status.INTERNAL_SERVER_ERROR)
     } else {
-      // Handle case where ApiClient has been deleted by an admin user in IDM but the AM OAuth2 client is still active.
-      var apiClient = apiClientResponse.getEntity().getJson()
+      def apiClient = decodeApiClientObjectFromResponseAndStoreInAttributes(apiClientResponse)
       if (apiClient.deleted) {
         logger.warn("Failed to retrieve apiClient for client_id: " + apiClientId + " , client has been deleted in IDM")
         return errorResponse(Status.UNAUTHORIZED, "Failed to get registration")
       }
-      // Add the apiClient to the attributes context for use by other filters
-      attributes.apiClient = apiClient
       return apiClientResponse
     }
   })
 }
+
+/**
+ * This method decodes the IDM apiClientResponse json and stores a com.forgerock.sapi.gateway.dcr.models.ApiClient
+ * object in the attributes context so that other filters can use this data.
+ *
+ * @param apiClientResponse the IDM response containing an ApiClient object to decode
+ * @return ApiClient decoded from the response
+ */
+def decodeApiClientObjectFromResponseAndStoreInAttributes(apiClientResponse) {
+  logger.debug(SCRIPT_NAME + "Adding ApiClient to attributes context")
+  def apiClient = new IdmApiClientDecoder().decode(json(apiClientResponse.entity.getJson()))
+  attributes.put(com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.API_CLIENT_ATTR_KEY, apiClient)
+  return apiClient
+}
+

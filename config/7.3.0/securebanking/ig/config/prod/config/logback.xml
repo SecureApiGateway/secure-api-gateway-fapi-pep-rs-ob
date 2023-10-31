@@ -25,34 +25,15 @@
             </layout>
         </encoder>
     </appender>
-     
-    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
-        <discriminator>
-            <key>routeId</key>
-            <defaultValue>system</defaultValue>
-        </discriminator>
-        <sift>
-            <!-- Create a separate log file for each <key> -->
-            <appender name="FILE-${routeId}" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <file>${openig.base}/logs/route-${routeId}.log</file>
-                 
-                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                    <!-- Rotate files daily -->
-                    <fileNamePattern>${openig.base}/logs/route-${routeId}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-                     
-                    <!-- each file should be at most 100MB, keep 30 days worth of history, but at most 3GB -->
-                    <maxFileSize>100MB</maxFileSize>
-                    <maxHistory>30</maxHistory>
-                    <totalSizeCap>3GB</totalSizeCap>
-                </rollingPolicy>
-                 
-                <encoder>
-                    <pattern>%d{HH:mm:ss:SSS} | %-5level | %thread | %logger{20} | %message%n%xException</pattern>
-                </encoder>
-            </appender>
-        </sift>
+    <appender name="METRICS" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
     </appender>
-     
+
+    <logger name="com.forgerock.sapi.gateway.metrics.LoggerRouteMetricsEventPublisher" additivity="false">
+        <appender-ref ref="METRICS" />
+    </logger>
     <root level="FINE">
         <appender-ref ref="STDOUT"/>
     </root>

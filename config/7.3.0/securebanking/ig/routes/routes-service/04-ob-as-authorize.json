@@ -8,6 +8,10 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
         "SBATFapiInteractionFilterChain",
         {
           "comment": "Add host to downstream request",
@@ -35,6 +39,15 @@
           "config": {
             "type": "application/x-groovy",
             "file": "FapiCompliantAuthorizeRequestFilter.groovy"
+          }
+        },
+        {
+          "name": "AuthoriseResponseFetchApiClientFilter",
+          "type": "AuthoriseResponseFetchApiClientFilter",
+          "comment": "Add ApiClient data to the context attributes",
+          "config": {
+            "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+            "clientHandler": "IDMClientHandler"
           }
         },
         {

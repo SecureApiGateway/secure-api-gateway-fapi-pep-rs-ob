@@ -16,7 +16,8 @@
 package com.forgerock.sapi.gateway.metrics;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,33 +31,53 @@ import org.slf4j.LoggerFactory;
 /**
  * Supplies Context information for the Token Endpoint route.
  * <p>
- * The context contains a single field: "grant_type" which is extracted from the Request's form parameter of the same
- * name. This represents the OAuth2.0 grant_type of the token that is being requested.
+ * The following data is extracted from the Request's form:
+ * <ul>
+ *     <li>"grant_type this represents the OAuth2.0 grant_type of the token that is being requested.</li>
+ *     <li>"scope" this represents the OAuth2.0 scopes that are being requested.</li>
+ * </ul>
  */
 public class TokenEndpointMetricsContextSupplier implements MetricsContextSupplier {
 
     private static final String GRANT_TYPE = "grant_type";
+    private static final String SCOPE = "scope";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
     public Map<String, Object> getMetricsContext(Context requestContext, Request request) {
+        final Map<String, Object> context = new HashMap<>();
         final String grantType = getGrantType(request);
         if (grantType != null) {
-            return Map.of("grant_type", grantType);
+            context.put(GRANT_TYPE, grantType);
         }
-        return Collections.emptyMap();
+        final List<String> scope = getScopes(request);
+        if (scope != null && !scope.isEmpty()) {
+            context.put(SCOPE, scope);
+        }
+        return context;
     }
 
     private String getGrantType(Request request) {
-        final List<String> grantTypeParams;
+        return getSingleFormValue(request, GRANT_TYPE);
+    }
+
+    private List<String> getScopes(Request request) {
+        final String scopeParam = getSingleFormValue(request, SCOPE);
+        if (scopeParam != null) {
+            return Arrays.asList(scopeParam.split("\\s+"));
+        }
+        return null;
+    }
+
+    private String getSingleFormValue(Request request, String paramName) {
         try {
-            grantTypeParams = request.getEntity().getForm().get(GRANT_TYPE);
-            if (grantTypeParams != null && grantTypeParams.size() > 0) {
-                return grantTypeParams.get(0);
+            final List<String> params = request.getEntity().getForm().get(paramName);
+            if (params != null && params.size() > 0) {
+                return params.get(0);
             }
         } catch (IOException e) {
-            logger.error("Failed to get grant_type from request form", e);
+            logger.error("Failed to get {} from request form", paramName, e);
         }
         return null;
     }

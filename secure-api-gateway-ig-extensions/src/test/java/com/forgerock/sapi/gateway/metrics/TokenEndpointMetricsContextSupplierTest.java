@@ -48,7 +48,7 @@ class TokenEndpointMetricsContextSupplierTest {
     }
 
     @Test
-    void retrievesGrantTypeFromRequest() {
+    void populatesContextFromValidRequest() {
         final String expectedGrantType = "client_credentials";
 
         final Request request = new Request();
@@ -56,16 +56,32 @@ class TokenEndpointMetricsContextSupplierTest {
         form.put("client_id", List.of("1232"));
         form.put("something_else", List.of("blah", "blah"));
         form.put("grant_type", List.of(expectedGrantType));
+        form.put("scope", List.of("payments openid"));
         form.put("another_thing", List.of("ldfsfdsd"));
         request.setEntity(form);
 
         final Map<String, Object> metricsContext = tokenEndpointMetricsContextSupplier.getMetricsContext(httpRequestContext, request);
-        assertThat(metricsContext.size()).isEqualTo(1);
+        assertThat(metricsContext.size()).isEqualTo(2);
         assertThat(metricsContext.get("grant_type")).isEqualTo(expectedGrantType);
+        assertThat(metricsContext.get("scope")).isEqualTo(List.of("payments", "openid"));
     }
 
     @Test
-    void returnsEmptyContextWhenUnableToExtractGrantTypeFromRequest() {
+    void returnsEmptyContextForInvalidRequest() {
+        // Valid request with a form body, but does not contain any of the expected fields
+        final Request request = new Request().setEntity(new Form());
+        final Form form = new Form();
+        form.put("client_id", List.of("1232"));
+        form.put("something_else", List.of("blah", "blah"));
+        form.put("another_thing", List.of("ldfsfdsd"));
+        request.setEntity(form);
+
+        assertThat(tokenEndpointMetricsContextSupplier.getMetricsContext(httpRequestContext, request)).isEmpty();
+    }
+
+    @Test
+    void returnsEmptyContextWhenUnableToAnyDataFromRequest() {
+        // Invalid request which is not a form
         assertThat(tokenEndpointMetricsContextSupplier.getMetricsContext(httpRequestContext, new Request())).isEmpty();
     }
 }

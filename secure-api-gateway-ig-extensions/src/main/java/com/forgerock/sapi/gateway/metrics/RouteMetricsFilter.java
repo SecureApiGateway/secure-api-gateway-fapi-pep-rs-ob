@@ -113,6 +113,7 @@ public class RouteMetricsFilter implements Filter {
         metricEvent.setRequestPath(request.getUri().getPath());
         metricEvent.setApiClientId(getApiClientId(apiClient));
         metricEvent.setApiClientOrgId(getApiClientOrgId(apiClient));
+        metricEvent.setSoftwareId(getSoftwareId(apiClient));
         metricEvent.setTrustedDirectory(getTrustedDirectory(apiClient));
         metricEvent.setHttpStatusCode(response.getStatus().getCode());
         metricEvent.setSuccessResponse(isSuccessResponse(response.getStatus()));
@@ -160,6 +161,14 @@ public class RouteMetricsFilter implements Filter {
             } else {
                 return apiClient.getOrganisation().getId();
             }
+        }
+    }
+
+    static String getSoftwareId(ApiClient apiClient ) {
+        if (apiClient == null) {
+            return null;
+        } else {
+            return apiClient.getSoftwareClientId();
         }
     }
 

@@ -54,6 +54,7 @@ class LoggerRouteMetricsEventPublisherTest {
         routeMetricsEvent.setHttpStatusCode(201);
         routeMetricsEvent.setApiClientId("api-client-1");
         routeMetricsEvent.setApiClientOrgId("api-client-org-1");
+        routeMetricsEvent.setSoftwareId("EFxdsfrt23423");
         routeMetricsEvent.setTimestamp(100000);
         routeMetricsEvent.setTrustedDirectory("OpenBankingUK");
 

@@ -63,6 +63,10 @@ public class RouteMetricsEvent {
      */
     private String apiClientOrgId;
     /**
+     * The id of the Software Statement that the ApiClient has used to register
+     */
+    private String softwareId;
+    /**
      * Name of the trustedDirectory that the ApiClient is registered with
      */
     private String trustedDirectory;
@@ -75,92 +79,100 @@ public class RouteMetricsEvent {
         return timestamp;
     }
 
-    public String getEventType() {
-        return eventType;
-    }
-
-    public String getRouteId() {
-        return routeId;
-    }
-
-    public String getRequestPath() {
-        return requestPath;
-    }
-
-    public String getHttpMethod() {
-        return httpMethod;
-    }
-
-    public long getResponseTimeMillis() {
-        return responseTimeMillis;
-    }
-
-    public int getHttpStatusCode() {
-        return httpStatusCode;
-    }
-
-    public boolean isSuccessResponse() {
-        return successResponse;
-    }
-
-    public String getApiClientId() {
-        return apiClientId;
-    }
-
-    public String getApiClientOrgId() {
-        return apiClientOrgId;
-    }
-
-    public String getTrustedDirectory() {
-        return trustedDirectory;
-    }
-
-    public Map<String, Object> getContext() {
-        return context;
-    }
-
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getEventType() {
+        return eventType;
     }
 
     public void setEventType(String eventType) {
         this.eventType = eventType;
     }
 
+    public String getRouteId() {
+        return routeId;
+    }
+
     public void setRouteId(String routeId) {
         this.routeId = routeId;
+    }
+
+    public String getRequestPath() {
+        return requestPath;
     }
 
     public void setRequestPath(String requestPath) {
         this.requestPath = requestPath;
     }
 
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
     public void setHttpMethod(String httpMethod) {
         this.httpMethod = httpMethod;
+    }
+
+    public long getResponseTimeMillis() {
+        return responseTimeMillis;
     }
 
     public void setResponseTimeMillis(long responseTimeMillis) {
         this.responseTimeMillis = responseTimeMillis;
     }
 
+    public int getHttpStatusCode() {
+        return httpStatusCode;
+    }
+
     public void setHttpStatusCode(int httpStatusCode) {
         this.httpStatusCode = httpStatusCode;
+    }
+
+    public boolean isSuccessResponse() {
+        return successResponse;
     }
 
     public void setSuccessResponse(boolean successResponse) {
         this.successResponse = successResponse;
     }
 
+    public String getApiClientId() {
+        return apiClientId;
+    }
+
     public void setApiClientId(String apiClientId) {
         this.apiClientId = apiClientId;
+    }
+
+    public String getApiClientOrgId() {
+        return apiClientOrgId;
     }
 
     public void setApiClientOrgId(String apiClientOrgId) {
         this.apiClientOrgId = apiClientOrgId;
     }
 
+    public String getSoftwareId() {
+        return softwareId;
+    }
+
+    public void setSoftwareId(String softwareId) {
+        this.softwareId = softwareId;
+    }
+
+    public String getTrustedDirectory() {
+        return trustedDirectory;
+    }
+
     public void setTrustedDirectory(String trustedDirectory) {
         this.trustedDirectory = trustedDirectory;
+    }
+
+    public Map<String, Object> getContext() {
+        return context;
     }
 
     public void setContext(Map<String, Object> context) {

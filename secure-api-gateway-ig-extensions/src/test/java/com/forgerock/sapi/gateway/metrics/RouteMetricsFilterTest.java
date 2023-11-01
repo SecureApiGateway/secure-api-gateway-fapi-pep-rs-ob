@@ -311,6 +311,7 @@ class RouteMetricsFilterTest {
                 expectedRequestPath, expectedStatusCode, isSuccessResponse, expectedMetricsContext);
         assertThat(metricsEvent.getApiClientId()).isEqualTo(TEST_API_CLIENT.getOauth2ClientId());
         assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(TEST_API_CLIENT.getOrganisation().getId());
+        assertThat(metricsEvent.getSoftwareId()).isEqualTo(TEST_API_CLIENT.getSoftwareClientId());
         assertThat(metricsEvent.getTrustedDirectory()).isEqualTo(TRUSTED_DIRECTORY_NAME);
     }
 

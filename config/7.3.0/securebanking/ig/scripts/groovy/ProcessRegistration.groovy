@@ -272,8 +272,8 @@ switch (method.toUpperCase()) {
         return next.handle(context, request)
                 .thenOnResult(response -> {
                     var apiClient = attributes.apiClient
-                    if (apiClient && apiClient.ssa) {
-                        addSoftwareStatementToResponse(response, apiClient.ssa)
+                    if (apiClient && apiClient.softwareStatementAssertion) {
+                        addSoftwareStatementToResponse(response, apiClient.softwareStatementAssertion)
                     }
                 })
     default:
@@ -397,11 +397,11 @@ private void rewriteUriToAccessExistingAmRegistration() {
     request.uri.setRawQuery("client_id=" + apiClientId)
 }
 
-private void addSoftwareStatementToResponse(response, ssa) {
+private void addSoftwareStatementToResponse(response, softwareStatementAssertion) {
     if (response.status.isSuccessful()) {
         var registrationResponse = response.getEntity().getJson()
         if (!registrationResponse["software_statement"]) {
-            registrationResponse["software_statement"] = ssa
+            registrationResponse["software_statement"] = softwareStatementAssertion.build()
         }
         response.entity.setJson(registrationResponse)
     }

@@ -130,9 +130,8 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
                     }, ex -> {
                         log.info("({}) Registration Request validation failed: {}", fapiInteractionId,
                                 ex.getMessage(), ex);
-                        Response badRequest = responseFactory.getResponse(fapiInteractionId,
-                                RESPONSE_MEDIA_TYPES, 
-                                Status.BAD_REQUEST, ex.getErrorFields()); 
+                        Response badRequest = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
+                                                                          ex.getErrorFields());
                         return Promises.newResultPromise(badRequest);
                     }, rte -> {
                         log.info("({}) A Runtime Exception occurred while validating the Registration Response Jwt " +
@@ -144,8 +143,8 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
                 ), ex -> {
                     log.info("({}) Software Statement validation failed:  {}", fapiInteractionId, ex.getMessage(),
                             ex);
-                    Response badRequest = responseFactory.getResponse(fapiInteractionId, RESPONSE_MEDIA_TYPES, 
-                            Status.BAD_REQUEST, ex.getErrorFields());
+                    Response badRequest = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
+                                                                      ex.getErrorFields());
                     return Promises.newResultPromise(badRequest);
                 }, rte -> {
                     log.error("({}) Runtime Error while validating Registration Request: {}", fapiInteractionId,

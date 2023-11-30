@@ -23,8 +23,6 @@ import java.util.Map;
 
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatterFactory;
@@ -33,15 +31,13 @@ import com.forgerock.sapi.gateway.common.rest.HttpMediaTypes;
 
 class ResponseFactoryTest {
 
-    private static String TX_ID = "tx_id";
-
     @Test
     void success_NoAcceptHeaders_getResponse() throws IOException {
         // Given
         ContentTypeFormatterFactory contentTypeFormatterFactory = new ContentTypeFormatterFactory();
         ResponseFactory responseFactory = new ResponseFactory(new ContentTypeNegotiator(contentTypeFormatterFactory.getSupportedContentTypes()), contentTypeFormatterFactory );
         // When
-        Response response = responseFactory.getResponse(TX_ID, List.of(), Status.BAD_REQUEST, Map.of("key", "value"));
+        Response response = responseFactory.getResponse(List.of(), Status.BAD_REQUEST, Map.of("key", "value"));
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(Status.BAD_REQUEST);
@@ -55,7 +51,7 @@ class ResponseFactoryTest {
         ContentTypeFormatterFactory contentTypeFormatterFactory = new ContentTypeFormatterFactory();
         ResponseFactory responseFactory = new ResponseFactory(new ContentTypeNegotiator(contentTypeFormatterFactory.getSupportedContentTypes()), contentTypeFormatterFactory );
         // When
-        Response response = responseFactory.getResponse(TX_ID, List.of(HttpMediaTypes.TEXT_HTML), Status.BAD_REQUEST, Map.of("key", "value"));
+        Response response = responseFactory.getResponse(List.of(HttpMediaTypes.TEXT_HTML), Status.BAD_REQUEST, Map.of("key", "value"));
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(Status.BAD_REQUEST);
@@ -69,7 +65,7 @@ class ResponseFactoryTest {
         ContentTypeFormatterFactory contentTypeFormatterFactory = new ContentTypeFormatterFactory();
         ResponseFactory responseFactory = new ResponseFactory(new ContentTypeNegotiator(contentTypeFormatterFactory.getSupportedContentTypes()), contentTypeFormatterFactory );
         // When
-        Response response = responseFactory.getResponse(TX_ID, List.of(HttpMediaTypes.APPLICATION_TEXT), Status.BAD_REQUEST, Map.of("key", "value"));
+        Response response = responseFactory.getResponse(List.of(HttpMediaTypes.APPLICATION_TEXT), Status.BAD_REQUEST, Map.of("key", "value"));
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(Status.BAD_REQUEST);
@@ -83,7 +79,7 @@ class ResponseFactoryTest {
         ContentTypeFormatterFactory contentTypeFormatterFactory = new ContentTypeFormatterFactory();
         ResponseFactory responseFactory = new ResponseFactory(new ContentTypeNegotiator(contentTypeFormatterFactory.getSupportedContentTypes()), contentTypeFormatterFactory );
         // When
-        Response response = responseFactory.getResponse(TX_ID, null, Status.BAD_REQUEST, Map.of("key", "value"));
+        Response response = responseFactory.getResponse(null, Status.BAD_REQUEST, Map.of("key", "value"));
         // Then
         assertThat(response).isNotNull();
     }

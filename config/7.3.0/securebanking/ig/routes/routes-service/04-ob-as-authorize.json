@@ -33,13 +33,9 @@
           }
         },
         {
-          "comment": "Ensure authorize request object is FAPI compliant",
-          "name": "FapiAuthorizeRequestFilter",
-          "type": "ScriptableFilter",
-          "config": {
-            "type": "application/x-groovy",
-            "file": "FapiCompliantAuthorizeRequestFilter.groovy"
-          }
+          "name": "FapiAuthorizeRequestValidationFilter",
+          "type": "FapiAuthorizeRequestValidationFilter",
+          "comment": "Ensure authorize request object is FAPI compliant"
         },
         {
           "name": "AuthoriseResponseFetchApiClientFilter",

@@ -40,9 +40,8 @@ public class ResponseFactory {
         this.contentTypeFormatterFactory = contentTypeFormatterFactory;
     }
 
-    public Response getResponse(String txId, List<String> acceptValues, Status status,
-            Map<String, String> errorFields) {
-        String bestContentType = contentTypeNegotiator.getBestContentType(txId, acceptValues);
+    public Response getResponse(List<String> acceptValues, Status status, Map<String, String> errorFields) {
+        String bestContentType = contentTypeNegotiator.getBestContentType(acceptValues);
         ContentTypeFormatter formatter = this.contentTypeFormatterFactory.getFormatter(bestContentType);
         String entityBody = formatter.getFormattedResponse(errorFields);
         ContentTypeHeader contentTypeHeader = ContentTypeHeader.valueOf(bestContentType);
@@ -54,6 +53,6 @@ public class ResponseFactory {
         Map<String, String> errorFields = new LinkedHashMap<>();
         errorFields.put("error", "Server unable to process request");
         errorFields.put("trace_id", txId);
-        return getResponse(txId, acceptValues, Status.INTERNAL_SERVER_ERROR, errorFields);
+        return getResponse(acceptValues, Status.INTERNAL_SERVER_ERROR, errorFields);
     }
 }

@@ -15,7 +15,9 @@
  */
 package com.forgerock.sapi.gateway.util;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
@@ -32,14 +34,15 @@ import org.forgerock.util.promise.Promises;
 public class TestHandlers {
 
     /**
-     * Handler which counts the number of times the handle method is invoked. This is useful to verify that a filter
-     * passed a request on to another handler.
+     * Handler which captures the Request objects that it has processed. This is useful for testing to be able to
+     * verify that the handler got called and that the Request looks as expected (especially if the filter under test
+     * is making modifications).
      *
      * This handler delegates to another handler for the actual impl.
      */
     public static class TestHandler implements Handler {
         private final Handler delegateHandler;
-        private final AtomicInteger numInteractions = new AtomicInteger();
+        private final List<Request> processedRequests = new CopyOnWriteArrayList<>();
 
         public TestHandler(Handler delegateHandler) {
             this.delegateHandler = delegateHandler;
@@ -47,16 +50,20 @@ public class TestHandlers {
 
         @Override
         public Promise<Response, NeverThrowsException> handle(Context context, Request request) {
-            numInteractions.incrementAndGet();
+            processedRequests.add(request);
             return delegateHandler.handle(context, request);
         }
 
         public int getNumInteractions() {
-            return numInteractions.get();
+            return processedRequests.size();
         }
 
         public boolean hasBeenInteractedWith() {
             return getNumInteractions() > 0;
+        }
+
+        public List<Request> getProcessedRequests() {
+            return new ArrayList<>(processedRequests);
         }
     }
 

@@ -26,9 +26,7 @@ import org.junit.jupiter.api.Test;
 class ContentTypeNegotiatorTest {
 
     private ContentTypeNegotiator negotiator;
-    private String logPrefix = "txId";
 
-    
     @BeforeEach
     void setUp() {
          List<String> supportedContentTypes = List.of("application/json", "text/html");
@@ -43,7 +41,7 @@ class ContentTypeNegotiatorTest {
     void successFirst_getBestContentType() {
         List<String> acceptHeaderValues = List.of("text/html, application/xhtml+xml, " +
                 "application/xml;q=0.9, */*;q=0.8");
-        String best = negotiator.getBestContentType(logPrefix, acceptHeaderValues);
+        String best = negotiator.getBestContentType(acceptHeaderValues);
 
         assertThat(best).isEqualTo("text/html");
     }
@@ -51,7 +49,7 @@ class ContentTypeNegotiatorTest {
     @Test
     void successWildcardMatch_getBestContentType() {
         List<String> acceptHeaderValues = List.of("application/xhtml+xml, application/xml;q=0.9, */*;q=0.8");
-        String best = negotiator.getBestContentType(logPrefix, acceptHeaderValues);
+        String best = negotiator.getBestContentType(acceptHeaderValues);
 
         assertThat(best).isEqualTo("application/json");
     }
@@ -61,7 +59,7 @@ class ContentTypeNegotiatorTest {
         negotiator = new ContentTypeNegotiator(List.of("application/json", "application/xml"));
         List<String> acceptHeaderValues = List.of("application/xhtml+xml, application/xml;q=0.9, " +
                 "application/text;q=0.9, */*;q=0.8");
-        String best = negotiator.getBestContentType(logPrefix, acceptHeaderValues);
+        String best = negotiator.getBestContentType(acceptHeaderValues);
 
         assertThat(best).isEqualTo("application/xml");
     }
@@ -71,7 +69,7 @@ class ContentTypeNegotiatorTest {
         negotiator = new ContentTypeNegotiator(List.of("application/json", "application/xml"));
         List<String> acceptHeaderValues = List.of("application/xhtml+xml, application/text;q=0.9, " +
                 "application/xml;q=0.9, */*;q=0.8");
-        String best = negotiator.getBestContentType(logPrefix, acceptHeaderValues);
+        String best = negotiator.getBestContentType(acceptHeaderValues);
 
         assertThat(best).isEqualTo("application/xml");
     }
@@ -80,7 +78,7 @@ class ContentTypeNegotiatorTest {
     void successNoAcceptHeaderValues_getBestContentType() {
         negotiator = new ContentTypeNegotiator(List.of("application/json", "application/xml"));
         List<String> acceptHeaderValues = List.of();
-        String best = negotiator.getBestContentType(logPrefix, acceptHeaderValues);
+        String best = negotiator.getBestContentType(acceptHeaderValues);
 
         assertThat(best).isEqualTo("application/json");
     }
@@ -88,8 +86,7 @@ class ContentTypeNegotiatorTest {
     @Test
     void successNullAcceptHeaderValues_getBestContentType() {
         negotiator = new ContentTypeNegotiator(List.of("application/json", "application/xml"));
-        List<String> acceptHeaderValues = List.of();
-        String best = negotiator.getBestContentType(logPrefix, null);
+        String best = negotiator.getBestContentType(null);
 
         assertThat(best).isEqualTo("application/json");
     }

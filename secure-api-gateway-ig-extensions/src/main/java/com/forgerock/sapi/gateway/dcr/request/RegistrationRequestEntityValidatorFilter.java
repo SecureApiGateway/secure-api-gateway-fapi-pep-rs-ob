@@ -97,7 +97,7 @@ public class RegistrationRequestEntityValidatorFilter implements Filter {
             log.info("({}) created context attribute " + RegistrationRequest.REGISTRATION_REQUEST_KEY, transactionId);
             return next.handle(context, request);
         } catch (DCRException exception){
-            Response response = responseFactory.getResponse(transactionId, RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
+            Response response = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
                     exception.getErrorFields());
             log.info("({}) Failed to understand the Registration Request body: {}", transactionId,
                     exception.getMessage(), exception);

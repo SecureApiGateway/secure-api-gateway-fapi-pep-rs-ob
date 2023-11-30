@@ -44,18 +44,18 @@ public class ContentTypeNegotiator {
      * returns a string representing the supported media type that best meets the media 
      * types accepted by the client
      */
-    public String getBestContentType(String logPrefix, List<String> acceptHeaderValues) {
+    public String getBestContentType(List<String> acceptHeaderValues) {
         if(acceptHeaderValues == null){
             acceptHeaderValues = List.of();
         }
-        logger.debug("({}) accept header contains {}", logPrefix, acceptHeaderValues);
-        TreeMap<Float, List<String>> mediaTypesMap = buildMapOfAcceptableMediaTypes(logPrefix, acceptHeaderValues);
-        String bestContentType = findHighestWeightedSupportedMediaType(logPrefix, mediaTypesMap);
-        logger.debug("({}) Best Content Type is {}", logPrefix, bestContentType);
+        logger.debug("accept header contains {}", acceptHeaderValues);
+        TreeMap<Float, List<String>> mediaTypesMap = buildMapOfAcceptableMediaTypes(acceptHeaderValues);
+        String bestContentType = findHighestWeightedSupportedMediaType(mediaTypesMap);
+        logger.debug("Best Content Type is {}", bestContentType);
         return bestContentType;
     }
 
-    private TreeMap<Float, List<String>> buildMapOfAcceptableMediaTypes(String logPrefix, List<String> acceptHeaderValues) {
+    private TreeMap<Float, List<String>> buildMapOfAcceptableMediaTypes(List<String> acceptHeaderValues) {
         final TreeMap<Float, List<String>> mediaTypesMap = new TreeMap<>();
         MultiValueMap<Float, String> multiMediaTypesMap = new MultiValueMap<>(mediaTypesMap);
         for (String acceptValue : acceptHeaderValues) {
@@ -70,24 +70,23 @@ public class ContentTypeNegotiator {
                     float qValue = Float.parseFloat(qValueStr);
                     multiMediaTypesMap.add(qValue, contentTypeAndQ[0].trim().toLowerCase());
                 } else {
-                    logger.debug("{}Invalid content type entry found in Accept header {}", logPrefix,
-                            acceptHeaderValues);
+                    logger.debug("Invalid content type entry found in Accept header {}", acceptHeaderValues);
                 }
             }
         }
         return mediaTypesMap;
     }
 
-    private String findHighestWeightedSupportedMediaType(String logPrefix, TreeMap<Float, List<String>> mediaTypesMap) {
+    private String findHighestWeightedSupportedMediaType(TreeMap<Float, List<String>> mediaTypesMap) {
        SortedMap<Float, List<String>> reverseSortedContentTypes = mediaTypesMap.descendingMap();
        for(Float key: reverseSortedContentTypes.keySet()){
            List<String> values = reverseSortedContentTypes.get(key);
-           logger.debug("({}) {} weighting is {}", logPrefix, values, key);
+           logger.debug("{} weighting is {}", values, key);
            for(String value : values){
                String regexValue = value.replace("*", ".*");
                regexValue = regexValue.replace("/", "\\/");
                for(String supportedType : supportedContentTypes){
-                   logger.trace("({}) Checking if accepted media type '{}' matches supported type '{}'", logPrefix,
+                   logger.trace("Checking if accepted media type '{}' matches supported type '{}'",
                            regexValue, supportedType);
                    if(supportedType.matches(regexValue)){
                        return supportedType;
@@ -95,7 +94,7 @@ public class ContentTypeNegotiator {
                }
            }
        }
-        logger.debug("({}) No matching media types", logPrefix);
+        logger.debug("No matching media types");
         return supportedContentTypes.get(0);
     }
 }

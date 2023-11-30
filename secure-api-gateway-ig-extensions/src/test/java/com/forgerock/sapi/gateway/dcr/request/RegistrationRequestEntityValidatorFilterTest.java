@@ -42,7 +42,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.common.rest.AcceptHeaderSupplier;
 import com.forgerock.sapi.gateway.dcr.common.ResponseFactory;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequestFactory;
@@ -56,7 +55,6 @@ class RegistrationRequestEntityValidatorFilterTest {
 
     private RegistrationRequestEntityValidatorFilter filter;
     private final RegistrationRequestEntitySupplier reqRequestSupplier = mock(RegistrationRequestEntitySupplier.class);
-    private final AcceptHeaderSupplier acceptHeaderSupplier = mock(AcceptHeaderSupplier.class);
     private static RegistrationRequest.Builder registrationRequestBuilder ;
     private static final JwtDecoder jwtDecoder = new JwtDecoder();
     private final ResponseFactory responseFactory = mock(ResponseFactory.class);
@@ -79,7 +77,7 @@ class RegistrationRequestEntityValidatorFilterTest {
 
     @AfterEach
     void tearDown() {
-        reset(reqRequestSupplier, acceptHeaderSupplier, responseFactory, handler);
+        reset(reqRequestSupplier, responseFactory, handler);
     }
 
     @Test
@@ -114,7 +112,7 @@ class RegistrationRequestEntityValidatorFilterTest {
         Map<String, Object> ssaClaimsOverrides = Map.of("iss", "invalid_issuer");
         // When
         when(reqRequestSupplier.apply(context, request)).thenReturn(createRegRequestB64EncodedJwtWithJwksUriBasedSSA(ssaClaimsOverrides));
-        when(responseFactory.getResponse(any(String.class), any(List.class), eq(Status.BAD_REQUEST), any(Map.class))).thenReturn(new Response(Status.BAD_REQUEST));
+        when(responseFactory.getResponse(any(List.class), eq(Status.BAD_REQUEST), any(Map.class))).thenReturn(new Response(Status.BAD_REQUEST));
         Promise<Response, NeverThrowsException> promise = filter.filter(context, request, handler);
 
         assertThat(promise).isNotNull();

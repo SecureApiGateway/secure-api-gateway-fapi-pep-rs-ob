@@ -4,7 +4,9 @@
       "enableTestTrustedDirectory": {"$bool": "&{ig.test.directory.enabled|false}"}
     },
     "oauth2": {
-      "tokenEndpointAuthMethodsSupported": ["private_key_jwt", "tls_client_auth"]
+      "tokenEndpointAuthMethodsSupported": {
+        "$list": "&{ig.oauth2.token.endpoint.auth.methods|private_key_jwt,tls_client_auth}"
+      }
     },
     "urls": {
       "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",

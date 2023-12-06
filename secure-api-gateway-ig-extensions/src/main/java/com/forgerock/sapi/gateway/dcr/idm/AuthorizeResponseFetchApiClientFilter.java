@@ -19,13 +19,13 @@ import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.Context;
 import org.forgerock.util.Reject;
 import org.forgerock.util.promise.NeverThrowsException;
@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.BaseFetchApiClientHeaplet;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**
@@ -51,44 +50,49 @@ import com.forgerock.sapi.gateway.dcr.models.ApiClient;
  */
 public class AuthorizeResponseFetchApiClientFilter implements Filter {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorizeResponseFetchApiClientFilter.class);
 
     /**
      * Service which can retrieve ApiClient data
      */
     private final ApiClientService apiClientService;
 
-    public AuthorizeResponseFetchApiClientFilter(ApiClientService apiClientService) {
+    /**
+     * Function that can retrieve the clientId of the ApiClient from the Request
+     */
+    private final Function<Request, Promise<String, NeverThrowsException>> clientIdRetriever;
+
+    public AuthorizeResponseFetchApiClientFilter(ApiClientService apiClientService,
+                                                 Function<Request, Promise<String, NeverThrowsException>> clientIdRetriever) {
         this.apiClientService = Reject.checkNotNull(apiClientService, "apiClientService must be provided");
+        this.clientIdRetriever = Reject.checkNotNull(clientIdRetriever, "clientIdRetriever must be provided");
     }
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        return next.handle(context, request).thenAsync(response -> {
-            if (response.getStatus().isServerError() || response.getStatus().isClientError()) {
-                return Promises.newResultPromise(response);
-            } else {
-                final List<String> clientIdParams = request.getQueryParams().get("client_id");
-                final String clientId;
-                if (clientIdParams != null && clientIdParams.size() > 0) {
-                    clientId =  clientIdParams.get(0);
-                } else {
-                    logger.error("Authorize request missing mandatory client_id param");
-                    return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
-                }
-                return apiClientService.getApiClient(clientId)
-                                       .thenOnResult(FetchApiClientFilter.createAddApiClientToContextResultHandler(context, logger))
-                                       .then(apiClient -> response, // return the original response from the upstream
-                                             this::handleApiClientServiceException, this::handleUnexpectedException);
-
+        return clientIdRetriever.apply(request).thenAsync(clientId -> {
+            if (clientId == null) {
+                LOGGER.error("Authorize request missing mandatory client_id param");
+                return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
             }
+            return next.handle(context, request).thenAsync(response -> {
+                if (response.getStatus().isServerError() || response.getStatus().isClientError()) {
+                    return Promises.newResultPromise(response);
+                } else {
+                    return apiClientService.getApiClient(clientId)
+                            .thenOnResult(FetchApiClientFilter.createAddApiClientToContextResultHandler(context, LOGGER))
+                            .then(apiClient -> response, // return the original response from the upstream
+                                    this::handleApiClientServiceException, this::handleUnexpectedException);
+
+                }
+            });
         });
     }
 
     private Response handleApiClientServiceException(ApiClientServiceException ex) {
         // Handles the case where the ApiClient has been deleted from the data store
         if (ex.getErrorCode() == ErrorCode.DELETED || ex.getErrorCode() == ErrorCode.NOT_FOUND) {
-            logger.warn("Failed to get ApiClient due to: {}", ex.getErrorCode(), ex);
+            LOGGER.warn("Failed to get ApiClient due to: {}", ex.getErrorCode(), ex);
             return new Response(Status.UNAUTHORIZED).setEntity(json(field("error", "client registration is invalid")));
         } else {
             return handleUnexpectedException(ex);
@@ -96,35 +100,38 @@ public class AuthorizeResponseFetchApiClientFilter implements Filter {
     }
 
     private Response handleUnexpectedException(Exception ex) {
-        logger.error("Failed to get ApiClient from idm due to an unexpected exception", ex);
+        LOGGER.error("Failed to get ApiClient from idm due to an unexpected exception", ex);
         return new Response(Status.INTERNAL_SERVER_ERROR);
     }
 
     /**
-     * Responsible for creating the {@link AuthorizeResponseFetchApiClientFilter}
+     * Helper function capable of retrieving the client_id parameter from the Request's Query params.
      *
-     * Mandatory config:
-     * - idmGetApiClientBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
-     * to be appended to this uri (and some query params).
-     * - clientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to
-     * query IDM)
-     *
-     * Example config:
-     * {
-     *           "comment": "Add ApiClient data to the context attributes for the AS /authorize route",
-     *           "name": "AuthoriseResponseFetchApiClientFilter",
-     *           "type": "AuthoriseResponseFetchApiClientFilter",
-     *           "config": {
-     *             "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
-     *             "clientHandler": "IDMClientHandler"
-     *            }
-     * }
+     * @return Promise<String, NeverThrowsException> which returns the client_id or null if it does not exist
      */
-    public static class Heaplet extends BaseFetchApiClientHeaplet {
-        @Override
-        public Object create() throws HeapException {
-            return new AuthorizeResponseFetchApiClientFilter(createApiClientService());
-        }
+    static Function<Request, Promise<String, NeverThrowsException>> queryParamClientIdRetriever() {
+        return request -> {
+            final List<String> clientIdParams = request.getQueryParams().get("client_id");
+            if (clientIdParams != null && clientIdParams.size() > 0) {
+                return Promises.newResultPromise(clientIdParams.get(0));
+            } else {
+                return Promises.newResultPromise(null);
+            }
+        };
+    }
+
+    /**
+     * Helper function capable of retrieving the client_id parameter from the Request's Form entity.
+     *
+     * @return Promise<String, NeverThrowsException> which returns the client_id or null if it does not exist
+     */
+    static Function<Request, Promise<String, NeverThrowsException>> formClientIdRetriever() {
+        return request -> request.getEntity().getFormAsync()
+                .then(form -> form.getFirst("client_id"))
+                .thenCatch(ioe -> {
+                    LOGGER.warn("Failed to extract client_id from /par request due to exception", ioe);
+                    return null;
+                });
     }
 
 }

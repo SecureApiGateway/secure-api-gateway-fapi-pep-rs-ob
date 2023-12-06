@@ -1,0 +1,66 @@
+{
+  "comment": "Ensure FAPI compliant pushed authorize requests",
+  "name": "06 - Open Banking Pushed Authorize Request endpoint",
+  "auditService": "AuditService-OB-Route",
+  "baseURI": "https://&{identity.platform.fqdn}",
+  "condition": "${find(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/par')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        {
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
+        },
+        "SBATFapiInteractionFilterChain",
+        {
+          "comment": "Add host to downstream request",
+          "name": "HeaderFilter-ChangeHostToIAM",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "host",
+              "X-Forwarded-Host",
+              "origin",
+              "referer"
+            ],
+            "add": {
+              "X-Forwarded-Host": [
+                "&{ig.fqdn}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "FapiParRequestValidationFilter",
+          "type": "FapiParRequestValidationFilter",
+          "comment": "Ensure authorize request object is FAPI compliant"
+        },
+        {
+          "name": "ParResponseFetchApiClientFilter",
+          "type": "ParResponseFetchApiClientFilter",
+          "comment": "Add ApiClient data to the context attributes",
+          "config": {
+            "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+            "clientHandler": "IDMClientHandler"
+          }
+        },
+        {
+          "name": "ReSignIdTokenFilter",
+          "type": "ReSignIdTokenFilter",
+          "comment": "Re-sign the id_token returned by AM to fix OB keyId issue",
+          "config": {
+            "verificationSecretsProvider": "SecretsProvider-AmJWK",
+            "verificationSecretId": "any.value.in.regex.format",
+            "signingKeyId": "&{ig.ob.aspsp.signing.kid}",
+            "signingSecretsProvider": "SecretsProvider-ASPSP",
+            "signingKeySecretId": "jwt.signer",
+            "endpointType": "authorize"
+          }
+        }
+      ],
+      "handler": "FRReverseProxyHandler"
+    }
+  }
+}

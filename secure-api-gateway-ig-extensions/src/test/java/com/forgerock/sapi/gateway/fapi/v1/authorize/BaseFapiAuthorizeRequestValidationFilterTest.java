@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.fapi.v1;
+package com.forgerock.sapi.gateway.fapi.v1.authorize;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +31,6 @@ import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
-import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RootContext;
 import org.forgerock.util.promise.NeverThrowsException;
@@ -38,7 +39,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.forgerock.sapi.gateway.common.rest.HttpMediaTypes;
-import com.forgerock.sapi.gateway.fapi.v1.FapiAuthorizeRequestValidationFilter.Heaplet;
 import com.forgerock.sapi.gateway.util.CryptoUtils;
 import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 import com.nimbusds.jose.JOSEException;
@@ -48,18 +48,23 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-class FapiAuthorizeRequestValidationFilterTest {
+public abstract class BaseFapiAuthorizeRequestValidationFilterTest {
 
-    private final FapiAuthorizeRequestValidationFilter filter;
-
-    private final Context context = new RootContext("test");
-
+    protected final BaseFapiAuthorizeRequestValidationFilter filter;
+    protected final Context context = new RootContext("test");
     private final RSASSASigner jwtSigner = new RSASSASigner(CryptoUtils.generateRsaKeyPair().getPrivate());
+    protected TestSuccessResponseHandler successResponseHandler;
 
-    private TestSuccessResponseHandler successResponseHandler;
+    public BaseFapiAuthorizeRequestValidationFilterTest(BaseFapiAuthorizeRequestValidationFilter filter) {
+        this.filter = filter;
+    }
 
-    FapiAuthorizeRequestValidationFilterTest() throws HeapException {
-        filter = (FapiAuthorizeRequestValidationFilter) new Heaplet().create();
+    private static Response getResponse(Promise<Response, NeverThrowsException> responsePromise) {
+        try {
+            return responsePromise.getOrThrow(1, TimeUnit.SECONDS);
+        } catch (InterruptedException | TimeoutException e) {
+            throw new RuntimeException("Failed to get response from promise", e);
+        }
     }
 
     @BeforeEach
@@ -68,13 +73,14 @@ class FapiAuthorizeRequestValidationFilterTest {
     }
 
     @Test
-    void failsWhenInvalidHttpMethodIsUsed() {
+    void failsWhenInvalidHttpMethodIsUsed() throws Exception {
         final Request request = new Request();
+        request.setUri("http://localhost/authorize");
         request.setMethod("PUT");
 
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, successResponseHandler);
 
-        final Response response = getResponse(responsePromise);
+        final Response response = BaseFapiAuthorizeRequestValidationFilterTest.getResponse(responsePromise);
         assertEquals(Status.METHOD_NOT_ALLOWED, response.getStatus());
         assertFalse(successResponseHandler.hasBeenInteractedWith()); // Never got to the handler
     }
@@ -87,7 +93,7 @@ class FapiAuthorizeRequestValidationFilterTest {
 
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, successResponseHandler);
 
-        validateErrorResponse(responsePromise, "Request must have a 'request' query parameter the value of which must be a signed jwt");
+        validateErrorResponse(responsePromise, "Request must have a 'request' parameter the value of which must be a signed jwt");
     }
 
     @Test
@@ -98,7 +104,7 @@ class FapiAuthorizeRequestValidationFilterTest {
 
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, successResponseHandler);
 
-        validateErrorResponse(responsePromise, "Request must have a 'request' query parameter the value of which must be a signed jwt");
+        validateErrorResponse(responsePromise, "Request must have a 'request' parameter the value of which must be a signed jwt");
     }
 
     @Test
@@ -107,11 +113,11 @@ class FapiAuthorizeRequestValidationFilterTest {
 
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, requestWithInvalidJwt, successResponseHandler);
 
-        validateErrorResponse(responsePromise, "Request must have a 'request' query parameter the value of which must be a signed jwt");
+        validateErrorResponse(responsePromise, "Request must have a 'request' parameter the value of which must be a signed jwt");
     }
 
     @Test
-    void failsWhenRequestJwtIsMissingRedirectUriClaim() throws Exception{
+    void failsWhenRequestJwtIsMissingRedirectUriClaim() throws Exception {
         final String state = UUID.randomUUID().toString();
         final JWTClaimsSet requestClaims = JWTClaimsSet.parse(Map.of("client_id", "client-123",
                 "nonce", "sdffdsdfdssfd",
@@ -204,7 +210,7 @@ class FapiAuthorizeRequestValidationFilterTest {
         request.getHeaders().add("Accept", HttpMediaTypes.APPLICATION_TEXT);
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, successResponseHandler);
 
-        final Response response = getResponse(responsePromise);
+        final Response response = BaseFapiAuthorizeRequestValidationFilterTest.getResponse(responsePromise);
         assertEquals(Status.BAD_REQUEST, response.getStatus());
         assertEquals(HttpMediaTypes.APPLICATION_TEXT, response.getHeaders().get(ContentTypeHeader.class).getType());
         assertEquals("error: invalid_request\n" +
@@ -215,11 +221,11 @@ class FapiAuthorizeRequestValidationFilterTest {
     void succeedsForValidRequest() throws Exception {
         final String state = UUID.randomUUID().toString();
         final JWTClaimsSet requestClaims = JWTClaimsSet.parse(Map.of("client_id", "client-123",
-                                                                     "redirect_uri", "https://test-tpp.com/redirect",
-                                                                     "nonce", "sdffdsdfdssfd",
-                                                                     "state", state,
-                                                                     "scope", "payments",
-                                                                     "response_type", "jwt"));
+                "redirect_uri", "https://test-tpp.com/redirect",
+                "nonce", "sdffdsdfdssfd",
+                "state", state,
+                "scope", "payments",
+                "response_type", "jwt"));
         final String signedRequestJwt = createSignedRequestJwt(requestClaims);
 
         final Request request = createRequest(signedRequestJwt, state);
@@ -232,10 +238,10 @@ class FapiAuthorizeRequestValidationFilterTest {
     @Test
     void succeedsForValidRequestWithoutStateClaim() throws Exception {
         final JWTClaimsSet requestClaims = JWTClaimsSet.parse(Map.of("client_id", "client-123",
-                                                                     "redirect_uri", "https://test-tpp.com/redirect",
-                                                                     "nonce", "sdffdsdfdssfd",
-                                                                     "scope", "payments",
-                                                                     "response_type", "jwt"));
+                "redirect_uri", "https://test-tpp.com/redirect",
+                "nonce", "sdffdsdfdssfd",
+                "scope", "payments",
+                "response_type", "jwt"));
         final String signedRequestJwt = createSignedRequestJwt(requestClaims);
 
         // state param in URI but NOT in jwt claims
@@ -247,23 +253,10 @@ class FapiAuthorizeRequestValidationFilterTest {
         validateHandlerReceivedRequestWithoutStateParam();
     }
 
-    private Request createRequest(String requestJwt, String state) throws Exception {
-        final Request request = new Request();
-        request.setUri("https://localhost/am/authorize?request=" + requestJwt + "&state=" + state);
-        request.setMethod("GET");
-        return request;
-    }
-
-    private static Response getResponse(Promise<Response, NeverThrowsException> responsePromise) {
-        try {
-            return responsePromise.getOrThrow(1, TimeUnit.SECONDS);
-        } catch (InterruptedException | TimeoutException e) {
-            throw new RuntimeException("Failed to get response from promise", e);
-        }
-    }
+    protected abstract Request createRequest(String requestJwt, String state) throws Exception;
 
     private void validateErrorResponse(Promise<Response, NeverThrowsException> responsePromise, String expectedErrorMessage) throws IOException {
-        final Response response = getResponse(responsePromise);
+        final Response response = BaseFapiAuthorizeRequestValidationFilterTest.getResponse(responsePromise);
         assertEquals(Status.BAD_REQUEST, response.getStatus());
 
         final JsonValue json = JsonValue.json(response.getEntity().getJson());
@@ -272,8 +265,8 @@ class FapiAuthorizeRequestValidationFilterTest {
         assertFalse(successResponseHandler.hasBeenInteractedWith()); // Never got to the handler
     }
 
-    private void validateSuccessResponse(Promise<Response, NeverThrowsException> responsePromise) {
-        final Response response = getResponse(responsePromise);
+    protected void validateSuccessResponse(Promise<Response, NeverThrowsException> responsePromise) {
+        final Response response = BaseFapiAuthorizeRequestValidationFilterTest.getResponse(responsePromise);
         validateSuccessResponse(response);
     }
 
@@ -284,13 +277,14 @@ class FapiAuthorizeRequestValidationFilterTest {
 
     private void validateHandlerReceivedRequestWithStateParam(String expectedState) {
         final Request processedRequest = successResponseHandler.getProcessedRequests().get(0);
-        assertEquals(List.of(expectedState), processedRequest.getQueryParams().get("state"));
-
+        assertEquals(expectedState, getRequestState(processedRequest));
     }
 
-    private void validateHandlerReceivedRequestWithoutStateParam() {
+    protected abstract String getRequestState(Request request);
+
+    protected void validateHandlerReceivedRequestWithoutStateParam() {
         final Request processedRequest = successResponseHandler.getProcessedRequests().get(0);
-        assertFalse(processedRequest.getQueryParams().containsKey("state"));
+        assertNull(getRequestState(processedRequest));
     }
 
     private String createSignedRequestJwt(JWTClaimsSet claimsSet) throws JOSEException {

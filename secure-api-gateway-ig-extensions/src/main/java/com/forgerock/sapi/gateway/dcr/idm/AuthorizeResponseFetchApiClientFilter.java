@@ -34,6 +34,9 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.forgerock.sapi.gateway.common.error.OAuthErrorResponseFactory;
+import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatterFactory;
+import com.forgerock.sapi.gateway.common.rest.HttpHeaderNames;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException;
 import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
@@ -62,6 +65,11 @@ public class AuthorizeResponseFetchApiClientFilter implements Filter {
      */
     private final Function<Request, Promise<String, NeverThrowsException>> clientIdRetriever;
 
+    /**
+     * Factory capable of producing OAuth2.0 compliant HTTP Responses for error conditions.
+     */
+    private final OAuthErrorResponseFactory errorResponseFactory = new OAuthErrorResponseFactory(new ContentTypeFormatterFactory());
+
     public AuthorizeResponseFetchApiClientFilter(ApiClientService apiClientService,
                                                  Function<Request, Promise<String, NeverThrowsException>> clientIdRetriever) {
         this.apiClientService = Reject.checkNotNull(apiClientService, "apiClientService must be provided");
@@ -73,7 +81,8 @@ public class AuthorizeResponseFetchApiClientFilter implements Filter {
         return clientIdRetriever.apply(request).thenAsync(clientId -> {
             if (clientId == null) {
                 LOGGER.error("Authorize request missing mandatory client_id param");
-                return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
+                return Promises.newResultPromise(
+                        errorResponseFactory.invalidRequestErrorResponse(request.getHeaders().get(HttpHeaderNames.ACCEPT), "'client_id' is missing in the request."));
             }
             return next.handle(context, request).thenAsync(response -> {
                 if (response.getStatus().isServerError() || response.getStatus().isClientError()) {

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.common.error.OAuthErrorResponseFactory;
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatterFactory;
+import com.forgerock.sapi.gateway.common.rest.HttpHeaderNames;
 
 /**
  * Base class for validating that authorize requests are FAPI compliant.
@@ -53,7 +54,6 @@ public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter
     private static final Set<String> VALID_HTTP_REQUEST_METHODS = Set.of("POST", "GET");
     private static final List<String> REQUIRED_REQUEST_JWT_CLAIMS = List.of("scope", "nonce", "response_type", "redirect_uri", "client_id");
     protected static final String STATE_PARAM_NAME = "state";
-    private static final String ACCEPT_HEADER_NAME = "accept";
     private static final String REQUEST_JWT_PARAM_NAME = "request";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -68,7 +68,7 @@ public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter
             return Promises.newResultPromise(new Response(Status.METHOD_NOT_ALLOWED));
         }
 
-        final Header acceptHeader = request.getHeaders().get(ACCEPT_HEADER_NAME);
+        final Header acceptHeader = request.getHeaders().get(HttpHeaderNames.ACCEPT);
         return getRequestJwtClaimSet(request).thenAsync(requestJwtClaimSet -> {
             if (requestJwtClaimSet == null) {
                 final String errorDescription = "Request must have a 'request' parameter the value of which must be a signed jwt";

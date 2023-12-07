@@ -19,6 +19,7 @@ import static com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilterTest.create
 import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataRequiredFieldsOnly;
 import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.forgerock.json.JsonValue.json;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -122,15 +123,16 @@ public abstract class BaseAuthorizeResponseFetchApiClientFilterTest {
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, request, new TestSuccessResponseHandler());
         final Response response = responsePromise.getOrThrow(1, TimeUnit.SECONDS);
 
-        assertThat(response.getStatus()).isEqualTo(Status.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatus()).isEqualTo(Status.BAD_REQUEST);
+        final JsonValue json = json(response.getEntity().getJson());
+        assertThat(json.get("error").asString()).isEqualTo("invalid_request");
+        assertThat(json.get("error_description").asString()).isEqualTo("'client_id' is missing in the request.");
         assertThat(FetchApiClientFilter.getApiClientFromContext(context)).isNull();
     }
 
     @Test
     void returnsErrorResponseWhenApiClientServiceReturnsException() throws Exception {
-        final Client internalServerErrorResponseHandler = new Client(Handlers.INTERNAL_SERVER_ERROR);
-        final AuthorizeResponseFetchApiClientFilter filter = new AuthorizeResponseFetchApiClientFilter(createApiClientService(internalServerErrorResponseHandler, idmBaseUri),
-                AuthorizeResponseFetchApiClientFilter.queryParamClientIdRetriever());
+        final AuthorizeResponseFetchApiClientFilter filter = createFilter(Handlers.INTERNAL_SERVER_ERROR);
         final AttributesContext context = BaseAuthorizeResponseFetchApiClientFilterTest.createContext();
 
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, createRequest(), new TestSuccessResponseHandler());

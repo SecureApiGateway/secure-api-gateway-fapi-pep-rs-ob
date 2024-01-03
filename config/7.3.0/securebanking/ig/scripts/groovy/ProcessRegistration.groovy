@@ -49,7 +49,7 @@ logger.debug(SCRIPT_NAME + "Running...")
 def errorResponseFactory = new ErrorResponseFactory(SCRIPT_NAME)
 
 def defaultResponseTypes = ["code id_token"]
-def supportedResponseTypes = [defaultResponseTypes]
+def supportedResponseTypes = [defaultResponseTypes, ["code"]]
 
 def method = request.method
 
@@ -93,7 +93,7 @@ switch (method.toUpperCase()) {
         ClaimsSetFacade regRequestClaimsSet = registrationRequest.getClaimsSet()
         Optional<List<String>> optionalResponseTypes = regRequestClaimsSet.getOptionalStringListClaim("response_types")
         if(optionalResponseTypes.isEmpty()){
-            logger.debug(SCRIPT_NAME + "No response_type claim in registration request. Setting default reponse_type " +
+            logger.debug(SCRIPT_NAME + "No response_types claim in registration request. Setting default response_types " +
                     "to " + defaultResponseTypes)
             registrationRequest.setResponseTypes(defaultResponseTypes)
         } else {
@@ -102,9 +102,9 @@ switch (method.toUpperCase()) {
             //   replace any of the client's requested metadata values submitted
             //   during the registration and substitute them with suitable values."
             if (!supportedResponseTypes.contains(optionalResponseTypes.get())){
-                logger.debug(SCRIPT_NAME + "No response_type claim does not include supported types. " +
-                        "Setting default reponse_type to " + defaultResponseTypes)
-                registrationRequest.setResponseTypes(defaultResponseTypes);
+                logger.debug(SCRIPT_NAME + "response_types claim does not include supported types. " +
+                        "Setting default response_types to " + defaultResponseTypes)
+                registrationRequest.setResponseTypes(defaultResponseTypes)
             }
         }
         logger.debug("{}response_types claim value is {}", SCRIPT_NAME, optionalResponseTypes.get())

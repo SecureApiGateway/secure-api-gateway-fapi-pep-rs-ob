@@ -48,8 +48,8 @@ logger.debug(SCRIPT_NAME + "Running...")
 
 def errorResponseFactory = new ErrorResponseFactory(SCRIPT_NAME)
 
-def defaultResponseTypes = ["code id_token"]
-def supportedResponseTypes = [defaultResponseTypes, ["code"]]
+def defaultResponseTypes = "code id_token"
+def supportedResponseTypes = [defaultResponseTypes, "code"]
 
 def method = request.method
 
@@ -87,24 +87,26 @@ switch (method.toUpperCase()) {
         }
         logger.debug(SCRIPT_NAME + "registrationRequest is still valid");
 
-        // rejectInvalidResponseTypes - the FAPI filter does this for us. However, we currently can't support the
-        // response_type "code" in conjunction with the response_mode value jwt that is allowed by the FAPI filter so
-        // we will restrict this to "code id_token" here.
         ClaimsSetFacade regRequestClaimsSet = registrationRequest.getClaimsSet()
         Optional<List<String>> optionalResponseTypes = regRequestClaimsSet.getOptionalStringListClaim("response_types")
         if(optionalResponseTypes.isEmpty()){
             logger.debug(SCRIPT_NAME + "No response_types claim in registration request. Setting default response_types " +
                     "to " + defaultResponseTypes)
-            registrationRequest.setResponseTypes(defaultResponseTypes)
+            registrationRequest.setResponseTypes([defaultResponseTypes])
         } else {
             // https://datatracker.ietf.org/doc/html/rfc7591#section-3.2.1 states that:
             //   "The authorization server MAY reject or
             //   replace any of the client's requested metadata values submitted
             //   during the registration and substitute them with suitable values."
-            if (!supportedResponseTypes.contains(optionalResponseTypes.get())){
-                logger.debug(SCRIPT_NAME + "response_types claim does not include supported types. " +
-                        "Setting default response_types to " + defaultResponseTypes)
-                registrationRequest.setResponseTypes(defaultResponseTypes)
+
+            def responseTypes = optionalResponseTypes.get()
+            for (String responseType : responseTypes) {
+                if (!supportedResponseTypes.contains(responseType)){
+                    logger.debug(SCRIPT_NAME + "response_types claim does not include supported types. " +
+                            "Setting default response_types to " + defaultResponseTypes)
+                    registrationRequest.setResponseTypes([defaultResponseTypes])
+                    break
+                }
             }
         }
         logger.debug("{}response_types claim value is {}", SCRIPT_NAME, optionalResponseTypes.get())

@@ -15,6 +15,7 @@
  */
 package com.forgerock.sapi.gateway.fapi.v1.authorize;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,8 @@ import com.forgerock.sapi.gateway.common.rest.HttpHeaderNames;
  * </ul>
  */
 public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter {
+    private static final Set<String> RESPONSE_TYPE_CODE = Set.of("code");
+    private static final Set<String> RESPONSE_TYPE_CODE_ID_TOKEN = Set.of("code", "id_token");
     private static final Set<String> VALID_HTTP_REQUEST_METHODS = Set.of("POST", "GET");
     private static final List<String> REQUIRED_REQUEST_JWT_CLAIMS = List.of("scope", "nonce", "response_type", "redirect_uri", "client_id");
     protected static final String STATE_PARAM_NAME = "state";
@@ -93,6 +96,11 @@ public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter
                 }
             }
 
+            final Response responseTypeValidationErrorResponse = validateResponseType(acceptHeader, requestJwtClaimSet);
+            if (responseTypeValidationErrorResponse != null) {
+                return Promises.newResultPromise(responseTypeValidationErrorResponse);
+            }
+
             // Should be ignoring and not returning state if it only exists as a http request parameter and does not
             // exist in the request jwt. AM however doesn't apply this rule and returns state in the resulting redirect
             //
@@ -103,6 +111,54 @@ public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter
                         return next.handle(context, request);
                     });
         });
+    }
+
+    /**
+     * Applies validation logic relating to the response_type
+     * <p>
+     * https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server specifies:
+     * the authorization server shall require
+     * <ol>
+     *     <li>the response_type value code id_token, or</li>
+     *     <li>the response_type value code in conjunction with the response_mode value jwt</li>
+     * </ol>
+     * <p>
+     * https://openid.net/specs/openid-financial-api-part-2-1_0.html#id-token-as-detached-signature-1 specifies:
+     * In addition, if the response_type value code id_token is used, the client shall include the value openid
+     * into the scope parameter in order to activate OIDC support;
+     */
+    Response validateResponseType(Header acceptHeader, JwtClaimsSet requestJwtClaimSet) {
+        final String responseTypeStr = requestJwtClaimSet.get("response_type").asString();
+        final Set<String> responseType = Set.of(responseTypeStr.split(" "));
+        if (responseType.equals(RESPONSE_TYPE_CODE)) {
+            return validateResponseTypeCode(acceptHeader, requestJwtClaimSet);
+        } else if (responseType.equals(RESPONSE_TYPE_CODE_ID_TOKEN)) {
+            return validateResponseTypeCodeIdToken(acceptHeader, requestJwtClaimSet);
+        } else {
+            return errorResponseFactory.invalidRequestErrorResponse(acceptHeader, "response_type not supported, must be one of: \"code\", \"code id_token\"");
+        }
+    }
+
+    private Response validateResponseTypeCode(Header acceptHeader, JwtClaimsSet requestJwtClaimSet) {
+        final String responseMode = requestJwtClaimSet.get("response_mode").asString();
+        if (responseMode == null) {
+            return errorResponseFactory.invalidRequestErrorResponse(acceptHeader,
+                    "response_mode must be specified when response_type is: \"code\"");
+        }
+        if (!"jwt".equals(responseMode)) {
+            return errorResponseFactory.invalidRequestErrorResponse(acceptHeader,"response_mode must be: \"jwt\" when response_type is: \"code\"");
+        }
+        return null;
+    }
+
+    private Response validateResponseTypeCodeIdToken(Header acceptHeader, JwtClaimsSet requestJwtClaimSet) {
+        final String scopeClaim = requestJwtClaimSet.get("scope").asString();
+        final List<String> scopes = Arrays.asList(scopeClaim.split(" "));
+        if (!scopes.contains("openid")) {
+            return errorResponseFactory.invalidRequestErrorResponse(acceptHeader,
+                    "request object must include openid as one of the requested scopes when response_type is: \"code id_token\"");
+        }
+        return null;
     }
 
     private Promise<JwtClaimsSet, NeverThrowsException> getRequestJwtClaimSet(Request request) {

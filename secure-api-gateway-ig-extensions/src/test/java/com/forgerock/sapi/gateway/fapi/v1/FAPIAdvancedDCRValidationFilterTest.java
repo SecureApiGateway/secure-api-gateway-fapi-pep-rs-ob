@@ -289,48 +289,22 @@ class FAPIAdvancedDCRValidationFilterTest {
         }
 
         @Test
+        void responseTypesFieldValid() {
+            List<List<String>> validResponseTypeValues = List.of(List.of("code"),
+                                                                 List.of("code id_token"),
+                                                                 List.of("id_token code"),
+                                                                 List.of("code", "code id_token"),
+                                                                 List.of("id_token code", "code"));
+
+            for (List<String> validResponseTypeValue : validResponseTypeValues) {
+                fapiValidationFilter.validateResponseTypes(json(object(field("response_types", array(validResponseTypeValue.toArray())))));
+            }
+        }
+
+        @Test
         void responseTypesInvalid() {
             runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("blah")))),
-                    DCRErrorCode.INVALID_CLIENT_METADATA, "response_types not supported, must be one of: [[code], [code id_token]]");
-        }
-
-        @Test
-        void responseTypesCodeValid() {
-            fapiValidationFilter.validateResponseTypes(json(object(field("response_types", array("code")), field("response_mode", "jwt"))));
-        }
-
-        @Test
-        void responseTypesCodeMissingResponseMode() {
-            runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("code")))),
-                    DCRErrorCode.INVALID_CLIENT_METADATA, "request object must contain field: response_mode when response_types is: [code]");
-        }
-
-        @Test
-        void responseTypesCodeInvalidResponseMode() {
-            runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes, json(object(field("response_types", array("code")),
-                            field("response_mode", "blah"))),
-                    DCRErrorCode.INVALID_CLIENT_METADATA, "response_mode not supported, must be one of: [jwt]");
-        }
-
-        @Test
-        void responseTypesCodeIdTokenValid() {
-            fapiValidationFilter.validateResponseTypes(json(object(field("response_types", array("code id_token")),
-                    field("scope", "blah openid something"))));
-        }
-
-        @Test
-        void responseTypesCodeIdTokenMissingScopeField() {
-            runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes,
-                    json(object(field("response_types", array("code id_token")))),
-                    DCRErrorCode.INVALID_CLIENT_METADATA, "request must contain field: scope");
-        }
-
-        @Test
-        void responseTypesCodeIdTokenNotRequestingOpenIdScope() {
-            runValidationAndVerifyExceptionThrown(fapiValidationFilter::validateResponseTypes,
-                    json(object(field("response_types", array("code id_token")), field("scope", "accounts payments"))),
-                    DCRErrorCode.INVALID_CLIENT_METADATA,
-                    "request object must include openid as one of the requested scopes when response_types is: [code id_token]");
+                    DCRErrorCode.INVALID_CLIENT_METADATA, "Invalid response_types value: blah, must be one of: \"code\" or \"code id_token\"");
         }
     }
 

@@ -64,7 +64,7 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
     public class HeapletTests {
         @Test
         void failsToConstructIfClientHandlerIsMissing() {
-            final HeapException heapException = assertThrows(HeapException.class, () -> new AuthoriseResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
+            final HeapException heapException = assertThrows(HeapException.class, () -> new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
                     json(object()), new HeapImpl(Name.of("heap"))), "Invalid object declaration");
             assertEquals(heapException.getCause().getMessage(), "/clientHandler: Expecting a value");
         }
@@ -75,7 +75,7 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             heap.put("idmClientHandler", idmClientHandler);
 
-            assertThrows(JsonValueException.class, () -> new AuthoriseResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
+            assertThrows(JsonValueException.class, () -> new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
                     json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmGetApiClientBaseUri: Expecting a value");
         }
 
@@ -89,7 +89,7 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
 
             final JsonValue config = json(object(field("clientHandler", "idmClientHandler"),
                     field("idmGetApiClientBaseUri", idmBaseUri)));
-            final AuthorizeResponseFetchApiClientFilter filter = (AuthorizeResponseFetchApiClientFilter) new AuthoriseResponseFetchApiClientFilterHeaplet().create(Name.of("test"), config, heap);
+            final AuthorizeResponseFetchApiClientFilter filter = (AuthorizeResponseFetchApiClientFilter) new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"), config, heap);
 
             // Test the filter created by the Heaplet
             callFilterValidateSuccessBehaviour(idmApiClientData, filter);

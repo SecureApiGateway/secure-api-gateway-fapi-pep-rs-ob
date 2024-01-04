@@ -41,7 +41,7 @@ import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.BaseFetchApiClien
  * }
  * }</pre>
  */
-public class AuthoriseResponseFetchApiClientFilterHeaplet extends BaseFetchApiClientHeaplet {
+public class AuthorizeResponseFetchApiClientFilterHeaplet extends BaseFetchApiClientHeaplet {
 
     @Override
     public Object create() throws HeapException {

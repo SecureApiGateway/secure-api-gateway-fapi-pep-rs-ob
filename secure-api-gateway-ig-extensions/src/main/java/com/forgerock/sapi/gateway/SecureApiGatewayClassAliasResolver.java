@@ -23,7 +23,7 @@ import org.forgerock.openig.alias.ClassAliasResolver;
 import com.forgerock.sapi.gateway.am.ReSignIdTokenFilter;
 import com.forgerock.sapi.gateway.common.exception.SapiLogAttachedExceptionFilterHeaplet;
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter;
-import com.forgerock.sapi.gateway.dcr.idm.AuthorizeResponseFetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.idm.AuthorizeResponseFetchApiClientFilterHeaplet;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.idm.ParResponseFetchApiClientFilterHeaplet;
 import com.forgerock.sapi.gateway.dcr.request.RegistrationRequestEntityValidatorFilter;
@@ -72,7 +72,7 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("ContextCertificateRetriever", ContextCertificateRetriever.class);
         ALIASES.put("HeaderCertificateRetriever", HeaderCertificateRetriever.class);
         ALIASES.put("RouteMetricsFilter", RouteMetricsFilter.class);
-        ALIASES.put("AuthoriseResponseFetchApiClientFilter", AuthorizeResponseFetchApiClientFilter.class);
+        ALIASES.put("AuthorizeResponseFetchApiClientFilter", AuthorizeResponseFetchApiClientFilterHeaplet.class);
         ALIASES.put("TokenEndpointMetricsContextSupplier", TokenEndpointMetricsContextSupplier.class);
         ALIASES.put("FapiAuthorizeRequestValidationFilter", FapiAuthorizeRequestValidationFilter.class);
         ALIASES.put("FapiParRequestValidationFilter", FapiParRequestValidationFilter.class);

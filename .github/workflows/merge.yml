@@ -20,7 +20,7 @@ jobs:
 
       # Java version and maven settings with protected repository id
       - uses: actions/setup-java@v3
-        name: set java and maven cache with protected repository
+        name: Set Java and Maven Cache with Protected Repository
         with:
           distribution: 'adopt'
           java-version: '17'
@@ -30,7 +30,7 @@ jobs:
           server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
 
-      - name: Get version
+      - name: Get Version
         id: get_version
         run: |
           echo "VERSION=$( mvn help:evaluate -Dexpression=project.version -q -DforceStdout )" >> $GITHUB_ENV
@@ -39,12 +39,12 @@ jobs:
           FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
           FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
-      - name: Context forgerock maven community repository
+      - name: Context Forgerock Maven Community Repository
         if: contains( env.VERSION, 'SNAPSHOT')
         run: |
           echo "MAVEN_SERVER_COMMUNITY=maven.forgerock.org-community-snapshots" >> $GITHUB_ENV
 
-      - name: Build maven
+      - name: Build Maven
         run: |
           mvn clean install
         env:
@@ -53,7 +53,7 @@ jobs:
 
       # Override maven settings
       - uses: actions/setup-java@v3
-        name: set java and maven cache with protected repository
+        name: Set Java and Maven Cache with Community Repository
         with:
           distribution: 'adopt'
           java-version: '17'
@@ -63,30 +63,37 @@ jobs:
           server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
 
-      - name: Deploy artifact package
+      - name: Deploy Artifact Package
         run: mvn -B deploy -DskipTests -Ddockerfile.skip
         env:
           FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
           FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
-      - uses: google-github-actions/auth@v0
+      - name: Auth to GCP  
+        uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
+          credentials_json: ${{ secrets.DEV_GAR_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v1.1.1
 
       # Configure docker to use the gcloud command-line tool as a credential helper
-      - run: |
-          gcloud auth configure-docker
+      - name: Auth Docker
+        run: |
+          gcloud auth configure-docker europe-west4-docker.pkg.dev
 
-      - name: docker build
+      - name: Docker Build
         run: |
           make docker tag=${{ env.GIT_SHA_SHORT }}
-          docker tag eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
-          docker push --all-tags eu.gcr.io/${{ secrets.GCR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}
-
-      - name: 'run functional tests'
+          docker tag ${{ vars.GAR_DEV_REPO }}/securebanking/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ vars.GAR_DEV_REPO }}/securebanking/gate/${{ env.SERVICE_NAME }}:latest
+          docker push ${{ vars.GAR_DEV_REPO }}/securebanking/${{ env.SERVICE_NAME }} --all-tags
+  
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    needs: build
+    steps:
+      - name: 'Update Environment'
         uses: codefresh-io/codefresh-pipeline-runner@master
         with:
           args: '-v SERVICE_NAME=${{ env.SERVICE_NAME }}'

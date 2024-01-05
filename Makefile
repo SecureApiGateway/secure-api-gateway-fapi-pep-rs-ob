@@ -1,13 +1,13 @@
-repo := sbat-gcr-develop
-service := "gate/ig"
+repo := europe-west4-docker.pkg.dev/sbat-gcr-develop/sapig-docker-artifact
+service := "ig"
 
 docker: conf
 ifndef tag
 	$(warning no tag supplied; latest assumed)
 	$(eval tag=latest)
 endif
-	docker build docker/7.3.0/ig/ -t eu.gcr.io/${repo}/securebanking/${service}:${tag}
-	docker push eu.gcr.io/${repo}/securebanking/${service}:${tag}
+	docker build docker/7.3.0/ig/ -t ${repo}/securebanking/${service}:${tag}
+	docker push ${repo}/securebanking/${service}:${tag}
 
 conf:
 ifndef env

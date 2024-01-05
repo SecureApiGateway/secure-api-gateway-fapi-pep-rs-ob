@@ -12,16 +12,16 @@ env:
   SERVICE_NAME: ig
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     name: Check PR integrity
     steps:
       - uses: actions/checkout@v3
 
       # set java and cache
-      - uses: actions/setup-java@v3
+      - name: Set Java and Maven Cache
+        uses: actions/setup-java@v3
         id: set_java_maven
-        name: set java and maven cache
         with:
           distribution: 'adopt'
           java-version: '17'
@@ -31,23 +31,33 @@ jobs:
           server-username: FR_ARTIFACTORY_USER # env variable for username to authentication protected repo
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable encrypted password to authentication protected repo
 
-      - uses: google-github-actions/auth@v0
-        with:
-          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
-
-        # Configure docker to use the gcloud command-line tool as a credential helper
-      - run: |
-          gcloud auth configure-docker
-
       - name: Build maven
         run: |
           mvn clean install
         env:
           FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
           FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+  
+  build:
+    runs-on: ubuntu-latest
+    name: Build Docker Image
+    needs: check
+    steps:
+      
+      - uses: actions/checkout@v3
+      
+      - name: Auth to GCP  
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.DEV_GAR_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1.1.1
+
+        # Configure docker to use the gcloud command-line tool as a credential helper
+      - name: Auth Docker
+        run: |
+          gcloud auth configure-docker europe-west4-docker.pkg.dev
 
       - name: Build Docker Image
         run: |
@@ -56,13 +66,17 @@ jobs:
           # Create production mode docker image
           make docker tag="$PR_NUMBER-prod"
 
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    needs: build
+    steps:
+
       - name: Create lowercase Github Username
         id: toLowerCase
         run: echo "GITHUB_USER=$(echo ${{github.actor}} | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
-      
-      - run: echo "GITHUB_USER set to ${{ env.GITHUB_USER }}"
-      
-      - name: 'build environment and run functional tests'
+            
+      - name: 'Update Environment'
         uses: codefresh-io/codefresh-pipeline-runner@master
         with:
           args: '-v TAG=${{ env.PR_NUMBER }} -v SERVICE_NAME=${{ env.SERVICE_NAME }} -v ENVIRONMENT=${{ env.GITHUB_USER }}'

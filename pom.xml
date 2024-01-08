@@ -47,7 +47,7 @@
         <release.java.version>11</release.java.version>
         <copyright-current-year>2022</copyright-current-year>
         <openig.version>2023.6.0</openig.version>
-        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version>
         <maven-release-plugin.version>3.0.0-M1</maven-release-plugin.version>

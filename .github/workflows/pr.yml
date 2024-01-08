@@ -1,4 +1,4 @@
-name: pull-request
+name: Pull Request Build and Deploy
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Check PR integrity
+    name: Build
     steps:
       - uses: actions/checkout@v3
 
@@ -58,9 +58,9 @@ jobs:
           # Create production mode docker image
           make docker tag="$PR_NUMBER-prod"
 
-  test:
+  deploy:
     runs-on: ubuntu-latest
-    name: Test
+    name: Deploy
     needs: build
     steps:
 
@@ -70,10 +70,10 @@ jobs:
             
       - name: 'Update Environment'
         uses: codefresh-io/codefresh-pipeline-runner@master
+        if: github.actor != 'dependabot[bot]'
         with:
           args: '-v TAG=${{ env.PR_NUMBER }} -v SERVICE_NAME=${{ env.SERVICE_NAME }} -v ENVIRONMENT=${{ env.GITHUB_USER }}'
         env:
           PIPELINE_NAME: 'ForgeCloud/sbat-infra/service-build'
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
           TRIGGER_NAME: github-actions-trigger-gateway
-        id: run-pipeline

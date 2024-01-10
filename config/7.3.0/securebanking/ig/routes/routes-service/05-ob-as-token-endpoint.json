@@ -86,16 +86,11 @@
           }
         },
         {
-          "name": "ReSignIdTokenFilter",
-          "type": "ReSignIdTokenFilter",
-          "comment": "Re-sign the id_token returned by AM to fix OB keyId issue",
+          "name": "AccessTokenResponseIdTokenReSignFilter",
+          "type": "AccessTokenResponseIdTokenReSignFilter",
+          "comment": "Re-sign the id_token returned by AM (if present) to fix OB keyId issue",
           "config": {
-            "verificationSecretsProvider": "SecretsProvider-AmJWK",
-            "verificationSecretId": "any.value.in.regex.format",
-            "signingKeyId": "&{ig.ob.aspsp.signing.kid}",
-            "signingSecretsProvider": "SecretsProvider-ASPSP",
-            "signingKeySecretId": "jwt.signer",
-            "endpointType": "access_token"
+            "jwtReSigner": "ObJwtReSigner"
           }
         }
       ],

@@ -20,7 +20,9 @@ import java.util.Map;
 
 import org.forgerock.openig.alias.ClassAliasResolver;
 
-import com.forgerock.sapi.gateway.am.ReSignIdTokenFilter;
+import com.forgerock.sapi.gateway.am.AccessTokenResponseIdTokenReSignFilter;
+import com.forgerock.sapi.gateway.am.AuthorizeResponseJwtReSignFilter;
+import com.forgerock.sapi.gateway.am.JwtReSigner;
 import com.forgerock.sapi.gateway.common.exception.SapiLogAttachedExceptionFilterHeaplet;
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter;
 import com.forgerock.sapi.gateway.dcr.idm.AuthorizeResponseFetchApiClientFilterHeaplet;
@@ -66,7 +68,6 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("ConsentRequestAccessAuthorisationFilter", ConsentRequestAccessAuthorisationFilter.class);
         ALIASES.put("TokenEndpointTransportCertValidationFilter", TokenEndpointTransportCertValidationFilter.class);
         ALIASES.put("SapiLogAttachedExceptionFilter", SapiLogAttachedExceptionFilterHeaplet.class);
-        ALIASES.put("ReSignIdTokenFilter", ReSignIdTokenFilter.class);
         ALIASES.put("CompactSerializationJwsSigner", CompactSerializationJwsSigner.class);
         ALIASES.put("AddCertificateToAttributesContextFilter", AddCertificateToAttributesContextFilter.class);
         ALIASES.put("ContextCertificateRetriever", ContextCertificateRetriever.class);
@@ -77,6 +78,9 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("FapiAuthorizeRequestValidationFilter", FapiAuthorizeRequestValidationFilter.class);
         ALIASES.put("FapiParRequestValidationFilter", FapiParRequestValidationFilter.class);
         ALIASES.put("ParResponseFetchApiClientFilter", ParResponseFetchApiClientFilterHeaplet.class);
+        ALIASES.put("JwtReSigner", JwtReSigner.class);
+        ALIASES.put("AccessTokenResponseIdTokenReSignFilter", AccessTokenResponseIdTokenReSignFilter.class);
+        ALIASES.put("AuthorizeResponseJwtReSignFilter", AuthorizeResponseJwtReSignFilter.class);
     }
 
     /**

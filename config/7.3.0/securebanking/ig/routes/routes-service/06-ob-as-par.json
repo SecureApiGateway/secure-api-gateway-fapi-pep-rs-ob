@@ -45,19 +45,6 @@
             "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
             "clientHandler": "IDMClientHandler"
           }
-        },
-        {
-          "name": "ReSignIdTokenFilter",
-          "type": "ReSignIdTokenFilter",
-          "comment": "Re-sign the id_token returned by AM to fix OB keyId issue",
-          "config": {
-            "verificationSecretsProvider": "SecretsProvider-AmJWK",
-            "verificationSecretId": "any.value.in.regex.format",
-            "signingKeyId": "&{ig.ob.aspsp.signing.kid}",
-            "signingSecretsProvider": "SecretsProvider-ASPSP",
-            "signingKeySecretId": "jwt.signer",
-            "endpointType": "authorize"
-          }
         }
       ],
       "handler": "FRReverseProxyHandler"

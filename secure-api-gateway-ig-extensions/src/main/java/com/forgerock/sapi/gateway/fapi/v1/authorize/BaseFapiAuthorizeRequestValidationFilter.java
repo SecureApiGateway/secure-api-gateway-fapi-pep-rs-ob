@@ -145,7 +145,8 @@ public abstract class BaseFapiAuthorizeRequestValidationFilter implements Filter
             return errorResponseFactory.invalidRequestErrorResponse(acceptHeader,
                     "response_mode must be specified when response_type is: \"code\"");
         }
-        if (!"jwt".equals(responseMode)) {
+        // Check if response_mode is one of: jwt, query.jwt, fragment.jwt or form_post.jwt
+        if (!responseMode.contains("jwt")) {
             return errorResponseFactory.invalidRequestErrorResponse(acceptHeader,"response_mode must be: \"jwt\" when response_type is: \"code\"");
         }
         return null;

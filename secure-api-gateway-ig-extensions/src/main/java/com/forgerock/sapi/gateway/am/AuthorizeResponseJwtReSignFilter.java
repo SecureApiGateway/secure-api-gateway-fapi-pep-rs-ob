@@ -39,6 +39,7 @@ import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.Context;
 import org.forgerock.util.AsyncFunction;
 import org.forgerock.util.Reject;
+import org.forgerock.util.annotations.VisibleForTesting;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.slf4j.Logger;
@@ -212,14 +213,15 @@ public class AuthorizeResponseJwtReSignFilter implements Filter {
      * @param request the {@link Request} to inspect
      * @return true if the response_mode is set to jwt or false if it is not specified or has another value.
      */
-    private boolean isJwtResponseMode(Request request) {
+    @VisibleForTesting
+    boolean isJwtResponseMode(Request request) {
         final String requestJwtString = request.getQueryParams().getFirst("request");
         if (requestJwtString == null) {
             return false;
         }
         final SignedJwt requestJwt = jwtReconstruction.reconstructJwt(requestJwtString, SignedJwt.class);
         final String responseMode = requestJwt.getClaimsSet().getClaim("response_mode", String.class);
-        return "jwt".equals(responseMode);
+        return responseMode != null && responseMode.contains("jwt");
     }
 
     private static boolean isFragmentResponse(MutableUri locationUri) {

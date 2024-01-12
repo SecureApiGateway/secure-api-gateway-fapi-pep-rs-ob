@@ -37,6 +37,8 @@ import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.forgerock.sapi.gateway.common.rest.HttpMediaTypes;
 import com.forgerock.sapi.gateway.util.CryptoUtils;
@@ -253,8 +255,9 @@ public abstract class BaseFapiAuthorizeRequestValidationFilterTest {
         validateHandlerReceivedRequestWithoutStateParam();
     }
 
-    @Test
-    void succeedsForValidRequestUsingJarm() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"jwt", "query.jwt", "fragment.jwt", "form_post.jwt"})
+    void succeedsForValidRequestUsingJarm(String jwtResponseMode) throws Exception {
         final String state = UUID.randomUUID().toString();
         final JWTClaimsSet requestClaims = JWTClaimsSet.parse(Map.of("client_id", "client-123",
                 "redirect_uri", "https://test-tpp.com/redirect",
@@ -262,7 +265,7 @@ public abstract class BaseFapiAuthorizeRequestValidationFilterTest {
                 "state", state,
                 "scope", "openid payments",
                 "response_type", "code",
-                "response_mode", "jwt"));
+                "response_mode", jwtResponseMode));
         final String signedRequestJwt = createSignedRequestJwt(requestClaims);
 
         final Request request = createRequest(signedRequestJwt, state);

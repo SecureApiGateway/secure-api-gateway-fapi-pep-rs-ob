@@ -20,6 +20,7 @@ import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URISyntaxException;
@@ -43,6 +44,8 @@ import org.forgerock.openig.heap.HeapImpl;
 import org.forgerock.openig.heap.Name;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.forgerock.sapi.gateway.am.AuthorizeResponseJwtReSignFilter.Heaplet;
 import com.forgerock.sapi.gateway.util.CryptoUtils;
@@ -123,10 +126,14 @@ class AuthorizeResponseJwtReSignFilterTest {
     }
 
     private Request createAuthorizeRequestJwtResponseMode() {
+        return createAuthorizeRequestJwtResponseMode("jwt");
+    }
+
+    private Request createAuthorizeRequestJwtResponseMode(String jwtResponseMode) {
         final Request authorizeRequest = createAuthorizeRequest();
         try {
             // Create the request JWT and sign it as the TPP
-            final Map<String, Object> requestJwtClaims = Map.of("response_mode", "jwt");
+            final Map<String, Object> requestJwtClaims = Map.of("response_mode", jwtResponseMode);
             final String requestJwtStr = jwtReSignerTestResourceManager.createSignedJwt(tppJwtSigner, tppKeyId, UUID.randomUUID().toString(), requestJwtClaims);
             authorizeRequest.getUri().setQuery("request=" + requestJwtStr);
         } catch (URISyntaxException e) {
@@ -150,6 +157,23 @@ class AuthorizeResponseJwtReSignFilterTest {
 
         final Response response = invokeFilter(createFilter(), createAuthorizeRequest(), responseHandler);
         assertEquals(Status.OK, response.getStatus());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jwt", "query.jwt", "fragment.jwt", "form_post.jwt"})
+    void testIsJwtResponseModeHandlesAllJwtResponseModeValues(String jwtResponseMode) {
+        assertTrue(createFilter().isJwtResponseMode(createAuthorizeRequestJwtResponseMode(jwtResponseMode)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"query", "fragment", "form_post"})
+    void testIsJwtResponseModeReturnsFalseForNonJwtModes(String jwtResponseMode) {
+        assertFalse(createFilter().isJwtResponseMode(createAuthorizeRequestJwtResponseMode(jwtResponseMode)));
+    }
+
+    @Test
+    void testIsJwtResponseModeReturnsFalseWhenRequestParamIsMissing() throws Exception {
+        assertFalse(createFilter().isJwtResponseMode(new Request().setUri("https://localhost/authorize?response_type=code")));
     }
 
     @Nested
@@ -181,6 +205,18 @@ class AuthorizeResponseJwtReSignFilterTest {
             final Response response = invokeFilter(filter, createAuthorizeRequest(), responseHandler);
 
             validateSuccessAuthoriseQueryResponse(response, expectedJti);
+        }
+
+        @Test
+        void testReSignerFailuresCauseInternalServerError() {
+            final String expectedJti = UUID.randomUUID().toString();
+            // Return an id_token that has not been signed by AM and will therefore fail sig validation in the re-signer
+            final String idTokenNotSignedByAm = jwtReSignerTestResourceManager.createSignedIdToken(tppJwtSigner, tppKeyId, expectedJti);
+            final TestHandler responseHandler = new FixedResponseHandler(buildAuthoriseEndpointQueryResponse(idTokenNotSignedByAm));
+
+            final Response response = invokeFilter(createFilter(), createAuthorizeRequest(), responseHandler);
+
+            assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
 
         @Test
@@ -254,6 +290,19 @@ class AuthorizeResponseJwtReSignFilterTest {
 
             final Response response = invokeFilter(createFilter(), createAuthorizeRequestJwtResponseMode(), responseHandler);
             assertEquals(Status.FOUND, response.getStatus());
+        }
+
+        @Test
+        void testReSignerFailuresCauseInternalServerError() {
+            final String responseJwtJti = UUID.randomUUID().toString();
+            final String idTokenJti = UUID.randomUUID().toString();
+            // id_token that has not been signed by AM and will therefore fail sig validation in the re-signer
+            final String idTokenNotSignedByAm = jwtReSignerTestResourceManager.createSignedIdToken(tppJwtSigner, tppKeyId, idTokenJti);
+            final TestHandler responseHandler = new FixedResponseHandler(buildJwtResponse(responseJwtJti, idTokenNotSignedByAm));
+
+            final Response response = invokeFilter(createFilter(), createAuthorizeRequestJwtResponseMode(), responseHandler);
+
+            assertEquals(Status.INTERNAL_SERVER_ERROR, response.getStatus());
         }
 
         private Response buildJwtResponse(String responseJwtJti, String idToken) {

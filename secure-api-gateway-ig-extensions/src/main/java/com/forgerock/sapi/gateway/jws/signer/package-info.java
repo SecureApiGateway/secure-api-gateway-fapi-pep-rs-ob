@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2022 ForgeRock AS (obst@forgerock.com)
+ * Copyright © 2020-2024 ForgeRock AS (obst@forgerock.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
  * Provides an extensible framework to address a solution when a specification require sign messages as JSON Web Signatures (JWS) to met Non-repudiation requirements,
  * JSON Web Signature (JWS) represents the payload of a JWS as a base64url-encoded value and uses this value in the JWS Signature computation.<br/><br/>

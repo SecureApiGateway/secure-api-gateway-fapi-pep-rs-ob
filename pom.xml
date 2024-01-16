@@ -44,7 +44,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html -->
-        <release.java.version>11</release.java.version>
+        <release.java.version>17</release.java.version>
         <copyright-current-year>2024</copyright-current-year>
         <openig.version>2023.6.0</openig.version>
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>

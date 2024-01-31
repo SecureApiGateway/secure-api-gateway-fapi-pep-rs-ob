@@ -31,7 +31,6 @@
 
     <properties>
         <legal.path.header>../legal/LICENSE-HEADER.txt</legal.path.header>
-
     </properties>
 
     <dependencies>

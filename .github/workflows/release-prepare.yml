@@ -9,7 +9,7 @@ on:
       java_version:
         required: false
         type: string
-        default: '14'
+        default: '17'
     outputs:
       release_branch_ref:
         description: "Release branch"

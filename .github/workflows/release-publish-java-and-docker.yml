@@ -24,7 +24,7 @@ on:
         required: true
       GCR_CREDENTIALS_JSON:
         required: true
-      GCR_RELEASE_REPO:
+      GAR_RELEASE_REPO:
         required: true
 
 jobs:

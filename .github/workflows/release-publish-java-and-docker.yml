@@ -16,15 +16,16 @@ on:
       SERVICE_NAME:
         required: false
         type: string
-        default: 'gate/ig'
+        default: 'ig'
+      GAR_RELEASE_REPO:
+        type: string
+        required: true
     secrets:
       FR_ARTIFACTORY_USER:
         required: true
       FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD:
         required: true
       GCR_CREDENTIALS_JSON:
-        required: true
-      GAR_RELEASE_REPO:
         required: true
 
 jobs:
@@ -103,7 +104,7 @@ jobs:
       - name: Build Docker Image
         id: build_docker
         run: |
-          make docker tag=${{ env.GIT_SHA_SHORT }} repo=${{ secrets.GAR_RELEASE_REPO }}
-          docker tag ${{ secrets.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ secrets.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:latest
-          docker tag ${{ secrets.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ secrets.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ inputs.release_version_number }}
-          docker push ${{ secrets.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }} --all-tags
+          make docker tag=${{ env.GIT_SHA_SHORT }} repo=${{ inputs.GAR_RELEASE_REPO }}
+          docker tag ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:latest
+          docker tag ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ inputs.release_version_number }}
+          docker push ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }} --all-tags

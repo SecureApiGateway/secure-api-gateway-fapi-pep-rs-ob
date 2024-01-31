@@ -1,5 +1,5 @@
 repo := europe-west4-docker.pkg.dev/sbat-gcr-develop/sapig-docker-artifact
-service := "ig"
+service := ig
 
 docker: conf
 ifndef tag

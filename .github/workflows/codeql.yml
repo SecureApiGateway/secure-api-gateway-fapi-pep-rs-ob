@@ -54,6 +54,9 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
           cache: 'maven'
+          server-id: forgerock-private-releases # protected release repo
+          server-username: FR_ARTIFACTORY_USER # env variable for username to authentication protected repo
+          server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable encrypted password to authentication protected repo
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
@@ -72,6 +75,9 @@ jobs:
       # If this step fails, then you should remove it and run the build manually (see below)
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun

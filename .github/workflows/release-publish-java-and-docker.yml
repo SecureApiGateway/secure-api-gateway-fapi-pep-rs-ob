@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         id: checkout_tag
         name: checkout release tag
         with:

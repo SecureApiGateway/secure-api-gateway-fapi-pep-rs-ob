@@ -16,7 +16,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Java version and maven settings with protected repository id
       - uses: actions/setup-java@v4

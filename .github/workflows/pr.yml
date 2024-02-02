@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # set java and cache
       - name: Set Java and Maven Cache

@@ -41,11 +41,11 @@ jobs:
           ref: ${{ inputs.release_tag_ref }} # branch created by maven release plugin prepare goal
 
       # Java version and maven settings with protected repository id
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         id: set_java_maven
         name: set java and maven cache
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: ${{ inputs.java_version }}
           architecture: x64
           cache: 'maven'
@@ -61,11 +61,11 @@ jobs:
           FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
       # Override maven settings
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         id: override_maven_settings
         name: set java and maven cache with protected repository
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: ${{ inputs.java_version }}
           architecture: x64
           cache: 'maven'

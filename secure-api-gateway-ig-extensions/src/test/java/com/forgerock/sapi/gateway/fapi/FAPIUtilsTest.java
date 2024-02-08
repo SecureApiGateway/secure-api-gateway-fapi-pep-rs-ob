@@ -17,9 +17,14 @@ package com.forgerock.sapi.gateway.fapi;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.forgerock.services.TransactionId;
 import org.forgerock.services.context.AttributesContext;
+import org.forgerock.services.context.Context;
 import org.forgerock.services.context.RequestAuditContext;
+import org.forgerock.services.context.RootContext;
 import org.forgerock.services.context.TransactionIdContext;
 import org.junit.jupiter.api.Test;
 
@@ -34,5 +39,29 @@ class FAPIUtilsTest {
         assertEquals("1234-5678-9123-4567", FAPIUtils.getFapiInteractionIdForDisplay(transactionIdContext));
         assertEquals("1234-5678-9123-4567", FAPIUtils.getFapiInteractionIdForDisplay(new AttributesContext(transactionIdContext)));
         assertEquals("1234-5678-9123-4567", FAPIUtils.getFapiInteractionIdForDisplay(new RequestAuditContext(new AttributesContext(transactionIdContext))));
+    }
+
+    @Test
+    void getFapiInteractionId() {
+        final AttributesContext wrongInteractionIdAttrType = new AttributesContext(new RootContext());
+        wrongInteractionIdAttrType.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, 123);
+
+        Context[] contextsWithoutInteractionId = new Context[]{
+                new RootContext(),
+                new AttributesContext(new RootContext()),
+                wrongInteractionIdAttrType,
+                new TransactionIdContext(new RootContext(), new TransactionId())
+        };
+        for (final Context invalidContext : contextsWithoutInteractionId) {
+            assertEquals(Optional.empty(), FAPIUtils.getFapiInteractionId(invalidContext));
+        }
+
+        final AttributesContext validAttributesContext = new AttributesContext(new RootContext());
+        final String fapiInteractionId = UUID.randomUUID().toString();
+        validAttributesContext.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, fapiInteractionId);
+
+        assertEquals(fapiInteractionId, FAPIUtils.getFapiInteractionId(validAttributesContext).get());
+        assertEquals(fapiInteractionId, FAPIUtils.getFapiInteractionId(new TransactionIdContext(validAttributesContext, new TransactionId())).get());
+
     }
 }

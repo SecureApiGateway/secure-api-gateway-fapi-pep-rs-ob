@@ -20,6 +20,10 @@ if (fapiInteractionId != null) {
     logger.debug(SCRIPT_NAME + "Found x-fapi-interaction-id: " + fapiInteractionId + " setting as TransactionId")
     TransactionIdContext newContext = new TransactionIdContext(context, new TransactionId(fapiInteractionId))
 
+    // Add the x-fapi-interaction-id to the attributes context so that it can be retrieved by filters that are
+    // installed before this one and require the id on the response path (these filters cannot see the TransactionIdContext)
+    attributes.put(FAPI_INTERACTION_ID, fapiInteractionId)
+
     // Add the x-fapi-interaction-id to the MDC context for logging purposes, ensure the previously set value is restored
     final String previousMdcFapiInteractionId = MDC.get(FAPI_INTERACTION_ID)
     MDC.put(FAPI_INTERACTION_ID, fapiInteractionId)

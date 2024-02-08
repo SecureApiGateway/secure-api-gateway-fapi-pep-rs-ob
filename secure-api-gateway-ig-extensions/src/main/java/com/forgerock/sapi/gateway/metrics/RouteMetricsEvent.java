@@ -74,6 +74,10 @@ public class RouteMetricsEvent {
      * Custom contextual information which may be supplied on a per-request basis
      */
     private Map<String, Object> context;
+    /**
+     * x-fapi-interaction-id header value for the request, this enables the request to be traced through the platform.
+     */
+    private String fapiInteractionId;
 
     public long getTimestamp() {
         return timestamp;
@@ -177,5 +181,13 @@ public class RouteMetricsEvent {
 
     public void setContext(Map<String, Object> context) {
         this.context = context;
+    }
+
+    public String getFapiInteractionId() {
+        return fapiInteractionId;
+    }
+
+    public void setFapiInteractionId(String fapiInteractionId) {
+        this.fapiInteractionId = fapiInteractionId;
     }
 }

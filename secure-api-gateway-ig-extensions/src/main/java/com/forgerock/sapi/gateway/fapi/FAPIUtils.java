@@ -15,10 +15,32 @@
  */
 package com.forgerock.sapi.gateway.fapi;
 
+import java.util.Optional;
+
+import org.forgerock.services.context.AttributesContext;
 import org.forgerock.services.context.Context;
 import org.forgerock.services.context.TransactionIdContext;
 
 public class FAPIUtils {
+
+    public static final String X_FAPI_INTERACTION_ID = "x-fapi-interaction-id";
+
+    /**
+     * Retrieves the x-fapi-interaction-id value from the {@link org.forgerock.services.context.AttributesContext}
+     *
+     * @param context Context object to extract the id from
+     * @return Optional containing the x-fapi-interaction-id String or is empty.
+     */
+    public static Optional<String> getFapiInteractionId(Context context) {
+        if (context != null && context.containsContext(AttributesContext.class)) {
+            final AttributesContext attributesContext = context.asContext(AttributesContext.class);
+            final Object interactionId = attributesContext.getAttributes().get(X_FAPI_INTERACTION_ID);
+            if (interactionId instanceof String) {
+                return Optional.of((String) interactionId);
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * Function which returns the x-fapi-interaction-id from the Context or returns a string to display should one
@@ -29,7 +51,10 @@ public class FAPIUtils {
      *
      * @param context Context to extract the value from
      * @return String the x-fapi-interaction-id or "No x-fapi-interaction-id"
+     * @deprecated The intended use of this methods is for when we wish to log the  x-fapi-interaction-id,
+     * the value is now set in the {@link org.slf4j.MDC} and is automatically added to all logs.
      */
+    @Deprecated
     public static String getFapiInteractionIdForDisplay(Context context) {
         if (context != null && context.containsContext(TransactionIdContext.class)) {
             return context.asContext(TransactionIdContext.class).getTransactionId().getValue();

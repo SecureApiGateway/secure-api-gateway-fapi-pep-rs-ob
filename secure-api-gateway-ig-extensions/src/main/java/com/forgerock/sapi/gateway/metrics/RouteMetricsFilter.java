@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
@@ -117,6 +118,8 @@ public class RouteMetricsFilter implements Filter {
         metricEvent.setTrustedDirectory(getTrustedDirectory(apiClient));
         metricEvent.setHttpStatusCode(response.getStatus().getCode());
         metricEvent.setSuccessResponse(isSuccessResponse(response.getStatus()));
+
+        FAPIUtils.getFapiInteractionId(context).ifPresent(metricEvent::setFapiInteractionId);
 
         stopwatch.stop();
         metricEvent.setResponseTimeMillis(stopwatch.elapsed(TimeUnit.MILLISECONDS));

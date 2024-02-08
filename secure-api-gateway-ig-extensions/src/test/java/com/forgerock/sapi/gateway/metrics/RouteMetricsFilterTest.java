@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -53,6 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.metrics.RouteMetricsFilter.Heaplet;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilterTest;
 import com.forgerock.sapi.gateway.util.TestHandlers.FixedResponseHandler;
@@ -65,8 +67,8 @@ class RouteMetricsFilterTest {
     public static final String TRUSTED_DIRECTORY_NAME = "OpenBankingUK";
     private static final ApiClient TEST_API_CLIENT = FetchTrustedDirectoryFilterTest.createApiClient(TRUSTED_DIRECTORY_NAME);
     private static final String TEST_ROUTE_ID = "01-test-route";
-
     private static final Map<String, Object> EMPTY_METRICS_CONTEXT = Map.of();
+    private static final String TEST_FAPI_INTERACTION_ID = UUID.randomUUID().toString();
 
     @Mock
     private RouteMetricsEventPublisher routeMetricsEventPublisher;
@@ -235,7 +237,7 @@ class RouteMetricsFilterTest {
 
         final FixedResponseHandler handler = new FixedResponseHandler(new Response(Status.BAD_REQUEST));
         final Promise<Response, NeverThrowsException> responsePromise = routeMetricsFilter.filter(
-                createContext(null, TEST_ROUTE_ID), request, handler);
+                createContext(null, TEST_ROUTE_ID, null), request, handler);
         final Response response = responsePromise.getOrThrow(1, TimeUnit.SECONDS);
 
         assertThat(handler.hasBeenInteractedWith()).isTrue();
@@ -249,6 +251,7 @@ class RouteMetricsFilterTest {
         assertThat(metricsEvent.getApiClientId()).isEqualTo(null);
         assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(null);
         assertThat(metricsEvent.getTrustedDirectory()).isEqualTo(null);
+        assertThat(metricsEvent.getFapiInteractionId()).isEqualTo(null);
     }
 
     @Test
@@ -290,12 +293,14 @@ class RouteMetricsFilterTest {
     }
 
     private static Context createContext() {
-        return createContext(TEST_API_CLIENT, TEST_ROUTE_ID);
+        return createContext(TEST_API_CLIENT, TEST_ROUTE_ID, TEST_FAPI_INTERACTION_ID);
     }
 
-    private static Context createContext(ApiClient apiClient, String routeId) {
-        final AttributesContext attributesContext = new AttributesContext(new RootContext("test"));
+    private static Context createContext(ApiClient apiClient, String routeId, String fapiInteractionId) {
+        final AttributesContext attributesContext = new AttributesContext(new RootContext());
         attributesContext.getAttributes().put(FetchApiClientFilter.API_CLIENT_ATTR_KEY, apiClient);
+        attributesContext.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, fapiInteractionId);
+
         return new RoutingContext(attributesContext, routeId, "test-route-name");
     }
 
@@ -313,6 +318,7 @@ class RouteMetricsFilterTest {
         assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(TEST_API_CLIENT.getOrganisation().getId());
         assertThat(metricsEvent.getSoftwareId()).isEqualTo(TEST_API_CLIENT.getSoftwareClientId());
         assertThat(metricsEvent.getTrustedDirectory()).isEqualTo(TRUSTED_DIRECTORY_NAME);
+        assertThat(metricsEvent.getFapiInteractionId()).isEqualTo(TEST_FAPI_INTERACTION_ID);
     }
 
     private static void validateMetricsEventCoreFields(RouteMetricsEvent metricsEvent, long expectedTimestamp,

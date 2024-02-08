@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +58,7 @@ class LoggerRouteMetricsEventPublisherTest {
         routeMetricsEvent.setSoftwareId("EFxdsfrt23423");
         routeMetricsEvent.setTimestamp(100000);
         routeMetricsEvent.setTrustedDirectory("OpenBankingUK");
+        routeMetricsEvent.setFapiInteractionId(UUID.randomUUID().toString());
 
         ArgumentCaptor<String> jsonArgumentCapture = ArgumentCaptor.forClass(String.class);
         doNothing().when(logger).info(anyString(), jsonArgumentCapture.capture());

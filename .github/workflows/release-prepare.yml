@@ -11,9 +11,6 @@ on:
         type: string
         default: '17'
     outputs:
-      release_branch_ref:
-        description: "Release branch"
-        value: ${{ jobs.release_prepare.outputs.release_branch_ref }}
       release_tag_ref:
         description: "Release tag"
         value: ${{ jobs.release_prepare.outputs.release_tag_ref }}
@@ -30,6 +27,8 @@ on:
         required: true
       FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD:
         required: true
+      release_github_token:
+        required: true
 env:
   # Set the environment with secrets provided by the caller (secrets section)
   GIT_AUTHOR_NAME: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
@@ -43,14 +42,14 @@ jobs:
     runs-on: ubuntu-latest
     # Map the job outputs to step outputs
     outputs:
-      release_branch_ref: ${{ steps.create_release_context.outputs.release_branch }}
       release_tag_ref: ${{ steps.create_release_context.outputs.release_tag }}
 
     steps:
       # https://github.com/actions/checkout
-      - uses: actions/checkout@v4
-        id: checkout_master
-        name: checkout master
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.release_github_token }}
 
       # set java and cache
       - uses: actions/setup-java@v4
@@ -81,21 +80,7 @@ jobs:
       - name: Create release context
         id: create_release_context
         run: |
-          echo "release_branch=release/${{ inputs.release_version_number }}" >> $GITHUB_OUTPUT
           echo "release_tag=v${{ inputs.release_version_number }}" >> $GITHUB_OUTPUT
-
-      # create the release branch with release version number provided
-      - name: create release branch
-        id: create_release_branch
-        run: |
-          echo "Release branch: ${{ steps.create_release_context.outputs.release_branch }}"
-          git checkout -b ${{ steps.create_release_context.outputs.release_branch }}
-
-      # push the branch to remote repository
-      - name: push branch
-        id: push_branch
-        run: |
-          git push -f --set-upstream origin ${{ steps.create_release_context.outputs.release_branch }}
 
       # Release prepare
       # - Change the version in the POM from x-SNAPSHOT to the new version provided for the release_version_number input
@@ -112,9 +97,3 @@ jobs:
         env:
           FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
           FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-
-      # pushing changes done by the release prepare step (development snapshot version)
-      - name: push development snapshot version
-        id: push
-        run: |
-          git push

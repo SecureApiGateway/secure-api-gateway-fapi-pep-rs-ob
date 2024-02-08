@@ -31,6 +31,7 @@ jobs:
       GPG_KEY_PASSPHRASE_BOT: ${{ secrets.GPG_KEY_PASSPHRASE_BOT }}
       GIT_COMMIT_USERNAME_BOT: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
       GIT_COMMIT_AUTHOR_EMAIL_BOT: ${{ secrets.GIT_COMMIT_AUTHOR_EMAIL_BOT }}
+      release_github_token: ${{ secrets.RELEASE_PAT }}
 
   release_java_and_docker:
     name: Call local publish java and docker
@@ -45,12 +46,13 @@ jobs:
       FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
       GCR_CREDENTIALS_JSON: ${{ secrets.DEV_GAR_KEY }}
 
-  release_draft_and_pr:
-    name: Call publish draft and PR
+  release_publish:
+    name: Call publish
     needs: [ release_prepare, release_java_and_docker ]
-    uses: SecureApiGateway/secure-api-gateway-parent/.github/workflows/release-publish-draft-and-pr.yml@master
+    uses: SecureApiGateway/secure-api-gateway-parent/.github/workflows/release-publish.yml@master
     with:
       release_version_number: ${{ inputs.release_version_number }}
-      release_branch_ref: ${{ needs.release_prepare.outputs.release_branch_ref }}
       release_tag_ref: ${{ needs.release_prepare.outputs.release_tag_ref }}
       release_notes: ${{ inputs.notes }}
+    secrets:
+      release_github_token: ${{ secrets.RELEASE_PAT }}

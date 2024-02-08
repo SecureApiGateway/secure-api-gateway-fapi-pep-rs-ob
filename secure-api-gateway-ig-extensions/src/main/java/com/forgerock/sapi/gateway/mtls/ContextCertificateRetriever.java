@@ -29,8 +29,6 @@ import org.forgerock.util.Reject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-
 /**
  * CertificateRetriever implementation which retrieves the certificate from the {@link org.forgerock.services.context.AttributesContext}.
  * <p>
@@ -51,8 +49,7 @@ public class ContextCertificateRetriever implements CertificateRetriever {
     public X509Certificate retrieveCertificate(Context context, Request request) throws CertificateException {
         final X509Certificate certificate = (X509Certificate) context.asContext(AttributesContext.class).getAttributes().get(certificateAttribute);
         if (certificate == null) {
-            logger.debug("({}) No client cert could be found in attribute: {}",
-                         FAPIUtils.getFapiInteractionIdForDisplay(context), certificateAttribute);
+            logger.debug("No client cert could be found in attribute: {}", certificateAttribute);
             throw new CertificateException("Client mTLS certificate not provided");
         }
         return certificate;

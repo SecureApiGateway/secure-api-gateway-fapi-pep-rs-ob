@@ -173,14 +173,13 @@ public class SoftwareStatement extends SapiJwt {
         /**
          * Processes the b64UrlEncoded jwt String and obtains the fields required to create a Software Statement
          * from the jwt and it's claims.
-         * @param transactionId used for logging purposes
          * @param b64EncodedSoftwareStatement the b64 Url Encoded String form of the Software Statement, i.e.
          *                                    the Software Statement Assertion
          * @return a SoftwareStatement initialised with data from the JWT
          * @throws DCRRegistrationRequestBuilderException if there are issues processing the b64 Url Encoded Jwt, or
          * if required claims are not present, or not in the expected form
          */
-        public SoftwareStatement build(String transactionId, String b64EncodedSoftwareStatement)
+        public SoftwareStatement build(String b64EncodedSoftwareStatement)
                 throws DCRRegistrationRequestBuilderException {
             try {
                 buildBaseJwt(b64EncodedSoftwareStatement);
@@ -189,7 +188,7 @@ public class SoftwareStatement extends SapiJwt {
                     throw new DCRRegistrationRequestBuilderException(DCRErrorCode.UNAPPROVED_SOFTWARE_STATEMENT,
                             "The issuer of the software statement is unrecognised");
                 }
-                getSsaSpecificFieldsFromJwt(transactionId, trustedDirectory);
+                getSsaSpecificFieldsFromJwt(trustedDirectory);
             } catch (JwtException je) {
                 throw new DCRRegistrationRequestBuilderException(DCRErrorCode.INVALID_SOFTWARE_STATEMENT,
                         "Software Statement JWT error: " + je.getMessage());
@@ -197,13 +196,13 @@ public class SoftwareStatement extends SapiJwt {
             return new SoftwareStatement(this);
         }
 
-        private void getSsaSpecificFieldsFromJwt(String transactionId, TrustedDirectory trustedDirectory) throws JwtException {
+        private void getSsaSpecificFieldsFromJwt(TrustedDirectory trustedDirectory) throws JwtException {
             if (trustedDirectory.softwareStatementHoldsJwksUri()) {
                 this.hasJwksUri = true;
                 this.jwksUri = claimsSet.getStringClaimAsURL(trustedDirectory.getSoftwareStatementJwksUriClaimName());
             } else {
                 this.hasJwksUri = false;
-                this.jwkSet = getJwkSet(transactionId);
+                this.jwkSet = getJwkSet();
             }
             this.orgId = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementOrgIdClaimName());
             this.orgName = claimsSet.getStringClaim(trustedDirectory.getSoftwareStatementOrgNameClaimName());
@@ -214,11 +213,11 @@ public class SoftwareStatement extends SapiJwt {
             this.roles = claimsSet.getRequiredStringListClaim(trustedDirectory.getSoftwareStatementRolesClaimName());
         }
 
-        private JWKSet getJwkSet(String transactionId)
+        private JWKSet getJwkSet()
                 throws JwtException {
             String jwksClaimName = this.trustedDirectory.getSoftwareStatementJwksClaimName();
             final JsonValue jwks = claimsSet.getJsonValueClaim(jwksClaimName);
-            log.debug("({}) jwks from software statement is {}", transactionId, jwks);
+            log.debug("jwks from software statement is {}", jwks);
             // Note, if the jwks can't be parsed (does not have a "keys" entry) it will return a non-null empty JWKSet
             JWKSet result = JWKSet.parse(jwks);
             if (result.getJWKsAsJsonValue().size() == 0) {

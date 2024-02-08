@@ -39,7 +39,6 @@ import com.forgerock.sapi.gateway.jwks.JwkSetService;
 class JwksSupplierJwksUriTest {
 
     private final static JwkSetService jwkSetService = mock(JwkSetService.class);
-    private static final String TX_ID = "transactionId";
     private final RegistrationRequest registrationRequest = mock(RegistrationRequest.class);
     private final SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
     private JwksSupplierJwksUri jwksUriSignatureValidator;
@@ -67,7 +66,7 @@ class JwksSupplierJwksUriTest {
 
         // When
         Promise<JWKSet, FailedToLoadJWKException> promise =
-                jwksUriSignatureValidator.getJWKSet(TX_ID, registrationRequest);
+                jwksUriSignatureValidator.getJWKSet(registrationRequest);
 
         FailedToLoadJWKException exception = catchThrowableOfType(promise::getOrThrow,
                 FailedToLoadJWKException.class);
@@ -88,7 +87,7 @@ class JwksSupplierJwksUriTest {
 
         // When
         Promise<JWKSet, FailedToLoadJWKException> promise =
-                jwksUriSignatureValidator.getJWKSet(TX_ID, registrationRequest);
+                jwksUriSignatureValidator.getJWKSet(registrationRequest);
         JWKSet jwkSet = promise.getOrThrow();
 
         // Then

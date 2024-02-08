@@ -26,9 +26,7 @@ import org.forgerock.services.context.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 
 /**
@@ -51,8 +49,7 @@ public class ErrorResponseFactory {
         final JsonValue errorResponseBody = json(object(field("error", errorCode.getCode()),
                                                         field("error_description", errorDescription)));
         response.setEntity(errorResponseBody);
-        final String fapiInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
-        logger.warn("({}) DCR Request failed validation, errorResponse: {}", fapiInteractionId, errorResponseBody);
+        logger.warn("DCR Request failed validation, errorResponse: {}", errorResponseBody);
         return response;
     }
 }

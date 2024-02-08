@@ -23,12 +23,11 @@ import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
 
 public interface JwksSupplier {
     /**
-     * Privides a JWKSet that may be used to validate a JWT signature
-     * @param transactionId used for logging
+     * Provides a JWKSet that may be used to validate a JWT signature
+     *
      * @param registrationRequest the registration request that requires validating
      * @return a promise that provides either a JWKSet, or a FailedToLoadJWKException
      * containing details of why the JWKSet could not be loaded
      */
-    Promise<JWKSet, FailedToLoadJWKException> getJWKSet(String transactionId,
-            RegistrationRequest registrationRequest);
+    Promise<JWKSet, FailedToLoadJWKException> getJWKSet(RegistrationRequest registrationRequest);
 }

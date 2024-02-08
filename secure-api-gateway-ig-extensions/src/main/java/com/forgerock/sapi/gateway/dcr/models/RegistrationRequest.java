@@ -104,30 +104,29 @@ public class RegistrationRequest extends SapiJwt {
         /**
          * Build a {@code RegistrationRequest} from the b64 encoded string representation of the registration request
          * jwt
-         * @param transactionId used for logging context and log tracing
          * @param b64EncodedJwtString the b64 encoded jwt string from the registration request body
          * @return a {@code RegistrationRequest} object
          * @throws DCRRegistrationRequestBuilderException when the {@code RegistrationRequest} can't be build because
          * the b64EncodedJwtString is malformed in some way or doesn't contain the expected claims
          */
-        public RegistrationRequest build(String transactionId, String b64EncodedJwtString)
+        public RegistrationRequest build(String b64EncodedJwtString)
                 throws DCRRegistrationRequestBuilderException {
             try {
                 super.buildBaseJwt(b64EncodedJwtString);
-                populateRegistrationRequest(transactionId);
+                populateRegistrationRequest();
                 return new RegistrationRequest(this);
             } catch (JwtException e) {
                 String errorDescription = "Registration Request Jwt error: " + e.getMessage();
-                log.debug("({}) {}", transactionId, errorDescription);
+                log.debug(errorDescription, e);
                 throw new DCRRegistrationRequestBuilderException(DCRErrorCode.INVALID_CLIENT_METADATA, errorDescription);
             }
         }
 
-        private void populateRegistrationRequest(String txId)
+        private void populateRegistrationRequest()
                 throws JwtException, DCRRegistrationRequestBuilderException {
             String SSA_CLAIM_NAME = "software_statement";
             String b64EncodedSsa = this.claimsSet.getStringClaim(SSA_CLAIM_NAME);
-            softwareStatement = softwareStatementBuilder.build(txId, b64EncodedSsa);
+            softwareStatement = softwareStatementBuilder.build(b64EncodedSsa);
             this.redirectUris = this.claimsSet.getRequiredUriListClaim("redirect_uris");
         }
 

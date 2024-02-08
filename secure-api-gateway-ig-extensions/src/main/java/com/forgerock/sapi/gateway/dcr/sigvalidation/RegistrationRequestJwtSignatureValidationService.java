@@ -59,33 +59,30 @@ public class RegistrationRequestJwtSignatureValidationService {
 
     /**
      * Validate a registration request signature
-     * @param fapiInteractionId used for log entries so log messages can be traced for a specific API request
      * @param registrationRequest the registration request to be validated
      * @return A Promise containing a Response (OK), or a DCRSignatureValidationException explaining why the
      * registration request signature validation failed
      */
-    public Promise<Response, DCRSignatureValidationException> validateJwtSignature(
-            String fapiInteractionId, RegistrationRequest registrationRequest) {
+    public Promise<Response, DCRSignatureValidationException> validateJwtSignature(RegistrationRequest registrationRequest) {
         SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement();
 
         JwksSupplier supplier;
         if (softwareStatement.hasJwksUri()) {
-            log.debug("({}) SSA contains JwksUri - using the JwksUri Validator", fapiInteractionId);
+            log.debug("SSA contains JwksUri - using the JwksUri Validator");
             supplier = jwksUriSignatureValidator;
         } else {
-            log.debug("({}) SSA contains an inline JWKS - using the Jwks Validator", fapiInteractionId);
+            log.debug("SSA contains an inline JWKS - using the Jwks Validator");
             supplier = jwksSignatureValidator;
         }
 
-        return supplier.getJWKSet(fapiInteractionId, registrationRequest).thenAsync((jwks)->{
+        return supplier.getJWKSet(registrationRequest).thenAsync((jwks)->{
             try {
-                log.debug("({}) validating jwt signed by {} against jwks {}", fapiInteractionId,
-                        registrationRequest.getKeyId(), jwks);
+                log.debug("Validating jwt signed by {} against jwks {}", registrationRequest.getKeyId(), jwks);
                 jwtSignatureValidator.validateSignature(registrationRequest.getSignedJwt(), jwks);
                 return Promises.newResultPromise(new Response(Status.OK));
             } catch (SignatureException e) {
                 String errorDescription = "Registration Request signature is invalid: '" + e.getMessage() + "'";
-                log.info("({}) {}", fapiInteractionId, errorDescription, e);
+                log.info(errorDescription, e);
                 return Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, errorDescription));
             }

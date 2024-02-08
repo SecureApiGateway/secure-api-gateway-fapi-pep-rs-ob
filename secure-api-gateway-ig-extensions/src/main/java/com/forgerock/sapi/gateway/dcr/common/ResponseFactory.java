@@ -18,15 +18,18 @@ package com.forgerock.sapi.gateway.dcr.common;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.forgerock.http.header.ContentTypeHeader;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
+import org.forgerock.services.context.Context;
 import org.forgerock.util.Reject;
 
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatter;
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatterFactory;
 import com.forgerock.sapi.gateway.common.rest.ContentTypeNegotiator;
+import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 
 public class ResponseFactory {
     private final ContentTypeNegotiator contentTypeNegotiator;
@@ -49,10 +52,13 @@ public class ResponseFactory {
         return new Response(status).setEntity(entityBody).addHeaders(contentTypeHeader);
     }
 
-    public Response getInternalServerErrorResponse(String txId, List<String> acceptValues) {
+    public Response getInternalServerErrorResponse(Context context, List<String> acceptValues) {
         Map<String, String> errorFields = new LinkedHashMap<>();
         errorFields.put("error", "Server unable to process request");
-        errorFields.put("trace_id", txId);
+        final Optional<String> fapiInteractionId = FAPIUtils.getFapiInteractionId(context);
+        if (fapiInteractionId.isPresent()) {
+            errorFields.put("trace_id", fapiInteractionId.get());
+        }
         return getResponse(acceptValues, Status.INTERNAL_SERVER_ERROR, errorFields);
     }
 }

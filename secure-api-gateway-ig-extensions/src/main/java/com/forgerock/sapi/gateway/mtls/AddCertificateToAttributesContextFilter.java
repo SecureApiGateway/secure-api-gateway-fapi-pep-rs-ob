@@ -39,8 +39,6 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-
 /**
  * Filter which uses a configurable {@link CertificateRetriever} to retrieve a client's mTLS certificate and adds it
  * to the {@link AttributesContext} so that downstream filters can use it.
@@ -64,12 +62,11 @@ public class AddCertificateToAttributesContextFilter implements Filter {
         try {
             final X509Certificate x509Certificate = certificateRetriever.retrieveCertificate(context, request);
             final AttributesContext attributesContext = context.asContext(AttributesContext.class);
-            logger.debug("({}) adding transport cert to AttributesContext.{}",
-                         FAPIUtils.getFapiInteractionIdForDisplay(context), attributeName);
+            logger.debug("Adding transport cert to AttributesContext.{}", attributeName);
             attributesContext.getAttributes().put(attributeName, x509Certificate);
             return next.handle(context, request);
         } catch (CertificateException e) {
-            logger.warn("({}) transport cert not valid", FAPIUtils.getFapiInteractionIdForDisplay(context), e);
+            logger.warn("Transport cert not valid", e);
             return Promises.newResultPromise(new Response(Status.BAD_REQUEST).setEntity(json(object(field("error_description", e.getMessage())))));
         }
     }

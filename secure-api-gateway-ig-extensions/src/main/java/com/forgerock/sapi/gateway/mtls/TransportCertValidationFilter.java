@@ -42,8 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
 import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter;
 
 /**
@@ -88,7 +86,7 @@ public class TransportCertValidationFilter implements Filter {
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        logger.debug("({}) attempting to validate transport cert", FAPIUtils.getFapiInteractionIdForDisplay(context));
+        logger.debug("Attempting to validate transport cert");
 
         final JWKSet jwkSet = getJwkSet(context);
 
@@ -96,17 +94,16 @@ public class TransportCertValidationFilter implements Filter {
         try {
             certificate = certificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException e) {
-            logger.warn("("+  FAPIUtils.getFapiInteractionIdForDisplay(context) + ") transport cert not valid", e);
+            logger.warn("Transport cert not valid", e);
             return Promises.newResultPromise(createErrorResponse("client tls certificate must be provided as a valid x509 certificate"));
         }
 
         try {
             transportCertValidator.validate(certificate, jwkSet);
-            logger.debug("({}) transport cert validated successfully", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.debug("Transport cert validated successfully");
             return next.handle(context, request);
         } catch (CertificateException e) {
-            logger.debug("({}) transport cert failed validation: not present in JWKS or present with wrong \"use\"",
-                         FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.debug("Transport cert failed validation: not present in JWKS or present with wrong \"use\"");
             return Promises.newResultPromise(createErrorResponse("client tls certificate not found in JWKS for software statement"));
         }
     }
@@ -114,7 +111,7 @@ public class TransportCertValidationFilter implements Filter {
     private JWKSet getJwkSet(Context context) {
         final JWKSet apiClientJwkSet = FetchApiClientJwksFilter.getApiClientJwkSetFromContext(context);
         if (apiClientJwkSet == null) {
-            logger.error("({}) apiClientJwkSet not found in request context", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.error("apiClientJwkSet not found in request context");
             throw new IllegalStateException("apiClientJwkSet not found in request context");
         }
         return apiClientJwkSet;

@@ -46,7 +46,6 @@ import com.forgerock.sapi.gateway.common.rest.HttpMediaTypes;
 import com.forgerock.sapi.gateway.dcr.common.ResponseFactory;
 import com.forgerock.sapi.gateway.dcr.common.exceptions.ApiGatewayRuntimeException;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.jwks.JwkSetService;
 import com.forgerock.sapi.gateway.jws.JwtSignatureValidator;
 
@@ -95,9 +94,7 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        final String fapiInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
-        log.debug("({}) filtering - filtering out invalid signatures of registration request and ssa jwts",
-                fapiInteractionId);
+        log.debug("Filtering out invalid signatures of registration request and ssa jwts");
         if (!VALIDATABLE_HTTP_REQUEST_METHODS.contains(request.getMethod())) {
             return next.handle(context, request);
         }
@@ -109,52 +106,44 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
                 throw new ApiGatewayRuntimeException("RegistrationRequestEntityValidatorFilter must appear in " +
                         "the route before the RequestAndSsaSignatureValidationFilter can be used");
             }
-            log.debug("({}) Performing JWT signature validation on registration request '{}'", fapiInteractionId,
-                    registrationRequest);
+            log.debug("Performing JWT signature validation on registration request '{}'", registrationRequest);
 
             Promise<Response, DCRSignatureValidationException> ssaValidationPromise =
-                    ssaValidator.validateJwtSignature(fapiInteractionId, registrationRequest.getSoftwareStatement());
+                    ssaValidator.validateJwtSignature(registrationRequest.getSoftwareStatement());
 
             return ssaValidationPromise.thenAsync( response ->
-                registrationRequestJwtValidator.validateJwtSignature(fapiInteractionId, registrationRequest).thenAsync(
+                registrationRequestJwtValidator.validateJwtSignature(registrationRequest).thenAsync(
                     regRequestValidationResponse -> {
                         if (regRequestValidationResponse.getStatus() != Status.OK) {
-                            log.info("({}) Response from validation is not OK as expected. Resposne: {}",
-                                    fapiInteractionId, regRequestValidationResponse);
+                            log.info("Response from validation is not OK as expected. Response: {}", regRequestValidationResponse);
                             return Promises.newResultPromise(response);
                         }
                         registrationRequest.setSignatureHasBeenValidated(true);
-                        log.debug("({}) Registration Request and embedded SSA both have valid signatures",
-                                fapiInteractionId);
+                        log.debug("Registration Request and embedded SSA both have valid signatures");
                         return next.handle(context, request);
                     }, ex -> {
-                        log.info("({}) Registration Request validation failed: {}", fapiInteractionId,
-                                ex.getMessage(), ex);
+                        log.info("Registration Request validation failed: {}", ex.getMessage(), ex);
                         Response badRequest = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
                                                                           ex.getErrorFields());
                         return Promises.newResultPromise(badRequest);
                     }, rte -> {
-                        log.info("({}) A Runtime Exception occurred while validating the Registration Response Jwt " +
-                                "signature: {}", fapiInteractionId, "error: " + rte.getMessage(), rte);
-                        Response internServerError = responseFactory.getInternalServerErrorResponse(fapiInteractionId,
+                        log.info("Runtime Exception occurred while validating the Registration Response Jwt signature",
+                                 rte);
+                        Response internServerError = responseFactory.getInternalServerErrorResponse(context,
                                 RESPONSE_MEDIA_TYPES);
                         return Promises.newResultPromise(internServerError);
                     }
                 ), ex -> {
-                    log.info("({}) Software Statement validation failed:  {}", fapiInteractionId, ex.getMessage(),
-                            ex);
+                    log.info("Software Statement validation failed" , ex);
                     Response badRequest = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
                                                                       ex.getErrorFields());
                     return Promises.newResultPromise(badRequest);
                 }, rte -> {
-                    log.error("({}) Runtime Error while validating Registration Request: {}", fapiInteractionId,
-                            "error: " + rte.getMessage(), rte);
-                    return Promises.newResultPromise(responseFactory.getInternalServerErrorResponse(fapiInteractionId,
-                            RESPONSE_MEDIA_TYPES));
+                    log.error("Runtime Error while validating Registration Request", rte);
+                    return Promises.newResultPromise(responseFactory.getInternalServerErrorResponse(context, RESPONSE_MEDIA_TYPES));
                 });
         } catch (RuntimeException rte){
-            log.error("({}) Runtime Error occurred in RequestAndSsaSignatureValidationFilter: {}", fapiInteractionId,
-                    rte.getMessage(), rte);
+            log.error("Runtime Error occurred in RequestAndSsaSignatureValidationFilter", rte);
             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
         }
     }

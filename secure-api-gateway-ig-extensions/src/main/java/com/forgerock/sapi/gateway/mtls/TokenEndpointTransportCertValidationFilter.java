@@ -48,7 +48,6 @@ import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
 import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.DefaultApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.JwkSetService;
@@ -154,13 +153,11 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
                                .thenAsync(validateApiClientTransportCert(clientCertificate, response),
                                           ex -> {
                                             // Top level exception handler
-                                            logger.error("({}) Failed to validate client mtls cert",
-                                                         FAPIUtils.getFapiInteractionIdForDisplay(context), ex);
+                                            logger.error("Failed to validate client mtls cert", ex);
                                             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           },
                                           rte -> {
-                                              logger.error("({}) Failed to validate client mtls cert",
-                                                           FAPIUtils.getFapiInteractionIdForDisplay(context),rte);
+                                              logger.error("Failed to validate client mtls cert",rte);
                                               return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
                                           });
             }

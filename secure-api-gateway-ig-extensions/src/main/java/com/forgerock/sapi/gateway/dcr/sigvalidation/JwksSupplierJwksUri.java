@@ -44,12 +44,10 @@ public class JwksSupplierJwksUri implements JwksSupplier {
     }
 
     @Override
-    public Promise<JWKSet, FailedToLoadJWKException> getJWKSet(
-            String transactionId, RegistrationRequest registrationRequest) {
+    public Promise<JWKSet, FailedToLoadJWKException> getJWKSet(RegistrationRequest registrationRequest) {
             SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement();
             URL softwareStatementsJwksUri = softwareStatement.getJwksUri();
-            log.debug("({}) using the jwkSetService to obtain a JWKSet from '{}'", transactionId,
-                    softwareStatementsJwksUri);
+            log.debug("Using the jwkSetService to obtain a JWKSet from '{}'", softwareStatementsJwksUri);
             return jwkSetService.getJwkSet(softwareStatementsJwksUri);
     }
 }

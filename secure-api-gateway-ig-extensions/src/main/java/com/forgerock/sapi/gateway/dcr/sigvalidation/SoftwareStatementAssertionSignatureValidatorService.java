@@ -58,15 +58,12 @@ public class SoftwareStatementAssertionSignatureValidatorService {
      * validates a Software Statement Assertion's signature. A Software Statement Assertion is a signed JWT issued
      * by a Trusted Directory. It's signature must be validated against a JWK Set hosted by the issuing trusted
      * directory
-     * @param transactionId used for logging purposes. This should generally be the transaction id from the IG route's
-     *                      context
+     *
      * @param softwareStatement the Software Statement Assertion to be validated
      * @return a Promise containing a Response with status 200 (Status.OK) or a DCRSignatureValidationException
      * containing information regarding the reason that the Software Statement Assertion could not be validated
      */
-    public Promise<Response, DCRSignatureValidationException> validateJwtSignature(
-            String transactionId, SoftwareStatement softwareStatement) {
-        Reject.ifNull(transactionId, "transactionId must be provided");
+    public Promise<Response, DCRSignatureValidationException> validateJwtSignature(SoftwareStatement softwareStatement) {
         Reject.ifNull(softwareStatement, "softwareStatement must be provided");
         try {
 
@@ -74,20 +71,19 @@ public class SoftwareStatementAssertionSignatureValidatorService {
             return this.jwkSetService.getJwkSet(issuingDirectoryJwksUrl).thenAsync(directoryJwkSet -> {
                 try {
                     this.jwtSignatureValidator.validateSignature(softwareStatement.getSignedJwt(), directoryJwkSet);
-                    log.debug("({}) SSA has a valid signature", transactionId);
+                    log.debug("SSA has a valid signature");
                     softwareStatement.setSignatureHasBeenValidated(true);
                     return Promises.newResultPromise(new Response(Status.OK));
                 } catch (SignatureException e) {
                     String errorDescription = "Failed to validate SSA against jwks_uri '" + issuingDirectoryJwksUrl +
                             "'";
-                    log.debug("({}) {}", transactionId, errorDescription);
+                    log.debug(errorDescription);
                     return Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_SOFTWARE_STATEMENT, errorDescription));
                 }
             }, ex -> {
-                String errorDescription = "Failed to obtain jwk set from trusted directory uri " +
-                        issuingDirectoryJwksUrl;
-                log.debug("({}) {}}", transactionId, errorDescription, ex);
+                String errorDescription = "Failed to obtain jwk set from trusted directory uri " + issuingDirectoryJwksUrl;
+                log.debug(errorDescription, ex);
                 return Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_SOFTWARE_STATEMENT, errorDescription));
             });

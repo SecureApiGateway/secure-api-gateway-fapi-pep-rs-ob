@@ -29,8 +29,7 @@ import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement;
 public class JwksSupplierEmbeddedJwks implements JwksSupplier {
 
     @Override
-    public Promise<JWKSet, FailedToLoadJWKException> getJWKSet(
-            String transactionId, RegistrationRequest registrationRequest) {
+    public Promise<JWKSet, FailedToLoadJWKException> getJWKSet(RegistrationRequest registrationRequest) {
         SoftwareStatement softwareStatement = registrationRequest.getSoftwareStatement();
         return Promises.newResultPromise(softwareStatement.getJwksSet());
     }

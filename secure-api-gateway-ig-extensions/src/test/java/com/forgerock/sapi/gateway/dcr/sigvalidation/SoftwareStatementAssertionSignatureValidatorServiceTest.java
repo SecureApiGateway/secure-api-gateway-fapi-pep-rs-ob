@@ -49,7 +49,6 @@ class SoftwareStatementAssertionSignatureValidatorServiceTest {
     private static final JwkSetService jwkSetService = mock(JwkSetService.class);
     private static final JwtSignatureValidator jwtSignatureValidator = mock(JwtSignatureValidator.class);
     private static final SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
-    private static final String TX_ID = "transactionId";
     private static final String SSA_ISSUER = "Acme Trusted Directory";
 
 
@@ -84,7 +83,7 @@ class SoftwareStatementAssertionSignatureValidatorServiceTest {
                 .validateSignature(ssaSignedJwt, JWKS_SET);
 
         Promise<Response, DCRSignatureValidationException> promise =
-                ssaSigValidator.validateJwtSignature(TX_ID, softwareStatement);
+                ssaSigValidator.validateJwtSignature(softwareStatement);
 
         // Then
         DCRSignatureValidationException exception = catchThrowableOfType(promise::getOrThrow,
@@ -109,7 +108,7 @@ class SoftwareStatementAssertionSignatureValidatorServiceTest {
                 Promises.newResultPromise(JWKS_SET));
 
         Promise<Response, DCRSignatureValidationException> promise =
-                ssaSigValidator.validateJwtSignature(TX_ID, softwareStatement);
+                ssaSigValidator.validateJwtSignature(softwareStatement);
 
         // Then
         Response response = promise.getOrThrow();

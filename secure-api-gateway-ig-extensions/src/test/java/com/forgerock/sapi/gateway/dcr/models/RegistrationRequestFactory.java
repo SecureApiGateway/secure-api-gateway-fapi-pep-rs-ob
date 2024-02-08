@@ -64,7 +64,7 @@ public class RegistrationRequestFactory {
         };
         SoftwareStatement.Builder ssBuilder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
         RegistrationRequest.Builder builder = new RegistrationRequest.Builder(ssBuilder, new JwtDecoder());
-        return builder.build("tx-id", regRequestB64EncodedJwt);
+        return builder.build(regRequestB64EncodedJwt);
     }
 
     public static RegistrationRequest getRegRequestWithJwksSoftwareStatement(
@@ -90,7 +90,7 @@ public class RegistrationRequestFactory {
 
         SoftwareStatement.Builder ssBuilder = new SoftwareStatement.Builder(trustedDirectoryService, new JwtDecoder());
         RegistrationRequest.Builder builder = new RegistrationRequest.Builder(ssBuilder, new JwtDecoder());
-        return builder.build("tx-id", regRequestB64EncodedJwt);
+        return builder.build(regRequestB64EncodedJwt);
     }
 
 

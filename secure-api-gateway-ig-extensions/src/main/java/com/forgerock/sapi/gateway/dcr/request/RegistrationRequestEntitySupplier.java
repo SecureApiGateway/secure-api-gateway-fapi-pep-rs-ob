@@ -22,8 +22,6 @@ import java.util.function.BiFunction;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.services.context.Context;
 
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-
 /**
  * Supplies the Registration Request json object from a JWT contained within the Request.entity
  * <p>
@@ -38,10 +36,8 @@ public class RegistrationRequestEntitySupplier implements BiFunction<Context, Re
 
     @Override
     public String apply(Context context, Request request)  {
-        final String fapiInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
         try {
-            final String registrationRequestJwtString = request.getEntity().getString();
-            return registrationRequestJwtString;
+            return request.getEntity().getString();
         } catch (IOException e) {
             // These are not validation errors, so do not raise a validation exception, instead allow the filter
             // to handle the null response

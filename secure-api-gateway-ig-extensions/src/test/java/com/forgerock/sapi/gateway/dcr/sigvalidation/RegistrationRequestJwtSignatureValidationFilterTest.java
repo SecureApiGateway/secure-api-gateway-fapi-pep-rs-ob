@@ -108,9 +108,9 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
-        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any(), any()))
+        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
 
         // When
@@ -127,9 +127,9 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         // Given
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
-        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any(), any()))
+        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
 
         // When
@@ -148,10 +148,10 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_SOFTWARE_STATEMENT, "invalid jwt signature")));
-        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any(), any()))
+        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
 
         // When
@@ -172,7 +172,7 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newRuntimeExceptionPromise(
                     new DCRSignatureValidationRuntimeException("Runtime exception validating SSA")));
 
@@ -192,9 +192,9 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
-        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any(), any()))
+        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any()))
                 .thenReturn(Promises.newExceptionPromise(
                         new DCRSignatureValidationException(DCRErrorCode.INVALID_CLIENT_METADATA, ERROR_DESCRIPTION)));
 
@@ -215,9 +215,9 @@ class RegistrationRequestJwtSignatureValidationFilterTest {
         context.getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY, registrationRequest);
         Promise<Response, NeverThrowsException> resultPromise = Response.newResponsePromise(new Response(Status.OK));
         when(handler.handle(any(), any())).thenReturn(resultPromise);
-        when(ssaSignatureValidatorService.validateJwtSignature(any(), any()))
+        when(ssaSignatureValidatorService.validateJwtSignature(any()))
                 .thenReturn(Promises.newResultPromise(new Response(Status.OK)));
-        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any(), any()))
+        when(dcrRegistrationRequestSignatureValidator.validateJwtSignature(any()))
                 .thenReturn(Promises.newRuntimeExceptionPromise(
                         new DCRSignatureValidationRuntimeException(ERROR_DESCRIPTION)));
 

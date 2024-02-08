@@ -34,9 +34,8 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectory;
 
@@ -86,16 +85,16 @@ public class FetchApiClientJwksFilter implements Filter {
         final TrustedDirectory trustedDirectory = getTrustedDirectory(context);
 
         return apiClientJwkSetService.getJwkSet(apiClient, trustedDirectory).thenAsync(jwkSet -> {
-            logger.debug("({}) added jwks to context for apiClient", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.debug("Added jwks to context for apiClient");
             context.asContext(AttributesContext.class).getAttributes().put(API_CLIENT_JWKS_ATTR_KEY, jwkSet);
             return next.handle(context, request);
         }, ex -> {
-            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to load JWKS for apiClient: "
-                    + apiClient + " and trusted directory: " + trustedDirectory + " due to exception", ex);
+            logger.error("Failed to load JWKS for apiClient: {} and trusted directory: {} due to exception",
+                    apiClient, trustedDirectory, ex);
             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
         }, rte -> {
-            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to load JWKS for apiClient: "
-                    + apiClient + " and trusted directory: " + trustedDirectory + " due to exception", rte);
+            logger.error("Failed to load JWKS for apiClient: {} and trusted directory: {} due to exception",
+                    apiClient, trustedDirectory, rte);
             return Promises.newResultPromise(new Response(Status.INTERNAL_SERVER_ERROR));
         });
     }
@@ -103,7 +102,7 @@ public class FetchApiClientJwksFilter implements Filter {
     private TrustedDirectory getTrustedDirectory(Context context) {
         final TrustedDirectory trustedDirectory = FetchTrustedDirectoryFilter.getTrustedDirectoryFromContext(context);
         if (trustedDirectory == null) {
-            logger.error("({}) trustedDirectory not found in request context", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.error("trustedDirectory not found in request context");
             throw new IllegalStateException("trustedDirectory not found in request context");
         }
         return trustedDirectory;
@@ -112,7 +111,7 @@ public class FetchApiClientJwksFilter implements Filter {
     private ApiClient getApiClient(Context context) {
         final ApiClient apiClient = FetchApiClientFilter.getApiClientFromContext(context);
         if (apiClient == null) {
-            logger.error("({}) apiClient not found in request context", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.error("apiClient not found in request context");
             throw new IllegalStateException("apiClient not found in request context");
         }
         return apiClient;

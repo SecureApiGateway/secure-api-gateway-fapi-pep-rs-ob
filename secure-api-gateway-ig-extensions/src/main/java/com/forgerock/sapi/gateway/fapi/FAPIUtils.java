@@ -19,7 +19,6 @@ import java.util.Optional;
 
 import org.forgerock.services.context.AttributesContext;
 import org.forgerock.services.context.Context;
-import org.forgerock.services.context.TransactionIdContext;
 
 public class FAPIUtils {
 
@@ -40,25 +39,5 @@ public class FAPIUtils {
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Function which returns the x-fapi-interaction-id from the Context or returns a string to display should one
-     * not be found. This function assumes that the x-fapi-interaction-id has been set as the TransactionIdContext.
-     *
-     * This function is intended to be called when we wish to display the x-fapi-interaction-id for a human to read,
-     * for example in a log message.
-     *
-     * @param context Context to extract the value from
-     * @return String the x-fapi-interaction-id or "No x-fapi-interaction-id"
-     * @deprecated The intended use of this methods is for when we wish to log the  x-fapi-interaction-id,
-     * the value is now set in the {@link org.slf4j.MDC} and is automatically added to all logs.
-     */
-    @Deprecated
-    public static String getFapiInteractionIdForDisplay(Context context) {
-        if (context != null && context.containsContext(TransactionIdContext.class)) {
-            return context.asContext(TransactionIdContext.class).getTransactionId().getValue();
-        }
-        return "No x-fapi-interaction-id";
     }
 }

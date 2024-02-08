@@ -22,7 +22,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -50,11 +49,10 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.common.ErrorResponseFactory;
-import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
-import com.forgerock.sapi.gateway.dcr.common.Validator;
 import com.forgerock.sapi.gateway.dcr.common.DCRErrorCode;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
+import com.forgerock.sapi.gateway.dcr.common.ErrorResponseFactory;
+import com.forgerock.sapi.gateway.dcr.common.Validator;
+import com.forgerock.sapi.gateway.dcr.common.exceptions.ValidationException;
 import com.forgerock.sapi.gateway.mtls.CertificateRetriever;
 import com.forgerock.sapi.gateway.mtls.ContextCertificateRetriever;
 import com.forgerock.sapi.gateway.mtls.HeaderCertificateRetriever;
@@ -263,14 +261,14 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
         try {
             x509Certificate = clientCertificateRetriever.retrieveCertificate(context, request);
         } catch (CertificateException ce) {
-            LOGGER.debug("({}), FAPI Validation failed due to client certificate error", FAPIUtils.getFapiInteractionIdForDisplay(context), ce);
+            LOGGER.debug("FAPI Validation failed due to client certificate error", ce);
             return Promises.newResultPromise(errorResponseFactory.errorResponse(context, DCRErrorCode.INVALID_CLIENT_METADATA,
                     "MTLS client certificate is missing or malformed"));
         }
         try {
             x509Certificate.checkValidity();
         } catch (CertificateException ce) {
-            LOGGER.debug("({}), FAPI Validation failed due to client certificate validity date check failure", FAPIUtils.getFapiInteractionIdForDisplay(context), ce);
+            LOGGER.debug("FAPI Validation failed due to client certificate validity date check failure", ce);
             return Promises.newResultPromise(errorResponseFactory.errorResponse(context, DCRErrorCode.INVALID_CLIENT_METADATA,
                     "MTLS client certificate has expired or cannot be used yet"));
         }
@@ -282,11 +280,11 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
             }
             validateRegistrationRequestObject(registrationRequestObject);
         } catch (ValidationException ve) {
-            LOGGER.debug("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") FAPI Validation failed", ve);
+            LOGGER.debug("FAPI Validation failed", ve);
             return Promises.newResultPromise(errorResponseFactory.errorResponse(context, ve));
         } catch (RuntimeException re) {
             // Log that an unexpected RuntimeException occurred and throw it on
-            LOGGER.warn("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") FAPI Validation failed due to unexpected RuntimeException", re);
+            LOGGER.warn("FAPI Validation failed due to unexpected RuntimeException", re);
             throw re;
         }
         return next.handle(context, request);
@@ -468,12 +466,11 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
 
         @Override
         public JsonValue apply(Context context, Request request) {
-            final String fapiInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
             try {
                 final String registrationRequestJwtString = request.getEntity().getString();
                 final SignedJwt registrationRequestJwt = new JwtReconstruction().reconstructJwt(registrationRequestJwtString,
                                                                                                 SignedJwt.class);
-                LOGGER.debug("({}) Registration Request JWT to validate: {}", fapiInteractionId, registrationRequestJwtString);
+                LOGGER.debug("Registration Request JWT to validate: {}", registrationRequestJwtString);
                 final JwsAlgorithm signingAlgo = registrationRequestJwt.getHeader().getAlgorithm();
                 // This validation is being done here as outside the supplier we are not aware that a JWT existed
                 if (signingAlgo == null || !supportedSigningAlgorithms.contains(signingAlgo.getJwaAlgorithmName())) {
@@ -483,7 +480,7 @@ public class FAPIAdvancedDCRValidationFilter implements Filter {
                 final JwtClaimsSet claimsSet = registrationRequestJwt.getClaimsSet();
                 return claimsSet.toJsonValue();
             } catch (InvalidJwtException | IOException e) {
-                LOGGER.warn("(" + fapiInteractionId + ") FAPI DCR failed: unable to extract registration object JWT from request", e);
+                LOGGER.warn("FAPI DCR failed: unable to extract registration object JWT from request", e);
                 // These are not validation errors, so do not raise a validation exception, instead allow the filter to handle the null response
                 return null;
             }

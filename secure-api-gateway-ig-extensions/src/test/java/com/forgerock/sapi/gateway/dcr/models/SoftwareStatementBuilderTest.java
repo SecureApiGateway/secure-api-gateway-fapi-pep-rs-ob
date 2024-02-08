@@ -48,8 +48,6 @@ class SoftwareStatementBuilderTest {
     private static final String SOFTWARE_CLIENT_NAME = "Acme App";
     private static final String JWKS_URI = "https://jwks.com";
 
-    public static final String TX_ID = "tx_id";
-
     public SoftwareStatement.Builder builder;
 
 
@@ -66,7 +64,7 @@ class SoftwareStatementBuilderTest {
         String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        SoftwareStatement softwareStatement = builder.build("tx_id", requestJwt);
+        SoftwareStatement softwareStatement = builder.build(requestJwt);
 
         // Then
         assertThat(softwareStatement).isNotNull();
@@ -85,7 +83,7 @@ class SoftwareStatementBuilderTest {
         String requestJwt = CryptoUtils.createEncodedJwtString(ssaClaims, JWSAlgorithm.PS256);
 
         // When
-        SoftwareStatement softwareStatement = builder.build(TX_ID, requestJwt);
+        SoftwareStatement softwareStatement = builder.build(requestJwt);
 
         // Then
         assertThat(softwareStatement).isNotNull();
@@ -104,7 +102,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                        builder.build(TX_ID, "not.valid.jwt"),
+                        builder.build("not.valid.jwt"),
                 DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
@@ -120,7 +118,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
@@ -135,7 +133,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.UNAPPROVED_SOFTWARE_STATEMENT);
@@ -152,7 +150,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
@@ -169,7 +167,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
@@ -186,7 +184,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
@@ -203,7 +201,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);
@@ -220,7 +218,7 @@ class SoftwareStatementBuilderTest {
 
         // When
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(()->
-                builder.build(TX_ID, requestJwt), DCRRegistrationRequestBuilderException.class);
+                builder.build(requestJwt), DCRRegistrationRequestBuilderException.class);
         // Then
         assertThat(exception).isNotNull();
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_SOFTWARE_STATEMENT);

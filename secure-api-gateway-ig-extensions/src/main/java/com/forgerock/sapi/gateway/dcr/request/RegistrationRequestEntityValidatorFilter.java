@@ -44,7 +44,6 @@ import com.forgerock.sapi.gateway.dcr.common.ResponseFactory;
 import com.forgerock.sapi.gateway.dcr.common.exceptions.DCRException;
 import com.forgerock.sapi.gateway.dcr.models.RegistrationRequest;
 import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.jws.JwtDecoder;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
 
@@ -83,30 +82,25 @@ public class RegistrationRequestEntityValidatorFilter implements Filter {
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        final String transactionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
         if (!VALIDATABLE_HTTP_REQUEST_METHODS.contains(request.getMethod())) {
             return next.handle(context, request);
         }
-        log.debug("({}) Running RegistrationRequestEntityValidatorFilter", transactionId);
+        log.debug("Running RegistrationRequestEntityValidatorFilter");
         try {
             String b64EncodedRegistrationRequestEntity = this.registrationEntitySupplier.apply(context, request);
-            RegistrationRequest registrationRequest = this.registrationRequestBuilder.build(transactionId,
-                    b64EncodedRegistrationRequestEntity);
+            RegistrationRequest registrationRequest = this.registrationRequestBuilder.build(b64EncodedRegistrationRequestEntity);
             context.asContext(AttributesContext.class).getAttributes().put(RegistrationRequest.REGISTRATION_REQUEST_KEY,
                     registrationRequest);
-            log.info("({}) created context attribute " + RegistrationRequest.REGISTRATION_REQUEST_KEY, transactionId);
+            log.info("Created context attribute " + RegistrationRequest.REGISTRATION_REQUEST_KEY);
             return next.handle(context, request);
         } catch (DCRException exception){
             Response response = responseFactory.getResponse(RESPONSE_MEDIA_TYPES, Status.BAD_REQUEST,
                     exception.getErrorFields());
-            log.info("({}) Failed to understand the Registration Request body: {}", transactionId,
-                    exception.getMessage(), exception);
+            log.info("Failed to understand the Registration Request body: {}", exception.getMessage(), exception);
             return Promises.newResultPromise(response);
         } catch (RuntimeException rte){
-            log.warn("({}) caught runtime exception while applying RegistrationRequestEntityValidatorFilter",
-                    transactionId, rte);
-            Response internServerError = responseFactory.getInternalServerErrorResponse(transactionId,
-                    RESPONSE_MEDIA_TYPES);
+            log.warn("Caught runtime exception while applying RegistrationRequestEntityValidatorFilter", rte);
+            Response internServerError = responseFactory.getInternalServerErrorResponse(context, RESPONSE_MEDIA_TYPES);
             return Promises.newResultPromise(internServerError);
         }
     }

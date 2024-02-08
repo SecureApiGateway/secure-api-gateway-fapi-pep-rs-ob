@@ -18,7 +18,6 @@ package com.forgerock.sapi.gateway.dcr.sigvalidation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -54,7 +53,6 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
     private final JwksSupplierEmbeddedJwks JwksFromSoftwareStatementSupplier = mock(JwksSupplierEmbeddedJwks.class);
     private final JwksSupplierJwksUri jwksFromJwksUriSupplier = mock(JwksSupplierJwksUri.class);
     private final JwtSignatureValidator jwtSignatureValidator = mock(JwtSignatureValidator.class);
-    private final String X_FAPI_INTERACTION_ID = "34324-3432432-3432432";
     private final RegistrationRequest registrationRequest = mock(RegistrationRequest.class);
     private final SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
     private RegistrationRequestJwtSignatureValidationService registrationRequestJwtSignatureValidator;
@@ -80,20 +78,18 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
         JWKSet jwkSet = new JWKSet();
         SignedJwt signedJwt = mock(SignedJwt.class);
         when(softwareStatement.hasJwksUri()).thenReturn(true);
-        when(jwksFromJwksUriSupplier.getJWKSet(anyString(),
-                eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
+        when(jwksFromJwksUriSupplier.getJWKSet(eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
         when(registrationRequest.getSignedJwt()).thenReturn(signedJwt);
 
         // When
         Promise<Response, DCRSignatureValidationException> validationResponsePromise =
-                registrationRequestJwtSignatureValidator.validateJwtSignature(X_FAPI_INTERACTION_ID,
-                registrationRequest);
+                registrationRequestJwtSignatureValidator.validateJwtSignature(registrationRequest);
 
         // Then
         Response validationResponse = validationResponsePromise.get();
         assertThat(validationResponse.getStatus()).isEqualTo(Status.OK);
-        verify(jwksFromJwksUriSupplier, times(1)).getJWKSet(any(), any());
-        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any(), any());
+        verify(jwksFromJwksUriSupplier, times(1)).getJWKSet(any());
+        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any());
     }
 
     @Test
@@ -103,20 +99,18 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
         SignedJwt signedJwt = mock(SignedJwt.class);
         when(softwareStatement.hasJwksUri()).thenReturn(true);
         when(softwareStatement.getJwksUri()).thenReturn(new URL("https://jwks.com"));
-        when(jwksFromJwksUriSupplier.getJWKSet(anyString(),
-                eq(registrationRequest))).thenReturn(Promises.newExceptionPromise(
+        when(jwksFromJwksUriSupplier.getJWKSet(eq(registrationRequest))).thenReturn(Promises.newExceptionPromise(
                         new FailedToLoadJWKException("Failed to load jwks")));
         doThrow(new SignatureException("invalid jwt signature")).when(jwtSignatureValidator).validateSignature(signedJwt, jwkSet);
         // When
         Promise<Response, DCRSignatureValidationException> validationResponsePromise =
-                registrationRequestJwtSignatureValidator.validateJwtSignature(X_FAPI_INTERACTION_ID,
-                        registrationRequest);
+                registrationRequestJwtSignatureValidator.validateJwtSignature(registrationRequest);
 
         // Then
         DCRSignatureValidationException exception = catchThrowableOfType(validationResponsePromise::getOrThrow,
                 DCRSignatureValidationException.class);
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_CLIENT_METADATA);
-        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any(), any());
+        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any());
     }
 
     @Test
@@ -126,21 +120,20 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
         SignedJwt signedJwt = mock(SignedJwt.class);
         when(softwareStatement.hasJwksUri()).thenReturn(true);
         when(softwareStatement.getJwksUri()).thenReturn(new URL("https://jwks.com"));
-        when(jwksFromJwksUriSupplier.getJWKSet(anyString(), eq(registrationRequest)))
+        when(jwksFromJwksUriSupplier.getJWKSet(eq(registrationRequest)))
                 .thenReturn(Promises.newResultPromise(jwkSet));
         when(registrationRequest.getSignedJwt()).thenReturn(signedJwt);
         doThrow(new SignatureException("invalid jwt signature"))
                 .when(jwtSignatureValidator).validateSignature(signedJwt, jwkSet);
         // When
         Promise<Response, DCRSignatureValidationException> validationResponsePromise =
-                registrationRequestJwtSignatureValidator.validateJwtSignature(X_FAPI_INTERACTION_ID,
-                        registrationRequest);
+                registrationRequestJwtSignatureValidator.validateJwtSignature(registrationRequest);
 
         // Then
         DCRSignatureValidationException exception = catchThrowableOfType(validationResponsePromise::getOrThrow,
                 DCRSignatureValidationException.class);
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_CLIENT_METADATA);
-        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any(), any());
+        verify(JwksFromSoftwareStatementSupplier, never()).getJWKSet(any());
     }
 
     @Test
@@ -149,21 +142,19 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
         JWKSet jwkSet = new JWKSet();
         SignedJwt signedJwt = mock(SignedJwt.class);
         when(softwareStatement.hasJwksUri()).thenReturn(false);
-        when(JwksFromSoftwareStatementSupplier.getJWKSet(anyString(),
-                eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
+        when(JwksFromSoftwareStatementSupplier.getJWKSet(eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
         when(registrationRequest.getSignedJwt()).thenReturn(signedJwt);
 
 
         // When
         Promise<Response, DCRSignatureValidationException> validationResponsePromise =
-                registrationRequestJwtSignatureValidator.validateJwtSignature(X_FAPI_INTERACTION_ID,
-                        registrationRequest);
+                registrationRequestJwtSignatureValidator.validateJwtSignature(registrationRequest);
 
         // Then
         Response validationResponse = validationResponsePromise.get();
         assertThat(validationResponse.getStatus()).isEqualTo(Status.OK);
-        verify(JwksFromSoftwareStatementSupplier, times(1)).getJWKSet(any(), any());
-        verify(jwksFromJwksUriSupplier, never()).getJWKSet(any(), any());
+        verify(JwksFromSoftwareStatementSupplier, times(1)).getJWKSet(any());
+        verify(jwksFromJwksUriSupplier, never()).getJWKSet(any());
     }
 
     @Test
@@ -172,21 +163,19 @@ class RegistrationRequestJwtSignatureValidationServiceTest {
         JWKSet jwkSet = new JWKSet();
         SignedJwt signedJwt = mock(SignedJwt.class);
         when(softwareStatement.hasJwksUri()).thenReturn(false);
-        when(JwksFromSoftwareStatementSupplier.getJWKSet(anyString(),
-                eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
+        when(JwksFromSoftwareStatementSupplier.getJWKSet(eq(registrationRequest))).thenReturn(Promises.newResultPromise(jwkSet));
         when(registrationRequest.getSignedJwt()).thenReturn(signedJwt);
         doThrow(new SignatureException("invalid jwt signature")).when(jwtSignatureValidator).validateSignature(signedJwt, jwkSet);
 
         // When
         Promise<Response, DCRSignatureValidationException> validationResponsePromise =
-                registrationRequestJwtSignatureValidator.validateJwtSignature(X_FAPI_INTERACTION_ID,
-                        registrationRequest);
+                registrationRequestJwtSignatureValidator.validateJwtSignature(registrationRequest);
 
         // Then
         DCRSignatureValidationException exception = catchThrowableOfType(validationResponsePromise::getOrThrow,
                 DCRSignatureValidationException.class);
         assertThat(exception.getErrorCode()).isEqualTo(DCRErrorCode.INVALID_CLIENT_METADATA);
-        verify(JwksFromSoftwareStatementSupplier, times(1)).getJWKSet(any(), any());
-        verify(jwksFromJwksUriSupplier, never()).getJWKSet(any(), any());
+        verify(JwksFromSoftwareStatementSupplier, times(1)).getJWKSet(any());
+        verify(jwksFromJwksUriSupplier, never()).getJWKSet(any());
     }
 }

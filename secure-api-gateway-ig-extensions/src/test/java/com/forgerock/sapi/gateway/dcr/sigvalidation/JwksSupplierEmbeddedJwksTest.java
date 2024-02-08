@@ -40,8 +40,6 @@ class JwksSupplierEmbeddedJwksTest {
     private JwksSupplierEmbeddedJwks jwksJwtSignatureValidator;
     private final RegistrationRequest registrationRequest = mock(RegistrationRequest.class);
     private final SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
-    private static final String TX_ID = "transactionId";
-
 
     @BeforeEach
     void setUp() {
@@ -64,7 +62,7 @@ class JwksSupplierEmbeddedJwksTest {
 
         // No need to mock validateSignature - it has a void return sign
         Promise<JWKSet, FailedToLoadJWKException> promise
-                = jwksJwtSignatureValidator.getJWKSet(TX_ID, registrationRequest);
+                = jwksJwtSignatureValidator.getJWKSet(registrationRequest);
         JWKSet jwksSet = promise.getOrThrow();
 
         // Then

@@ -42,7 +42,6 @@ class RegistrationRequestBuilderTest {
     private final SoftwareStatement.Builder softwareStatementBuilder = mock(SoftwareStatement.Builder.class);
     private final JwtDecoder jwtDecoder = mock(JwtDecoder.class);
     private final static String B64_ENCODED_REG_REQUEST_JWT = "header.payload.sig";
-    private final static String TX_ID = "tx_id";
 
 
     @BeforeEach
@@ -65,9 +64,9 @@ class RegistrationRequestBuilderTest {
         // When
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenReturn(regRequestSignedJwt);
         SoftwareStatement softwareStatement = mock(SoftwareStatement.class);
-        when(softwareStatementBuilder.build(TX_ID, softwareStatementb64EncodedString)).thenReturn(
+        when(softwareStatementBuilder.build(softwareStatementb64EncodedString)).thenReturn(
                 softwareStatement);
-        RegistrationRequest registrationReqeuest = builder.build(TX_ID, B64_ENCODED_REG_REQUEST_JWT);
+        RegistrationRequest registrationReqeuest = builder.build(B64_ENCODED_REG_REQUEST_JWT);
 
         // Then
         assertThat(registrationReqeuest).isNotNull();
@@ -83,7 +82,7 @@ class RegistrationRequestBuilderTest {
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenThrow(new JwtException("invalid jwt"));
 
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(
-                ()->builder.build(TX_ID, B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
+                ()->builder.build(B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
 
         // Then
         assertThat(exception).isNotNull();
@@ -100,7 +99,7 @@ class RegistrationRequestBuilderTest {
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenReturn(regRequestSignedJwt);
 
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(
-                ()->builder.build(TX_ID, B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
+                ()->builder.build(B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
 
         // Then
         assertThat(exception).isNotNull();
@@ -115,7 +114,7 @@ class RegistrationRequestBuilderTest {
         // When
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenReturn(regRequestSignedJwt);
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(
-                ()->builder.build(TX_ID, B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
+                ()->builder.build(B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
 
         // Then
         assertThat(exception).isNotNull();
@@ -131,11 +130,11 @@ class RegistrationRequestBuilderTest {
         SignedJwt regRequestSignedJwt = CryptoUtils.createSignedJwt(claims, JWSAlgorithm.PS256);
         // When
         when(jwtDecoder.getSignedJwt(B64_ENCODED_REG_REQUEST_JWT)).thenReturn(regRequestSignedJwt);
-        when(softwareStatementBuilder.build(TX_ID, softwareStatementb64EncodedString)).thenThrow(
+        when(softwareStatementBuilder.build(softwareStatementb64EncodedString)).thenThrow(
                 new DCRRegistrationRequestBuilderException(DCRErrorCode.INVALID_CLIENT_METADATA, "error"));
 
         DCRRegistrationRequestBuilderException exception = catchThrowableOfType(
-                ()->builder.build(TX_ID, B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
+                ()->builder.build(B64_ENCODED_REG_REQUEST_JWT), DCRRegistrationRequestBuilderException.class);
 
         // Then
         assertThat(exception).isNotNull();

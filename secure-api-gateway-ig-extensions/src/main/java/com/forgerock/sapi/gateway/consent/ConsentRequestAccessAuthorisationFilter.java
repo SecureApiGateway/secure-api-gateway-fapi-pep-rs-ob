@@ -34,8 +34,6 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-
 /**
  * Filter that protects access to a consent request by validating that an end user browser session belongs to the
  * same user that is specified in the signed consent request JWT (sent from AM). This can be used in filter chains
@@ -81,7 +79,7 @@ public class ConsentRequestAccessAuthorisationFilter implements Filter {
      */
     static ExceptionHandler createDefaultExceptionHandler() {
         return (ctxt, ex) -> {
-            LOGGER.warn("(" + FAPIUtils.getFapiInteractionIdForDisplay(ctxt) + ") Failed to get userId data required to do authorisation check", ex);
+            LOGGER.warn("Failed to get userId data required to do authorisation check", ex);
             return new Response(Status.INTERNAL_SERVER_ERROR);
         };
     }
@@ -99,7 +97,6 @@ public class ConsentRequestAccessAuthorisationFilter implements Filter {
 
     @Override
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
-        final String fapiInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
         final String ssoTokenUserId;
         final String consentRequestUser;
         try {
@@ -109,13 +106,12 @@ public class ConsentRequestAccessAuthorisationFilter implements Filter {
             return Promises.newResultPromise(exceptionHandler.onException(context, ex));
         }
 
-        LOGGER.info("({}) Verifying ssoTokenUserId: {} matches consent request JWT username: {}",
-                fapiInteractionId, ssoTokenUserId, consentRequestUser);
+        LOGGER.info("Verifying ssoTokenUserId: {} matches consent request JWT username: {}", ssoTokenUserId, consentRequestUser);
         if (!ssoTokenUserId.equals(consentRequestUser)) {
-            LOGGER.warn("({}) User: {} not authorised to access consent", fapiInteractionId, ssoTokenUserId);
+            LOGGER.warn("User: {} not authorised to access consent", ssoTokenUserId);
             return Promises.newResultPromise(new Response(Status.UNAUTHORIZED));
         }
-        LOGGER.debug("({}) User authorised to access consent", fapiInteractionId);
+        LOGGER.debug("User authorised to access consent");
         return next.handle(context, request);
     }
 

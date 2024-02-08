@@ -31,8 +31,6 @@ import org.forgerock.util.Reject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
-
 /**
  * CertificateRetriever implementation that retrieves the client's mTLS certificate from a HTTP Request Header.
  * <p>
@@ -52,21 +50,20 @@ public class HeaderCertificateRetriever implements CertificateRetriever {
 
     @Override
     public X509Certificate retrieveCertificate(Context context, Request request) throws CertificateException {
-        final String fapInteractionId = FAPIUtils.getFapiInteractionIdForDisplay(context);
         final String headerValue = request.getHeaders().getFirst(certificateHeaderName);
         if (headerValue == null) {
-            logger.debug("({}) No client cert could be found for header: {}", fapInteractionId, certificateHeaderName);
+            logger.debug("No client cert could be found for header: {}", certificateHeaderName);
             throw new CertificateException("Client mTLS certificate not provided");
         }
         final String certPem;
         try {
              certPem = URLDecoder.decode(headerValue, StandardCharsets.UTF_8);
         } catch (RuntimeException ex) {
-            logger.debug("(" + fapInteractionId + ") Failed to URL decode cert from header: " + certificateHeaderName, ex);
+            logger.debug("Failed to URL decode cert from header: " + certificateHeaderName, ex);
             throw new CertificateException("Failed to URL decode certificate header value. " +
                     "Expect certificate in PEM encoded then URL encoded format", ex);
         }
-        logger.debug("({}) Found client cert: {}", fapInteractionId, certPem);
+        logger.debug("Found client cert: {}", certPem);
         return parseCertificate(certPem);
     }
 

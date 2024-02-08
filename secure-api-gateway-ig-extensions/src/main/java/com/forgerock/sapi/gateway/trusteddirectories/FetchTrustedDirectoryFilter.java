@@ -21,7 +21,6 @@ import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
-import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.services.context.AttributesContext;
@@ -32,9 +31,8 @@ import org.forgerock.util.promise.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**
  * Fetches {@link TrustedDirectory} configuration for the {@link ApiClient} that is configured in the {@link AttributesContext}
@@ -77,14 +75,14 @@ public class FetchTrustedDirectoryFilter implements Filter {
     public Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
         final ApiClient apiClient = FetchApiClientFilter.getApiClientFromContext(context);
         if (apiClient == null) {
-            logger.error("({}) apiClient not found in request context", FAPIUtils.getFapiInteractionIdForDisplay(context));
+            logger.error("apiClient not found in request context");
             throw new IllegalStateException("apiClient not found in request context");
         }
         try {
             context.asContext(AttributesContext.class).getAttributes().put(TRUSTED_DIRECTORY_ATTR_KEY, getTrustedDirectory(apiClient));
             return next.handle(context, request);
         } catch (RuntimeException ex) {
-            logger.error("(" + FAPIUtils.getFapiInteractionIdForDisplay(context) + ") failed to get trustedDirectory for apiClient: " + apiClient, ex);
+            logger.error("Failed to get trustedDirectory for apiClient: " + apiClient, ex);
             throw ex;
         }
     }

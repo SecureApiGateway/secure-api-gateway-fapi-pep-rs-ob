@@ -26,12 +26,14 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.forgerock.http.header.GenericHeader;
 import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
@@ -54,7 +56,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.metrics.RouteMetricsFilter.Heaplet;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilterTest;
 import com.forgerock.sapi.gateway.util.TestHandlers.FixedResponseHandler;
@@ -92,9 +93,9 @@ class RouteMetricsFilterTest {
         mockTickerForSingleResponseTime(expectedResponseTime);
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route");
-        request.setMethod("POST");
+        final String method = "POST";
+        final String url = "https://localhost/test/route";
+        final Request request = createRequest(url, method);
 
         final ArgumentCaptor<RouteMetricsEvent> metricsEventCaptor = ArgumentCaptor.forClass(RouteMetricsEvent.class);
         doNothing().when(routeMetricsEventPublisher).publish(metricsEventCaptor.capture());
@@ -113,15 +114,21 @@ class RouteMetricsFilterTest {
                 "POST", "/test/route", 200, true, EMPTY_METRICS_CONTEXT);
     }
 
+    private static Request createRequest(String url, String method) throws URISyntaxException {
+        final Request request = new Request();
+        request.setUri(url);
+        request.setMethod(method);
+        request.addHeaders(new GenericHeader("x-fapi-interaction-id", TEST_FAPI_INTERACTION_ID));
+        return request;
+    }
+
     @Test
     void reportsRouteMetricsForErrorResponse() throws Exception {
         final long expectedResponseTime = 233;
         mockTickerForSingleResponseTime(expectedResponseTime);
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route/with/error");
-        request.setMethod("GET");
+        final Request request = createRequest("https://localhost/test/route/with/error", "GET");
 
         final ArgumentCaptor<RouteMetricsEvent> metricsEventCaptor = ArgumentCaptor.forClass(RouteMetricsEvent.class);
         doNothing().when(routeMetricsEventPublisher).publish(metricsEventCaptor.capture());
@@ -147,9 +154,7 @@ class RouteMetricsFilterTest {
         mockTickerForSingleResponseTime(expectedResponseTime);
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route");
-        request.setMethod("POST");
+        final Request request = createRequest("https://localhost/test/route", "POST");
 
         doThrow(new IllegalStateException("publisher failed!")).when(routeMetricsEventPublisher).publish(any());
 
@@ -170,9 +175,7 @@ class RouteMetricsFilterTest {
         final MetricsContextSupplier customMetricsContextSupplier = (context, request) -> customMetricsContextData;
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource, customMetricsContextSupplier);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route");
-        request.setMethod("POST");
+        final Request request = createRequest("https://localhost/test/route", "POST");
 
         final ArgumentCaptor<RouteMetricsEvent> metricsEventCaptor = ArgumentCaptor.forClass(RouteMetricsEvent.class);
         doNothing().when(routeMetricsEventPublisher).publish(metricsEventCaptor.capture());
@@ -201,9 +204,7 @@ class RouteMetricsFilterTest {
         mockTickerForSingleResponseTime(expectedResponseTime);
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource, buggyMetricsContextSupplier);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route");
-        request.setMethod("POST");
+        final Request request = createRequest("https://localhost/test/route", "POST");
 
         final ArgumentCaptor<RouteMetricsEvent> metricsEventCaptor = ArgumentCaptor.forClass(RouteMetricsEvent.class);
         doNothing().when(routeMetricsEventPublisher).publish(metricsEventCaptor.capture());
@@ -228,16 +229,14 @@ class RouteMetricsFilterTest {
         mockTickerForSingleResponseTime(expectedResponseTime);
         final RouteMetricsFilter routeMetricsFilter = createFilter(timestampSource);
 
-        final Request request = new Request();
-        request.setUri("https://localhost/test/route/with/error");
-        request.setMethod("GET");
+        final Request request = createRequest("https://localhost/test/route/with/error", "GET");
 
         final ArgumentCaptor<RouteMetricsEvent> metricsEventCaptor = ArgumentCaptor.forClass(RouteMetricsEvent.class);
         doNothing().when(routeMetricsEventPublisher).publish(metricsEventCaptor.capture());
 
         final FixedResponseHandler handler = new FixedResponseHandler(new Response(Status.BAD_REQUEST));
         final Promise<Response, NeverThrowsException> responsePromise = routeMetricsFilter.filter(
-                createContext(null, TEST_ROUTE_ID, null), request, handler);
+                createContext(null, TEST_ROUTE_ID), request, handler);
         final Response response = responsePromise.getOrThrow(1, TimeUnit.SECONDS);
 
         assertThat(handler.hasBeenInteractedWith()).isTrue();
@@ -251,7 +250,6 @@ class RouteMetricsFilterTest {
         assertThat(metricsEvent.getApiClientId()).isEqualTo(null);
         assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(null);
         assertThat(metricsEvent.getTrustedDirectory()).isEqualTo(null);
-        assertThat(metricsEvent.getFapiInteractionId()).isEqualTo(null);
     }
 
     @Test
@@ -293,14 +291,12 @@ class RouteMetricsFilterTest {
     }
 
     private static Context createContext() {
-        return createContext(TEST_API_CLIENT, TEST_ROUTE_ID, TEST_FAPI_INTERACTION_ID);
+        return createContext(TEST_API_CLIENT, TEST_ROUTE_ID);
     }
 
-    private static Context createContext(ApiClient apiClient, String routeId, String fapiInteractionId) {
+    private static Context createContext(ApiClient apiClient, String routeId) {
         final AttributesContext attributesContext = new AttributesContext(new RootContext());
         attributesContext.getAttributes().put(FetchApiClientFilter.API_CLIENT_ATTR_KEY, apiClient);
-        attributesContext.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, fapiInteractionId);
-
         return new RoutingContext(attributesContext, routeId, "test-route-name");
     }
 
@@ -358,9 +354,7 @@ class RouteMetricsFilterTest {
             final JsonValue config = json(object());
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             final RouteMetricsFilter routeMetricsFilter = (RouteMetricsFilter) new Heaplet().create(Name.of("test"), config, heap);
-            final Request request = new Request();
-            request.setUri("https://localhost/test/example");
-            request.setMethod("GET");
+            final Request request = createRequest("https://localhost/test/example", "GET");
 
             final TestSuccessResponseHandler handler = new TestSuccessResponseHandler();
             final Promise<Response, NeverThrowsException> responsePromise = routeMetricsFilter.filter(createContext(), request, handler);

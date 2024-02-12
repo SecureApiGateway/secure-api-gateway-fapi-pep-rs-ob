@@ -148,13 +148,9 @@
             "type": "FapiInteractionIdFilter"
           },
           {
-            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext",
-            "name": "FapiTransactionIdFilter-1",
-            "type": "ScriptableFilter",
-            "config": {
-              "type": "application/x-groovy",
-              "file": "FapiTransactionIdFilter.groovy"
-            }
+            "name": "FapiInteractionIdTracingFilter",
+            "type": "FapiInteractionIdTracingFilter",
+            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext"
           },
           {
             "comment": "Log any unhandled exceptions, installed after the FapiTransactionIdFilter so that the txId being logged is set to the x-fapi-interaction-id",

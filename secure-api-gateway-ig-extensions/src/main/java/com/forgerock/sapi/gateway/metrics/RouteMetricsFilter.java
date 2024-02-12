@@ -119,7 +119,7 @@ public class RouteMetricsFilter implements Filter {
         metricEvent.setHttpStatusCode(response.getStatus().getCode());
         metricEvent.setSuccessResponse(isSuccessResponse(response.getStatus()));
 
-        FAPIUtils.getFapiInteractionId(context).ifPresent(metricEvent::setFapiInteractionId);
+        FAPIUtils.getFapiInteractionId(request).ifPresent(metricEvent::setFapiInteractionId);
 
         stopwatch.stop();
         metricEvent.setResponseTimeMillis(stopwatch.elapsed(TimeUnit.MILLISECONDS));

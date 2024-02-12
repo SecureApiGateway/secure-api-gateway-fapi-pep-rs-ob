@@ -100,7 +100,7 @@ public class RegistrationRequestEntityValidatorFilter implements Filter {
             return Promises.newResultPromise(response);
         } catch (RuntimeException rte){
             log.warn("Caught runtime exception while applying RegistrationRequestEntityValidatorFilter", rte);
-            Response internServerError = responseFactory.getInternalServerErrorResponse(context, RESPONSE_MEDIA_TYPES);
+            Response internServerError = responseFactory.getInternalServerErrorResponse(request, RESPONSE_MEDIA_TYPES);
             return Promises.newResultPromise(internServerError);
         }
     }

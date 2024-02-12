@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.forgerock.http.header.ContentTypeHeader;
+import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
-import org.forgerock.services.context.Context;
 import org.forgerock.util.Reject;
 
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatter;
@@ -52,10 +52,10 @@ public class ResponseFactory {
         return new Response(status).setEntity(entityBody).addHeaders(contentTypeHeader);
     }
 
-    public Response getInternalServerErrorResponse(Context context, List<String> acceptValues) {
+    public Response getInternalServerErrorResponse(Request request, List<String> acceptValues) {
         Map<String, String> errorFields = new LinkedHashMap<>();
         errorFields.put("error", "Server unable to process request");
-        final Optional<String> fapiInteractionId = FAPIUtils.getFapiInteractionId(context);
+        final Optional<String> fapiInteractionId = FAPIUtils.getFapiInteractionId(request);
         if (fapiInteractionId.isPresent()) {
             errorFields.put("trace_id", fapiInteractionId.get());
         }

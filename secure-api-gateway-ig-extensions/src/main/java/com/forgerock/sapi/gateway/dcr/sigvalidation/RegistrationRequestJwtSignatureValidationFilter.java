@@ -129,7 +129,7 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
                     }, rte -> {
                         log.info("Runtime Exception occurred while validating the Registration Response Jwt signature",
                                  rte);
-                        Response internServerError = responseFactory.getInternalServerErrorResponse(context,
+                        Response internServerError = responseFactory.getInternalServerErrorResponse(request,
                                 RESPONSE_MEDIA_TYPES);
                         return Promises.newResultPromise(internServerError);
                     }
@@ -140,7 +140,7 @@ public class RegistrationRequestJwtSignatureValidationFilter implements Filter {
                     return Promises.newResultPromise(badRequest);
                 }, rte -> {
                     log.error("Runtime Error while validating Registration Request", rte);
-                    return Promises.newResultPromise(responseFactory.getInternalServerErrorResponse(context, RESPONSE_MEDIA_TYPES));
+                    return Promises.newResultPromise(responseFactory.getInternalServerErrorResponse(request, RESPONSE_MEDIA_TYPES));
                 });
         } catch (RuntimeException rte){
             log.error("Runtime Error occurred in RequestAndSsaSignatureValidationFilter", rte);

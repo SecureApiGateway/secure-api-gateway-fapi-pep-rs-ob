@@ -16,38 +16,22 @@
 package com.forgerock.sapi.gateway.fapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.util.Optional;
 import java.util.UUID;
 
-import org.forgerock.services.TransactionId;
-import org.forgerock.services.context.AttributesContext;
-import org.forgerock.services.context.Context;
-import org.forgerock.services.context.RootContext;
-import org.forgerock.services.context.TransactionIdContext;
+import org.forgerock.http.header.GenericHeader;
+import org.forgerock.http.protocol.Request;
 import org.junit.jupiter.api.Test;
 
 class FAPIUtilsTest {
     @Test
     void getFapiInteractionId() {
-        final AttributesContext wrongInteractionIdAttrType = new AttributesContext(new RootContext());
-        wrongInteractionIdAttrType.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, 123);
+        assertFalse(FAPIUtils.getFapiInteractionId(new Request()).isPresent(), "No x-fapi-interaction-id should be found");
 
-        Context[] contextsWithoutInteractionId = new Context[]{
-                new RootContext(),
-                new AttributesContext(new RootContext()),
-                wrongInteractionIdAttrType,
-                new TransactionIdContext(new RootContext(), new TransactionId())
-        };
-        for (final Context invalidContext : contextsWithoutInteractionId) {
-            assertEquals(Optional.empty(), FAPIUtils.getFapiInteractionId(invalidContext));
-        }
-
-        final AttributesContext validAttributesContext = new AttributesContext(new RootContext());
         final String fapiInteractionId = UUID.randomUUID().toString();
-        validAttributesContext.getAttributes().put(FAPIUtils.X_FAPI_INTERACTION_ID, fapiInteractionId);
-
-        assertEquals(fapiInteractionId, FAPIUtils.getFapiInteractionId(validAttributesContext).get());
-        assertEquals(fapiInteractionId, FAPIUtils.getFapiInteractionId(new TransactionIdContext(validAttributesContext, new TransactionId())).get());
+        final Request requestWithFapiInteractionIdHeader = new Request().addHeaders(
+                new GenericHeader("x-fapi-interaction-id", fapiInteractionId));
+        assertEquals(fapiInteractionId, FAPIUtils.getFapiInteractionId(requestWithFapiInteractionIdHeader).get());
     }
 }

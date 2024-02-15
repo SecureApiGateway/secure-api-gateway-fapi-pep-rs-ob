@@ -15,51 +15,19 @@
  */
 package com.forgerock.sapi.gateway.dcr.models;
 
-import java.util.Objects;
-
 import org.forgerock.util.Reject;
 
 /**
  * Data object which represents an Organisation to which one or more {@link ApiClient} objects belong
+ *
+ * @param id   Unique identifier of this organisation.
+ * @param name Organisation name, typically the company name.
  */
-public class ApiClientOrganisation {
+public record ApiClientOrganisation(String id, String name) {
 
-    /**
-     * Unique identifier of this organisation.
-     */
-    private final String id;
-
-    /**
-     * Organisation name, typically the company name.
-     */
-    private final String name;
-
-    public ApiClientOrganisation(String id, String name) {
+    public ApiClientOrganisation {
         Reject.ifBlank(id, "id must be provided");
         Reject.ifBlank(name, "name must be provided");
-        this.id = id;
-        this.name = name;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final ApiClientOrganisation that = (ApiClientOrganisation) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name);
     }
 
     @Override

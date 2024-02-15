@@ -15,7 +15,7 @@
  */
 package com.forgerock.sapi.gateway.mtls;
 
-import static com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.createAddApiClientToContextResultHandler;
+import static com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter.createAddApiClientToContextResultHandler;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -44,9 +44,9 @@ import org.forgerock.util.promise.Promises;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoder;
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientService;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoder;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.DefaultApiClientJwkSetService;
@@ -229,7 +229,7 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
      * Mandatory fields:
      *
      *  - idmClientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to query IDM)
-     *  - idmGetApiClientBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
+     *  - idmManagedObjectsBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
      *                            to be appended to this uri (and some query params).
      *  - trustedDirectoryService: the name of a {@link TrustedDirectoryService} object on the heap
      *  - jwkSetService: the name of the service (defined in config on the heap) that can obtain JWK Sets from a jwk set url
@@ -251,7 +251,7 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
      *           "config": {
      *             "clientTlsCertHeader": "ssl-client-cert",
      *             "idmClientHandler": "IDMClientHandler",
-     *             "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+     *             "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
      *             "trustedDirectoryService": "TrustedDirectoriesService",
      *             "jwkSetService": "OBJwkSetService",
      *             "transportCertValidator": "TransportCertValidator"
@@ -267,12 +267,12 @@ public class TokenEndpointTransportCertValidationFilter implements Filter {
             final Handler clientHandler = config.get("idmClientHandler").as(requiredHeapObject(heap, Handler.class));
             final Client httpClient = new Client(clientHandler);
 
-            String idmGetApiClientBaseUri = config.get("idmGetApiClientBaseUri").required().asString();
-            if (!idmGetApiClientBaseUri.endsWith("/")) {
-                idmGetApiClientBaseUri = idmGetApiClientBaseUri + '/';
+            String idmManagedObjectsBaseUri = config.get("idmManagedObjectsBaseUri").required().asString();
+            if (!idmManagedObjectsBaseUri.endsWith("/")) {
+                idmManagedObjectsBaseUri = idmManagedObjectsBaseUri + '/';
             }
 
-            final ApiClientService apiClientService = new IdmApiClientService(httpClient, idmGetApiClientBaseUri, new IdmApiClientDecoder());
+            final ApiClientService apiClientService = new IdmApiClientService(httpClient, idmManagedObjectsBaseUri, new IdmApiClientDecoder());
 
             final TrustedDirectoryService trustedDirectoryService = config.get("trustedDirectoryService")
                     .as(requiredHeapObject(heap, TrustedDirectoryService.class));

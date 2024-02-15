@@ -37,7 +37,7 @@ import org.forgerock.util.promise.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.fapi.FAPIUtils;
 import com.forgerock.sapi.gateway.trusteddirectories.TrustedDirectoryService;
@@ -151,7 +151,7 @@ public class RouteMetricsFilter implements Filter {
         if (apiClient == null) {
             return null;
         } else {
-            return apiClient.getOauth2ClientId();
+            return apiClient.getOAuth2ClientId();
         }
     }
 
@@ -162,7 +162,7 @@ public class RouteMetricsFilter implements Filter {
             if (apiClient.getOrganisation() == null) {
                 return null;
             } else {
-                return apiClient.getOrganisation().getId();
+                return apiClient.getOrganisation().id();
             }
         }
     }

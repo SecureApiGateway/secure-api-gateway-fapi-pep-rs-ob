@@ -39,19 +39,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
+import com.forgerock.sapi.gateway.dcr.models.ApiClientTest;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilter.Heaplet;
 import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 
 public class FetchTrustedDirectoryFilterTest {
 
-    private final String secureApiGatewayJwksUri = "https://test-bank.com";
     private TrustedDirectoryService trustedDirectoryService;
 
     @BeforeEach
     void setUp() throws MalformedURLException {
+        String secureApiGatewayJwksUri = "https://test-bank.com";
         URL secureApiGatewayJwksUrl = new URL(secureApiGatewayJwksUri);
         trustedDirectoryService = new TrustedDirectoryServiceStatic(true, secureApiGatewayJwksUrl);
     }
@@ -61,7 +61,7 @@ public class FetchTrustedDirectoryFilterTest {
         ssaClaims.setIssuer(issuer);
         final SignedJwt ssaSignedJwt = new SignedJwt(new JwsHeader(), ssaClaims, new byte[0], new byte[0]);
 
-        return ApiClientTest.createBuilderWithTestValues().setSoftwareStatementAssertion(ssaSignedJwt).build();
+        return ApiClientTest.createBuilderWithJwks().setSoftwareStatementAssertion(ssaSignedJwt).build();
     }
 
     @Test

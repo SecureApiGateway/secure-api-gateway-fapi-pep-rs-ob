@@ -54,7 +54,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.metrics.RouteMetricsFilter.Heaplet;
 import com.forgerock.sapi.gateway.trusteddirectories.FetchTrustedDirectoryFilterTest;
@@ -236,7 +236,7 @@ class RouteMetricsFilterTest {
 
         final FixedResponseHandler handler = new FixedResponseHandler(new Response(Status.BAD_REQUEST));
         final Promise<Response, NeverThrowsException> responsePromise = routeMetricsFilter.filter(
-                createContext(null, TEST_ROUTE_ID), request, handler);
+                createContext(null), request, handler);
         final Response response = responsePromise.getOrThrow(1, TimeUnit.SECONDS);
 
         assertThat(handler.hasBeenInteractedWith()).isTrue();
@@ -272,13 +272,13 @@ class RouteMetricsFilterTest {
 
     @Test
     void testGetApiClientId() {
-        assertThat(RouteMetricsFilter.getApiClientId(TEST_API_CLIENT)).isEqualTo(TEST_API_CLIENT.getOauth2ClientId());
+        assertThat(RouteMetricsFilter.getApiClientId(TEST_API_CLIENT)).isEqualTo(TEST_API_CLIENT.getOAuth2ClientId());
         assertThat(RouteMetricsFilter.getApiClientId(null)).isEqualTo(null);
     }
 
     @Test
     void testGetApiClientOrgId() {
-        assertThat(RouteMetricsFilter.getApiClientOrgId(TEST_API_CLIENT)).isEqualTo(TEST_API_CLIENT.getOrganisation().getId());
+        assertThat(RouteMetricsFilter.getApiClientOrgId(TEST_API_CLIENT)).isEqualTo(TEST_API_CLIENT.getOrganisation().id());
         assertThat(RouteMetricsFilter.getApiClientOrgId(mock(ApiClient.class))).isEqualTo(null);
         assertThat(RouteMetricsFilter.getApiClientOrgId(null)).isEqualTo(null);
     }
@@ -291,13 +291,13 @@ class RouteMetricsFilterTest {
     }
 
     private static Context createContext() {
-        return createContext(TEST_API_CLIENT, TEST_ROUTE_ID);
+        return createContext(TEST_API_CLIENT);
     }
 
-    private static Context createContext(ApiClient apiClient, String routeId) {
+    private static Context createContext(ApiClient apiClient) {
         final AttributesContext attributesContext = new AttributesContext(new RootContext());
         attributesContext.getAttributes().put(FetchApiClientFilter.API_CLIENT_ATTR_KEY, apiClient);
-        return new RoutingContext(attributesContext, routeId, "test-route-name");
+        return new RoutingContext(attributesContext, RouteMetricsFilterTest.TEST_ROUTE_ID, "test-route-name");
     }
 
     private void mockTickerForSingleResponseTime(long responseTimeMillis) {
@@ -310,8 +310,8 @@ class RouteMetricsFilterTest {
 
         validateMetricsEventCoreFields(metricsEvent, expectedTimestamp, expectedResponseTime, expectedHttpMethod,
                 expectedRequestPath, expectedStatusCode, isSuccessResponse, expectedMetricsContext);
-        assertThat(metricsEvent.getApiClientId()).isEqualTo(TEST_API_CLIENT.getOauth2ClientId());
-        assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(TEST_API_CLIENT.getOrganisation().getId());
+        assertThat(metricsEvent.getApiClientId()).isEqualTo(TEST_API_CLIENT.getOAuth2ClientId());
+        assertThat(metricsEvent.getApiClientOrgId()).isEqualTo(TEST_API_CLIENT.getOrganisation().id());
         assertThat(metricsEvent.getSoftwareId()).isEqualTo(TEST_API_CLIENT.getSoftwareClientId());
         assertThat(metricsEvent.getTrustedDirectory()).isEqualTo(TRUSTED_DIRECTORY_NAME);
         assertThat(metricsEvent.getFapiInteractionId()).isEqualTo(TEST_FAPI_INTERACTION_ID);

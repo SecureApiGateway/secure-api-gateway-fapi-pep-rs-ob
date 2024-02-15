@@ -311,7 +311,7 @@ def validateIssCritClaim(issCritClaim) {
         throw new IllegalStateException("Route is configured incorrectly, " + SCRIPT_NAME + "requires apiClient context attribute");
     }
     def apiClient = attributes.apiClient
-    def orgId = apiClient.getOrganisation().getId()
+    def orgId = apiClient.getOrganisation().id()
     def softwareStatementId = apiClient.getSoftwareClientId()
     def expectedIssuerValue = orgId + "/" + softwareStatementId
     if (expectedIssuerValue != issCritClaim) {

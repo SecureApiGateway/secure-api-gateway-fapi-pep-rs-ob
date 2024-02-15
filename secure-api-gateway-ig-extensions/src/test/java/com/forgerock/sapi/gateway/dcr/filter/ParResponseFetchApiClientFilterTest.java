@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
 
 import java.net.URISyntaxException;
 import java.util.function.Function;

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
 
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataAllFields;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -40,7 +39,8 @@ import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientServiceTest.MockGetApiClientIdmHandler;
 
 class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFetchApiClientFilterTest {
 
@@ -76,19 +76,19 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
             heap.put("idmClientHandler", idmClientHandler);
 
             assertThrows(JsonValueException.class, () -> new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
-                    json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmGetApiClientBaseUri: Expecting a value");
+                    json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmManagedObjectsBaseUri: Expecting a value");
         }
 
         @Test
         void successfullyCreatesFilterWithRequiredConfigOnly() throws Exception {
-            final JsonValue idmApiClientData = createIdmApiClientDataAllFields(clientId);
-            final Handler idmClientHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmApiClientData);
+            final JsonValue idmApiClientData = IdmApiClientDecoderTest.createIdmApiClientWithJwksUri(clientId);
+            final Handler idmClientHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             heap.put("idmClientHandler", idmClientHandler);
 
             final JsonValue config = json(object(field("clientHandler", "idmClientHandler"),
-                    field("idmGetApiClientBaseUri", idmBaseUri)));
+                    field("idmManagedObjectsBaseUri", idmBaseUri)));
             final AuthorizeResponseFetchApiClientFilter filter = (AuthorizeResponseFetchApiClientFilter) new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"), config, heap);
 
             // Test the filter created by the Heaplet

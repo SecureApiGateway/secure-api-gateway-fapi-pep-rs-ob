@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
 
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataAllFields;
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataRequiredFieldsOnly;
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
+import static com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest.createIdmApiClientWithJwks;
+import static com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -50,39 +49,41 @@ import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.Heaplet;
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter.Heaplet;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoder;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientServiceTest.MockGetApiClientIdmHandler;
 
 /**
  * Unit tests for {@link FetchApiClientFilter}.
- *
+ * <p>
  * IDM behaviour is simulated using Handlers installed as the httpClient within the Filter.
- * See {@link MockApiClientTestDataIdmHandler} for an example Handler which returns mocked ApiClient data.
+ * See {@link MockGetApiClientIdmHandler} for an example Handler which returns mocked ApiClient data.
  */
 class FetchApiClientFilterTest {
 
     @Test
     void fetchApiClientUsingMockedIdmResponseWithAllFields() throws Exception {
-        final String idmBaseUri = "http://localhost/openidm/managed/";
         final String clientId = "1234-5678-9101";
-        final JsonValue idmClientData = createIdmApiClientDataAllFields(clientId);
-        testFetchingApiClient(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = IdmApiClientDecoderTest.createIdmApiClientWithJwksUri(clientId);
+        testFetchingApiClient(clientId, idmClientData);
     }
 
     @Test
     void fetchApiClientUsingMockedIdmResponseWithMandatoryFieldsOnly() throws Exception {
-        final String idmBaseUri = "http://localhost/openidm/managed/";
         final String clientId = "9999";
-        final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(clientId);
-        testFetchingApiClient(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = createIdmApiClientWithJwks(clientId);
+        testFetchingApiClient(clientId, idmClientData);
     }
 
-    private static void testFetchingApiClient(String idmBaseUri, String clientId, JsonValue idmClientData) throws Exception {
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+    private static void testFetchingApiClient(String clientId, JsonValue idmClientData) throws Exception {
+        final MockGetApiClientIdmHandler idmResponseHandler = new MockGetApiClientIdmHandler("http://localhost/openidm/managed", clientId, idmClientData);
         final String clientIdClaim = "aud";
         final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
-        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(idmResponseHandler), idmBaseUri), clientIdClaim);
+        final FetchApiClientFilter filter = new FetchApiClientFilter(createApiClientService(new Client(idmResponseHandler), "http://localhost/openidm/managed"), clientIdClaim);
         callFilterValidateSuccessBehaviour(accessToken, idmClientData, filter);
     }
 
@@ -135,21 +136,21 @@ class FetchApiClientFilterTest {
             heap.put("idmClientHandler", idmClientHandler);
 
             assertThrows(JsonValueException.class, () -> new Heaplet().create(Name.of("test"),
-                    json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmGetApiClientBaseUri: Expecting a value");
+                    json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmManagedObjectsBaseUri: Expecting a value");
         }
 
         @Test
         void successfullyCreatesFilterWithRequiredConfigOnly() throws Exception {
-            final String idmBaseUri = "http://idm/managed/";
+            final String idmBaseUri = "http://idm/managed";
             final String clientId = "999999999";
-            final JsonValue idmApiClientData = createIdmApiClientDataAllFields(clientId);
-            final Handler idmClientHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmApiClientData);
+            final JsonValue idmApiClientData = IdmApiClientDecoderTest.createIdmApiClientWithJwksUri(clientId);
+            final Handler idmClientHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             heap.put("idmClientHandler", idmClientHandler);
 
             final JsonValue config = json(object(field("clientHandler", "idmClientHandler"),
-                                                 field("idmGetApiClientBaseUri", idmBaseUri)));
+                                                 field("idmManagedObjectsBaseUri", idmBaseUri)));
             final FetchApiClientFilter filter = (FetchApiClientFilter) new Heaplet().create(Name.of("test"), config, heap);
 
 
@@ -161,23 +162,23 @@ class FetchApiClientFilterTest {
 
         @Test
         void successfullyCreatesFilterWithAllOptionalConfigSupplied() throws Exception {
-            final String idmBaseUri = "http://idm/managed/";
+            final String idmBaseUri = "http://idm/managed";
             final String clientId = "999999999";
-            final JsonValue idmApiClientData = createIdmApiClientDataAllFields(clientId);
-            final Handler idmClientHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmApiClientData);
+            final JsonValue idmApiClientData = IdmApiClientDecoderTest.createIdmApiClientWithJwksUri(clientId);
+            final Handler idmClientHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
             heap.put("idmClientHandler", idmClientHandler);
 
             final String clientIdClaim = "client_id";
             final JsonValue config = json(object(field("clientHandler", "idmClientHandler"),
-                                                 field("idmGetApiClientBaseUri", idmBaseUri),
+                                                 field("idmManagedObjectsBaseUri", idmBaseUri),
                                                  field("accessTokenClientIdClaim", clientIdClaim)));
             final FetchApiClientFilter filter = (FetchApiClientFilter) new Heaplet().create(Name.of("test"), config, heap);
 
             final AccessTokenInfo accessToken = createAccessToken(clientIdClaim, clientId);
             // Test the filter created by the Heaplet
-            callFilterValidateSuccessBehaviour(accessToken, createIdmApiClientDataAllFields(clientId), filter);
+            callFilterValidateSuccessBehaviour(accessToken, IdmApiClientDecoderTest.createIdmApiClientWithJwksUri(clientId), filter);
         }
     }
 

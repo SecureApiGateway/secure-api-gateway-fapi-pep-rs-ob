@@ -15,7 +15,7 @@
  */
 package com.forgerock.sapi.gateway.jwks;
 
-import static com.forgerock.sapi.gateway.dcr.idm.ApiClientTest.createApiClientWithSoftwareStatementJwks;
+import static com.forgerock.sapi.gateway.dcr.models.ApiClientTest.createApiClientWithSoftwareStatementJwks;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
 import static org.forgerock.json.JsonValue.object;
@@ -36,7 +36,7 @@ import org.forgerock.json.jose.jwt.JwtClaimsSet;
 import org.forgerock.util.promise.Promise;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
+import com.forgerock.sapi.gateway.dcr.models.ApiClientTest;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.jwks.cache.BaseCachingJwkSetServiceTest.ReturnsErrorsJwkStore;
 import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
@@ -96,7 +96,7 @@ class DefaultApiClientJwkSetServiceTest {
 
     @Test
     void failsIfJwksUriIsNull() {
-        final ApiClient apiClient = ApiClientTest.createApiClientWithJwksUri(null);
+        final ApiClient apiClient = ApiClientTest.createBuilderWithJwks().build();
         final TrustedDirectory trustedDirectory = new TrustedDirectoryOpenBankingTest();
 
         final JwkSetService errorsJwkStore = new ReturnsErrorsJwkStore();
@@ -155,7 +155,7 @@ class DefaultApiClientJwkSetServiceTest {
         final JwtClaimsSet claimsSet = new JwtClaimsSet();
         claimsSet.setClaim(misconfiguredDirectory.getSoftwareStatementJwksClaimName(), json(object(field("keys", "should be a list"))));
 
-        final ApiClient apiClient = ApiClientTest.createBuilderWithTestValues().setSoftwareStatementAssertion(new SignedJwt(new JwsHeader(), claimsSet, new byte[0], new byte[0])).build();
+        final ApiClient apiClient = ApiClientTest.createBuilderWithJwks().setSoftwareStatementAssertion(new SignedJwt(new JwsHeader(), claimsSet, new byte[0], new byte[0])).build();
 
         final Promise<JWKSet, FailedToLoadJWKException> jwkSetPromise = apiClientJwkSetService.getJwkSet(apiClient, misconfiguredDirectory);
 

@@ -77,7 +77,7 @@
           "name": "TokenEndpointTransportCertValidationFilter",
           "type": "TokenEndpointTransportCertValidationFilter",
           "config": {
-            "idmGetApiClientBaseUri": "&{urls.idmGetApiClientBaseUri}",
+            "idmManagedObjectsBaseUri": "&{urls.idmManagedObjectsBaseUri}",
             "idmClientHandler": "IDMClientHandler",
             "trustedDirectoryService": "TrustedDirectoriesService",
             "jwkSetService": "OBJwkSetService",

@@ -24,16 +24,14 @@ import org.forgerock.json.jose.jws.SignedJwt;
 import org.forgerock.util.Reject;
 
 /**
- * Data object which represents a registered OAuth2 client.
- *
- * Use {@link ApiClientBuilder} to create an instance
- *
- * ApiClient is immutable.
+ * Data object which represents a registered OAuth2.0 client, this class is immutable.
+ * <p>
+ * Use {@link ApiClientBuilder} to create an instance.
  */
 public class ApiClient {
 
     public static class ApiClientBuilder {
-        private String oauth2ClientId;
+        private String oAuth2ClientId;
         private String softwareClientId;
         private String clientName;
         private URI jwksUri;
@@ -43,8 +41,8 @@ public class ApiClient {
         private ApiClientOrganisation organisation;
         private boolean deleted;
 
-        public ApiClientBuilder setOauth2ClientId(String oauth2ClientId) {
-            this.oauth2ClientId = oauth2ClientId;
+        public ApiClientBuilder setOAuth2ClientId(String oAuth2ClientId) {
+            this.oAuth2ClientId = oAuth2ClientId;
             return this;
         }
 
@@ -89,22 +87,23 @@ public class ApiClient {
         }
 
         public ApiClient build() {
-            Reject.ifNull(oauth2ClientId, "oauth2ClientId must be configured");
+            Reject.ifNull(oAuth2ClientId, "oAuth2ClientId must be configured");
             Reject.ifNull(softwareClientId, "softwareClientId must be configured");
             Reject.ifNull(clientName, "clientName must be configured");
             Reject.ifNull(softwareStatementAssertion, "softwareStatementAssertion must be configured");
             Reject.ifNull(organisation, "organisation must be configured");
             Reject.ifNull(roles, "roles must be configured");
-            return new ApiClient(oauth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
+            Reject.unless(jwksUri == null ^ jwks == null, "Exactly one of jwksUri or jwks must be configured");
+            return new ApiClient(oAuth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
         }
     }
 
     /**
-     * The OAuth2 Client ID for this client. This is generated and assigned at registration.
-     *
+     * The OAuth2.0 client_id for this client. This is generated and assigned at registration.
+     * <p>
      * This ID can uniquely identify the ApiClient.
      */
-    private final String oauth2ClientId;
+    private final String oAuth2ClientId;
 
     /**
      * The Client ID for this client as defined in the software statement used to at registration (not necessarily unique).
@@ -144,10 +143,10 @@ public class ApiClient {
 
     private final boolean deleted;
 
-    private ApiClient(String oauth2ClientId, String softwareClientId, String clientName, URI jwksUri, JWKSet jwks,
+    private ApiClient(String oAuth2ClientId, String softwareClientId, String clientName, URI jwksUri, JWKSet jwks,
             SignedJwt softwareStatementAssertion, ApiClientOrganisation organisation, List<String> roles,
             boolean deleted) {
-        this.oauth2ClientId = oauth2ClientId;
+        this.oAuth2ClientId = oAuth2ClientId;
         this.softwareClientId = softwareClientId;
         this.clientName = clientName;
         this.jwksUri = jwksUri;
@@ -158,8 +157,8 @@ public class ApiClient {
         this.deleted = deleted;
     }
 
-    public String getOauth2ClientId() {
-        return oauth2ClientId;
+    public String getOAuth2ClientId() {
+        return oAuth2ClientId;
     }
 
     public String getSoftwareClientId() {
@@ -199,18 +198,18 @@ public class ApiClient {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ApiClient apiClient = (ApiClient) o;
-        return deleted == apiClient.deleted && Objects.equals(oauth2ClientId, apiClient.oauth2ClientId) && Objects.equals(softwareClientId, apiClient.softwareClientId) && Objects.equals(clientName, apiClient.clientName) && Objects.equals(jwksUri, apiClient.jwksUri) && Objects.equals(jwks, apiClient.jwks) && Objects.equals(softwareStatementAssertion, apiClient.softwareStatementAssertion) && Objects.equals(organisation, apiClient.organisation) && Objects.equals(roles, apiClient.roles);
+        return deleted == apiClient.deleted && Objects.equals(oAuth2ClientId, apiClient.oAuth2ClientId) && Objects.equals(softwareClientId, apiClient.softwareClientId) && Objects.equals(clientName, apiClient.clientName) && Objects.equals(jwksUri, apiClient.jwksUri) && Objects.equals(jwks, apiClient.jwks) && Objects.equals(softwareStatementAssertion, apiClient.softwareStatementAssertion) && Objects.equals(organisation, apiClient.organisation) && Objects.equals(roles, apiClient.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(oauth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
+        return Objects.hash(oAuth2ClientId, softwareClientId, clientName, jwksUri, jwks, softwareStatementAssertion, organisation, roles, deleted);
     }
 
     @Override
     public String toString() {
         return "ApiClient{" +
-                "oauth2ClientId='" + oauth2ClientId + '\'' +
+                "oAuth2ClientId='" + oAuth2ClientId + '\'' +
                 ", softwareClientId='" + softwareClientId + '\'' +
                 ", clientName='" + clientName + '\'' +
                 ", jwksUri=" + jwksUri +

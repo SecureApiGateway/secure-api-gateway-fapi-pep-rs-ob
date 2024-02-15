@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
 
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
@@ -37,8 +37,9 @@ import org.slf4j.LoggerFactory;
 import com.forgerock.sapi.gateway.common.error.OAuthErrorResponseFactory;
 import com.forgerock.sapi.gateway.common.rest.ContentTypeFormatterFactory;
 import com.forgerock.sapi.gateway.common.rest.HttpHeaderNames;
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException;
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientService.ApiClientServiceException.ErrorCode;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientServiceException;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 
 /**

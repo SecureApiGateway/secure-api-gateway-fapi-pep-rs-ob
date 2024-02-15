@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.service.idm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.forgerock.json.JsonValue.array;
@@ -46,25 +46,28 @@ public class IdmApiClientDecoderTest {
 
     private final IdmApiClientDecoder idmApiClientDecoder = new IdmApiClientDecoder();
 
-    public static JsonValue createIdmApiClientDataAllFields(String clientId) {
-        return createIdmApiClientDataAllFields(clientId, "https://somelocation/jwks.jwks");
+    public static JsonValue createIdmApiClientWithJwksUri(String clientId) {
+        return createIdmApiClientWithJwksUri(clientId, "https://somelocation/jwks.jwks");
     }
 
-    public static JsonValue createIdmApiClientDataAllFields(String clientId, String jwksUri) {
-        return createIdmApiClientDataRequiredFieldsOnly(clientId).put("jwksUri", jwksUri);
+    public static JsonValue createIdmApiClientWithJwksUri(String clientId, String jwksUri) {
+        return createIdmApiClientDataInner(clientId).put("jwksUri", jwksUri);
     }
 
-    public static JsonValue createIdmApiClientDataRequiredFieldsOnly(String clientId) {
-        return json(object(field("id", "ebSqTNqmQXFYz6VtWGXZAa"),
-                field("name", "Automated Testing"),
-                field("description", "Blah blah blah"),
-                field("ssa", createTestSoftwareStatementAssertion().build()),
-                field("oauth2ClientId", clientId),
-                field("roles", array("AISP", "PISP", "CBPII")),
-                field("jwks", DCRTestHelpers.getJwksJsonValue()),
-                field("deleted", false),
-                field("apiClientOrg", object(field("id", "98761234"),
-                field("name", "Test Organisation")))));
+    public static JsonValue createIdmApiClientWithJwks(String clientId) {
+        return createIdmApiClientDataInner(clientId).put("jwks", DCRTestHelpers.getJwksJsonValue());
+    }
+
+    private static JsonValue createIdmApiClientDataInner(String clientId) {
+        return json(object(field("_id", clientId),
+                           field("id", "ebSqTNqmQXFYz6VtWGXZAa"),
+                           field("name", "Automated Testing"),
+                           field("ssa", createTestSoftwareStatementAssertion().build()),
+                           field("oauth2ClientId", clientId),
+                           field("roles", array("AISP", "PISP", "CBPII")),
+                           field("deleted", false),
+                           field("apiClientOrg", object(field("id", "98761234"),
+                           field("name", "Test Organisation")))));
     }
 
     /**
@@ -91,9 +94,13 @@ public class IdmApiClientDecoderTest {
     }
 
     public static void verifyIdmClientDataMatchesApiClientObject(JsonValue idmClientData, ApiClient actualApiClient) {
+        verifyIdmClientDataMatchesApiClientObject(idmClientData, actualApiClient, false);
+    }
+
+    public static void verifyIdmClientDataMatchesApiClientObject(JsonValue idmClientData, ApiClient actualApiClient, boolean deleted) {
         assertEquals(idmClientData.get("id").asString(), actualApiClient.getSoftwareClientId());
         assertEquals(idmClientData.get("name").asString(), actualApiClient.getClientName());
-        assertEquals(idmClientData.get("oauth2ClientId").asString(), actualApiClient.getOauth2ClientId());
+        assertEquals(idmClientData.get("oauth2ClientId").asString(), actualApiClient.getOAuth2ClientId());
         final JsonValue jwksUri = idmClientData.get("jwksUri");
         if (jwksUri.isNotNull()) {
             assertEquals(jwksUri.asString(), actualApiClient.getJwksUri().toString());
@@ -104,26 +111,28 @@ public class IdmApiClientDecoderTest {
             assertEquals(JWKSet.parse(jwks), actualApiClient.getJwks());
         }
 
-        assertEquals(idmClientData.get("apiClientOrg").get("id").asString(), actualApiClient.getOrganisation().getId());
-        assertEquals(idmClientData.get("apiClientOrg").get("name").asString(), actualApiClient.getOrganisation().getName());
+        assertEquals(idmClientData.get("apiClientOrg").get("id").asString(), actualApiClient.getOrganisation().id());
+        assertEquals(idmClientData.get("apiClientOrg").get("name").asString(), actualApiClient.getOrganisation().name());
         assertEquals(idmClientData.get("roles").asList(String.class), actualApiClient.getRoles());
 
         final String ssaStr = idmClientData.get("ssa").asString();
         final SignedJwt expectedSignedJwt = new JwtReconstruction().reconstructJwt(ssaStr, SignedJwt.class);
         assertEquals(expectedSignedJwt.getHeader(), actualApiClient.getSoftwareStatementAssertion().getHeader());
         assertEquals(expectedSignedJwt.getClaimsSet(), actualApiClient.getSoftwareStatementAssertion().getClaimsSet());
+
+        assertThat(actualApiClient.isDeleted()).isEqualTo(deleted);
     }
 
     @Test
     void decodeApiClientAllFieldsSet() {
-        final JsonValue idmJson = createIdmApiClientDataAllFields("1234");
+        final JsonValue idmJson = createIdmApiClientWithJwksUri("1234");
         final ApiClient apiClient = new IdmApiClientDecoder().decode(idmJson);
         verifyIdmClientDataMatchesApiClientObject(idmJson, apiClient);
     }
 
     @Test
     void decodeApiClientRequiredFieldsOnly() {
-        final JsonValue idmJson = createIdmApiClientDataRequiredFieldsOnly("9999");
+        final JsonValue idmJson = createIdmApiClientWithJwks("9999");
         final ApiClient apiClient = idmApiClientDecoder.decode(idmJson);
         verifyIdmClientDataMatchesApiClientObject(idmJson, apiClient);
         assertNull(apiClient.getJwksUri(), "jwksUri must be null");
@@ -136,13 +145,13 @@ public class IdmApiClientDecoderTest {
         assertEquals("/name: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
 
         // Test with ssa field missing
-        final JsonValue missingSsaField = createIdmApiClientDataRequiredFieldsOnly("123454");
+        final JsonValue missingSsaField = createIdmApiClientWithJwks("123454");
         missingSsaField.remove("ssa");
         decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(missingSsaField));
         assertEquals("/ssa: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
 
         // Test with apiClientOrg.id field missing
-        final JsonValue missingOrgId = createIdmApiClientDataRequiredFieldsOnly("2323");
+        final JsonValue missingOrgId = createIdmApiClientWithJwks("2323");
         missingOrgId.get("apiClientOrg").remove("id");
         decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(missingOrgId));
         assertEquals("/apiClientOrg/id: is a required field, failed to decode IDM ApiClient", decodeException.getMessage());
@@ -150,7 +159,7 @@ public class IdmApiClientDecoderTest {
 
     @Test
     void failToDecodeDueToRolesFieldInvalidType() {
-        final JsonValue invalidRoles = createIdmApiClientDataRequiredFieldsOnly("2323");
+        final JsonValue invalidRoles = createIdmApiClientWithJwks("2323");
         invalidRoles.put("roles", "ROLE1,ROLE2");
         JsonValueException decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(invalidRoles));
         assertEquals("/roles: Expecting a List of java.lang.String elements", decodeException.getMessage());
@@ -162,12 +171,11 @@ public class IdmApiClientDecoderTest {
 
     @Test
     void failToDecodeDueToUnexpectedException() {
-        final JsonValue corruptSsaField = createIdmApiClientDataRequiredFieldsOnly("123454");
+        final JsonValue corruptSsaField = createIdmApiClientWithJwks("123454");
         corruptSsaField.put("ssa", "This is not a JWT");
 
         JsonValueException decodeException = assertThrows(JsonValueException.class, () -> idmApiClientDecoder.decode(corruptSsaField));
         assertEquals("/ssa: failed to decode JWT, raw jwt string: This is not a JWT", decodeException.getMessage());
         assertThat(decodeException.getCause()).isInstanceOf(InvalidJwtException.class);
-        decodeException.getCause().printStackTrace();
     }
 }

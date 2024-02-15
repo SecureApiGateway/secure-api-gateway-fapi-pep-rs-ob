@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.service.idm;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 
 import org.forgerock.json.JsonValue;
@@ -42,13 +41,13 @@ public class IdmApiClientDecoder {
      *
      * @param apiClientJson the json to decode
      * @return ApiClient
-     * @throws JsonValueException
+     * @throws JsonValueException if decoding the json fails
      */
     public ApiClient decode(JsonValue apiClientJson) {
         try {
             final ApiClientBuilder apiClientBuilder = new ApiClientBuilder()
                     .setClientName(apiClientJson.get("name").as(this::requiredField).asString())
-                    .setOauth2ClientId(apiClientJson.get("oauth2ClientId").as(this::requiredField).asString())
+                    .setOAuth2ClientId(apiClientJson.get("oauth2ClientId").as(this::requiredField).asString())
                     .setSoftwareClientId(apiClientJson.get("id").as(this::requiredField).asString())
                     .setDeleted(apiClientJson.get("deleted").as(this::requiredField).asBoolean())
                     .setSoftwareStatementAssertion(apiClientJson.get("ssa").as(this::requiredField).as(this::decodeSsa))
@@ -75,8 +74,7 @@ public class IdmApiClientDecoder {
     }
 
     private JWKSet decodeJwks(JsonValue jwks) {
-        JWKSet jwkSet = JWKSet.parse(jwks);
-        return jwkSet;
+        return JWKSet.parse(jwks);
     }
 
     private List<String> decodeRoles(JsonValue jsonValue) {

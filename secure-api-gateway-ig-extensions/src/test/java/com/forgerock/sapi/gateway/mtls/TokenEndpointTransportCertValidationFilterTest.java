@@ -15,7 +15,7 @@
  */
 package com.forgerock.sapi.gateway.mtls;
 
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataAllFields;
+import static com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest.createIdmApiClientWithJwksUri;
 import static com.forgerock.sapi.gateway.mtls.TokenEndpointTransportCertValidationFilter.DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
@@ -60,12 +60,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientService;
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
+import com.forgerock.sapi.gateway.dcr.models.ApiClientTest;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.dcr.models.ApiClient.ApiClientBuilder;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientServiceTest.MockGetApiClientIdmHandler;
 import com.forgerock.sapi.gateway.jwks.ApiClientJwkSetService;
 import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
 import com.forgerock.sapi.gateway.mtls.TokenEndpointTransportCertValidationFilter.Heaplet;
@@ -115,12 +114,8 @@ class TokenEndpointTransportCertValidationFilterTest {
             transportCertValidationFilter = new TokenEndpointTransportCertValidationFilter(mockApiClientService, mockTrustedDirectoryService,
                     mockApiClientJwkSetService, mockCertificateRetriever, mockTransportCertValidator, DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM);
 
-            final ApiClientBuilder apiClientBuilder = ApiClientTest.createBuilderWithTestValues().setOauth2ClientId(testClientId);
-            final URI jwksUri;
             try {
-                jwksUri = new URI("http://localhost/jwks");
-                apiClientBuilder.setJwksUri(jwksUri);
-                testApiClient = apiClientBuilder.build();
+                testApiClient = ApiClientTest.createApiClientWithJwksUri(new URI("http://localhost/jwks"));
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
@@ -298,10 +293,10 @@ class TokenEndpointTransportCertValidationFilterTest {
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
 
             final URL apiClientJwksUrl = new URL("https://localhost/apiClient.jwks");
-            final JsonValue idmClientData = createIdmApiClientDataAllFields(testClientId, apiClientJwksUrl.toString());
+            final JsonValue idmClientData = createIdmApiClientWithJwksUri(testClientId, apiClientJwksUrl.toString());
 
-            final String idmBaseUri = "https://localhost/idm/getApiClient/";
-            final MockApiClientTestDataIdmHandler mockApiClientTestDataIdmHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, testClientId, idmClientData);
+            final String idmBaseUri = "https://localhost/idm/getApiClient";
+            final MockGetApiClientIdmHandler mockApiClientTestDataIdmHandler = new MockGetApiClientIdmHandler(idmBaseUri, testClientId, idmClientData);
 
             heap.put("clientHandler", mockApiClientTestDataIdmHandler);
             heap.put("trustedDirectoryService", (TrustedDirectoryService) issuer -> new TrustedDirectoryOpenBankingTest());
@@ -310,7 +305,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             heap.put("headerCertificateRetriever", new HeaderCertificateRetriever(certHeader));
 
             final JsonValue config = json(object(field("idmClientHandler", "clientHandler"),
-                                                 field("idmGetApiClientBaseUri", idmBaseUri),
+                                                 field("idmManagedObjectsBaseUri", idmBaseUri),
                                                  field("trustedDirectoryService", "trustedDirectoryService"),
                                                  field("jwkSetService", "jwkSetService"),
                                                  field("transportCertValidator", "transportCertValidator"),
@@ -340,10 +335,10 @@ class TokenEndpointTransportCertValidationFilterTest {
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
 
             final URL apiClientJwksUrl = new URL("https://localhost/apiClient.jwks");
-            final JsonValue idmClientData = createIdmApiClientDataAllFields(testClientId, apiClientJwksUrl.toString());
+            final JsonValue idmClientData = createIdmApiClientWithJwksUri(testClientId, apiClientJwksUrl.toString());
 
-            final String idmBaseUri = "https://localhost/idm/getApiClient/";
-            final MockApiClientTestDataIdmHandler mockApiClientTestDataIdmHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, testClientId, idmClientData);
+            final String idmBaseUri = "https://localhost/idm/getApiClient";
+            final MockGetApiClientIdmHandler mockApiClientTestDataIdmHandler = new MockGetApiClientIdmHandler(idmBaseUri, testClientId, idmClientData);
 
             heap.put("clientHandler", mockApiClientTestDataIdmHandler);
             heap.put("trustedDirectoryService", (TrustedDirectoryService) issuer -> new TrustedDirectoryOpenBankingTest());
@@ -351,7 +346,7 @@ class TokenEndpointTransportCertValidationFilterTest {
             heap.put("transportCertValidator", new DefaultTransportCertValidator());
 
             final JsonValue config = json(object(field("idmClientHandler", "clientHandler"),
-                                                field("idmGetApiClientBaseUri", idmBaseUri),
+                                                field("idmManagedObjectsBaseUri", idmBaseUri),
                                                 field("trustedDirectoryService", "trustedDirectoryService"),
                                                 field("jwkSetService", "jwkSetService"),
                                                 field("transportCertValidator", "transportCertValidator"),
@@ -424,12 +419,11 @@ class TokenEndpointTransportCertValidationFilterTest {
     }
 
     private TestHandler createResponseWithValidAccessToken() {
-        final TestHandler nextHandler = new TestHandler((ctxt, request) -> {
+        return new TestHandler((ctxt, request) -> {
             final Response response = new Response(Status.OK);
             final JsonValue jsonResponse = json(object(field("access_token", createAccessToken(Map.of(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM, testClientId)))));
             response.setEntity(jsonResponse);
             return Promises.newResultPromise(response);
         });
-        return nextHandler;
     }
 }

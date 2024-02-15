@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
 
-import static com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilterTest.createApiClientService;
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.createIdmApiClientDataRequiredFieldsOnly;
-import static com.forgerock.sapi.gateway.dcr.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
+import static com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilterTest.createApiClientService;
+import static com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest.createIdmApiClientWithJwks;
+import static com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest.verifyIdmClientDataMatchesApiClientObject;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.forgerock.json.JsonValue.json;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,13 +41,13 @@ import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.IdmApiClientServiceTest.MockApiClientTestDataIdmHandler;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientServiceTest.MockGetApiClientIdmHandler;
 import com.forgerock.sapi.gateway.util.TestHandlers.FixedResponseHandler;
 import com.forgerock.sapi.gateway.util.TestHandlers.TestSuccessResponseHandler;
 
 public abstract class BaseAuthorizeResponseFetchApiClientFilterTest {
-    static final String idmBaseUri = "http://localhost/openidm/managed/";
+    static final String idmBaseUri = "http://localhost/openidm/managed";
     static final String clientId = "9999";
     private static AttributesContext createContext() {
         return new AttributesContext(new RootContext("root"));
@@ -62,8 +62,8 @@ public abstract class BaseAuthorizeResponseFetchApiClientFilterTest {
 
     @Test
     void fetchApiClientForSuccessResponse() throws Exception {
-        final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(clientId);
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = createIdmApiClientWithJwks(clientId);
+        final MockGetApiClientIdmHandler idmResponseHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmClientData);
         callFilterValidateSuccessBehaviour(idmClientData, createFilter(idmResponseHandler));
     }
 
@@ -99,8 +99,8 @@ public abstract class BaseAuthorizeResponseFetchApiClientFilterTest {
 
     @Test
     void doesNotFetchApiClientForErrorResponses() throws InterruptedException, TimeoutException {
-        final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(clientId);
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = createIdmApiClientWithJwks(clientId);
+        final MockGetApiClientIdmHandler idmResponseHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmClientData);
         final AuthorizeResponseFetchApiClientFilter filter = createFilter(idmResponseHandler);
         final AttributesContext context = BaseAuthorizeResponseFetchApiClientFilterTest.createContext();
 
@@ -113,8 +113,8 @@ public abstract class BaseAuthorizeResponseFetchApiClientFilterTest {
 
     @Test
     void returnsErrorResponseWhenClientIdParamNotFound() throws Exception {
-        final JsonValue idmClientData = createIdmApiClientDataRequiredFieldsOnly(clientId);
-        final MockApiClientTestDataIdmHandler idmResponseHandler = new MockApiClientTestDataIdmHandler(idmBaseUri, clientId, idmClientData);
+        final JsonValue idmClientData = createIdmApiClientWithJwks(clientId);
+        final MockGetApiClientIdmHandler idmResponseHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmClientData);
         final AuthorizeResponseFetchApiClientFilter filter = createFilter(idmResponseHandler);
         final AttributesContext context = BaseAuthorizeResponseFetchApiClientFilterTest.createContext();
 

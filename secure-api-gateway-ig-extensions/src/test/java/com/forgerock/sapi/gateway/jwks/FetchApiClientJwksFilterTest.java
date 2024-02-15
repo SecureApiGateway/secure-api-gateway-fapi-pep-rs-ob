@@ -15,7 +15,7 @@
  */
 package com.forgerock.sapi.gateway.jwks;
 
-import static com.forgerock.sapi.gateway.dcr.idm.ApiClientTest.createApiClientWithJwksUri;
+import static com.forgerock.sapi.gateway.dcr.models.ApiClientTest.createApiClientWithJwksUri;
 import static com.forgerock.sapi.gateway.jwks.DefaultApiClientJwkSetServiceTest.createJwkSet;
 import static org.forgerock.json.JsonValue.field;
 import static org.forgerock.json.JsonValue.json;
@@ -49,8 +49,8 @@ import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.dcr.idm.ApiClientTest;
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.models.ApiClientTest;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
 import com.forgerock.sapi.gateway.jwks.FetchApiClientJwksFilter.Heaplet;
 import com.forgerock.sapi.gateway.jwks.mocks.MockJwkSetService;
@@ -68,7 +68,7 @@ class FetchApiClientJwksFilterTest {
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(apiClientJwkSetService);
 
         final Context context = new AttributesContext(new RootContext());
-        addApiClientToContext(context, ApiClientTest.createBuilderWithTestValues().build());
+        addApiClientToContext(context, ApiClientTest.createBuilderWithJwks().build());
         addTrustedDirectoryToContext(context, new TrustedDirectoryOpenBankingTest());
         final TestSuccessResponseHandler responseHandler = new TestSuccessResponseHandler();
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, new Request(), responseHandler);
@@ -96,7 +96,7 @@ class FetchApiClientJwksFilterTest {
     void failsIfTrustedDirectoryNotFound() {
         final TestSuccessResponseHandler responseHandler = new TestSuccessResponseHandler();
         final Context context = new AttributesContext(new RootContext());
-        addApiClientToContext(context, ApiClientTest.createBuilderWithTestValues().build());
+        addApiClientToContext(context, ApiClientTest.createBuilderWithJwks().build());
 
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(new ReturnsExeptionsApiClientJwkSetService());
 
@@ -110,7 +110,7 @@ class FetchApiClientJwksFilterTest {
         final FetchApiClientJwksFilter filter = new FetchApiClientJwksFilter(new ReturnsExeptionsApiClientJwkSetService());
 
         final Context context = new AttributesContext(new RootContext());
-        addApiClientToContext(context, ApiClientTest.createBuilderWithTestValues().build());
+        addApiClientToContext(context, ApiClientTest.createBuilderWithJwks().build());
         addTrustedDirectoryToContext(context, new TrustedDirectoryOpenBankingTest());
         final TestSuccessResponseHandler responseHandler = new TestSuccessResponseHandler();
         final Promise<Response, NeverThrowsException> responsePromise = filter.filter(context, new Request(), responseHandler);

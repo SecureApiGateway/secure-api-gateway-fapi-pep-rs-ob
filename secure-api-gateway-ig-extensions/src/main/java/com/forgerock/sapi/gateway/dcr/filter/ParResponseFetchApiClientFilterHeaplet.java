@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.dcr.idm;
+package com.forgerock.sapi.gateway.dcr.filter;
+
+import static com.forgerock.sapi.gateway.dcr.filter.AuthorizeResponseFetchApiClientFilter.*;
 
 import org.forgerock.openig.heap.HeapException;
 
-import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.BaseFetchApiClientHeaplet;
+import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter.BaseFetchApiClientHeaplet;
 
 /**
- * Responsible for creating the {@link AuthorizeResponseFetchApiClientFilter}
+ * Heaplet for creating a ParResponseFetchApiClientFilter, this is an alias for the AuthorizeResponseFetchApiClientFilter
+ * that has been configured to retrieve the client_id from the HTTP Request's Form.
  * <p>
  * Mandatory config:
- * - idmGetApiClientBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
+ * - idmManagedObjectsBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
  * to be appended to this uri (and some query params).
  * - clientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to
  * query IDM)
@@ -31,20 +34,20 @@ import com.forgerock.sapi.gateway.dcr.idm.FetchApiClientFilter.BaseFetchApiClien
  * Example config:
  * <pre>{@code
  * {
- *   "comment": "Add ApiClient data to the context attributes for the AS /authorize route",
- *   "name": "AuthoriseResponseFetchApiClientFilter",
- *   "type": "AuthoriseResponseFetchApiClientFilter",
+ *   "comment": "Add ApiClient data to the context attributes for the AS /par route",
+ *   "name": "ParResponseFetchApiClientFilter",
+ *   "type": "ParResponseFetchApiClientFilter",
  *   "config": {
- *     "idmGetApiClientBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
+ *     "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
  *     "clientHandler": "IDMClientHandler"
  *   }
  * }
  * }</pre>
  */
-public class AuthorizeResponseFetchApiClientFilterHeaplet extends BaseFetchApiClientHeaplet {
+public class ParResponseFetchApiClientFilterHeaplet extends BaseFetchApiClientHeaplet {
 
     @Override
     public Object create() throws HeapException {
-        return new AuthorizeResponseFetchApiClientFilter(createApiClientService(), AuthorizeResponseFetchApiClientFilter.queryParamClientIdRetriever());
+        return new AuthorizeResponseFetchApiClientFilter(createApiClientService(), formClientIdRetriever());
     }
 }

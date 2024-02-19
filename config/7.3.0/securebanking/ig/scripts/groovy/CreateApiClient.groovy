@@ -3,6 +3,7 @@ import com.forgerock.sapi.gateway.dcr.models.SoftwareStatement
 import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoder
 import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService
 import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientOrganisationService
+import com.forgerock.sapi.gateway.dcr.service.ApiClientServiceException.ErrorCode
 
 import static org.forgerock.util.promise.Promises.newResultPromise
 
@@ -48,8 +49,13 @@ switch(method.toUpperCase()) {
     return apiClientService.getApiClient(apiClientId).thenAsync(apiClient -> {
       return createOrUpdateRegistration(method)
     }, ex -> {
+      if (ex.errorCode == ErrorCode.DELETED) {
+        return newResultPromise(errorResponse(Status.UNAUTHORIZED, "Unable to update deleted registration"))
+      } else if (ex.errorCode == ErrorCode.NOT_FOUND) {
+        return newResultPromise(errorResponse(Status.NOT_FOUND, "Update failed - registration not found"))
+      }
       logger.error("Failed to get ApiClient from IDM", ex)
-      return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to get ApiClient"))
+      return newResultPromise(errorResponse(Status.INTERNAL_SERVER_ERROR, "Failed to update ApiClient"))
     })
   case "DELETE":
     return next.handle(context, request).thenAsync(response -> {

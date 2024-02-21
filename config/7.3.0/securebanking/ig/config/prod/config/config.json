@@ -104,8 +104,7 @@
             "name": "FetchApiClientFilter",
             "type": "FetchApiClientFilter",
             "config": {
-              "idmManagedObjectsBaseUri": "&{urls.idmManagedObjectsBaseUri}",
-              "clientHandler": "IDMClientHandler"
+              "apiClientService": "IdmApiClientService"
             }
           },
           {
@@ -464,6 +463,22 @@
         "signingKeyId": "&{ig.ob.aspsp.signing.kid}",
         "signingSecretsProvider": "SecretsProvider-ASPSP",
         "signingKeySecretId": "jwt.signer"
+      }
+    },
+    {
+      "name": "IdmApiClientService",
+      "type": "IdmApiClientService",
+      "config": {
+        "clientHandler": "IDMClientHandler",
+        "idmManagedObjectsBaseUri": "&{urls.idmManagedObjectsBaseUri}"
+      }
+    },
+    {
+      "name": "IdmApiClientOrganisationService",
+      "type": "IdmApiClientOrganisationService",
+      "config": {
+        "clientHandler": "IDMClientHandler",
+        "idmManagedObjectsBaseUri": "&{urls.idmManagedObjectsBaseUri}"
       }
     }
   ],

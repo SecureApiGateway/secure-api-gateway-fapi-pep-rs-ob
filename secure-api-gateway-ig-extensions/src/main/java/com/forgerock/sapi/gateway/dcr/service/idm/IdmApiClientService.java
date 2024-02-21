@@ -33,6 +33,7 @@ import org.forgerock.http.protocol.Request;
 import org.forgerock.http.protocol.Response;
 import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
+import org.forgerock.openig.heap.HeapException;
 import org.forgerock.util.Reject;
 import org.forgerock.util.annotations.VisibleForTesting;
 import org.forgerock.util.promise.Promise;
@@ -276,5 +277,14 @@ public class IdmApiClientService implements ApiClientService {
         } catch (URISyntaxException e) {
             return apiClientServiceExceptionPromise(e);
         }
+    }
+
+    public static class Heaplet extends BaseIdmServiceHeaplet {
+        @Override
+        public Object create() throws HeapException {
+            return new IdmApiClientService(createHttpClient(), getIdmManagedObjectsBaseUri(),
+                    getApiClientManagedObjName(), getApiClientOrgManagedObjName(), new IdmApiClientDecoder());
+        }
+
     }
 }

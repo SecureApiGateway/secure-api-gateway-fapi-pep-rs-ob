@@ -42,8 +42,7 @@
           "type": "ParResponseFetchApiClientFilter",
           "comment": "Add ApiClient data to the context attributes",
           "config": {
-            "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed",
-            "clientHandler": "IDMClientHandler"
+            "apiClientService": "IdmApiClientService"
           }
         }
       ],

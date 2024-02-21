@@ -15,18 +15,20 @@
  */
 package com.forgerock.sapi.gateway.dcr.filter;
 
+import static com.forgerock.sapi.gateway.dcr.filter.AuthorizeResponseFetchApiClientFilter.queryParamClientIdRetriever;
+import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
+
+import org.forgerock.openig.heap.GenericHeaplet;
 import org.forgerock.openig.heap.HeapException;
 
-import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter.BaseFetchApiClientHeaplet;
+import com.forgerock.sapi.gateway.dcr.models.ApiClient;
+import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
 
 /**
  * Responsible for creating the {@link AuthorizeResponseFetchApiClientFilter}
  * <p>
  * Mandatory config:
- * - idmManagedObjectsBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
- * to be appended to this uri (and some query params).
- * - clientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to
- * query IDM)
+ * - apiClientService: reference to an {@link ApiClientService} implementation heap object to use to retrieve the {@link ApiClient}
  * <p>
  * Example config:
  * <pre>{@code
@@ -35,16 +37,16 @@ import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter.BaseFetchApiCl
  *   "name": "AuthoriseResponseFetchApiClientFilter",
  *   "type": "AuthoriseResponseFetchApiClientFilter",
  *   "config": {
- *     "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
- *     "clientHandler": "IDMClientHandler"
+ *     "apiClientService": "IdmApiClientService"
  *   }
  * }
  * }</pre>
  */
-public class AuthorizeResponseFetchApiClientFilterHeaplet extends BaseFetchApiClientHeaplet {
+public class AuthorizeResponseFetchApiClientFilterHeaplet extends GenericHeaplet {
 
     @Override
     public Object create() throws HeapException {
-        return new AuthorizeResponseFetchApiClientFilter(createApiClientService(), AuthorizeResponseFetchApiClientFilter.queryParamClientIdRetriever());
+        final ApiClientService apiClientService = config.get("apiClientService").as(requiredHeapObject(heap, ApiClientService.class));
+        return new AuthorizeResponseFetchApiClientFilter(apiClientService, queryParamClientIdRetriever());
     }
 }

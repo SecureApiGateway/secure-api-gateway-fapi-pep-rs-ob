@@ -87,18 +87,15 @@
           }
         },
         {
-          "comment": "Register TPP org and OAuth2 client in IDM or delete from IDM",
-          "name": "CreateApiClient",
-          "type": "ScriptableFilter",
+          "name": "ManageApiClientFilter",
+          "type": "ManageApiClientFilter",
           "config": {
-            "type": "application/x-groovy",
-            "file": "CreateApiClient.groovy",
-            "args": {
-              "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
-              "routeArgObjApiClientOrg": "apiClientOrg",
-              "routeArgObjApiClient": "apiClient"
-            },
-            "clientHandler": "IDMClientHandler"
+            "apiClientService": "IdmApiClientService",
+            "apiClientOrgService": "IdmApiClientOrganisationService",
+            "clientIdRequestParameterLocator": {
+              "name": "QueryParamClientIdRequestParameterLocator",
+              "type": "QueryParamClientIdRequestParameterLocator"
+            }
           }
         },
         {

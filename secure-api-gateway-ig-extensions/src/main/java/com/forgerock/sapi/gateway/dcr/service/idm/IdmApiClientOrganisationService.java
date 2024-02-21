@@ -27,6 +27,7 @@ import java.net.URI;
 import org.forgerock.http.Client;
 import org.forgerock.http.header.GenericHeader;
 import org.forgerock.http.protocol.Request;
+import org.forgerock.openig.heap.HeapException;
 import org.forgerock.util.Reject;
 import org.forgerock.util.annotations.VisibleForTesting;
 import org.forgerock.util.promise.Promise;
@@ -106,6 +107,7 @@ public class IdmApiClientOrganisationService implements ApiClientOrganisationSer
                                       field("id",   organisationId),
                                       field("name", organisationName))));
 
+        logger.debug("Attempting to create organisation - id: {}, name: {}", organisationId, organisationName);
         return httpClient.send(request)
                 .then(response -> {
                     if (!response.getStatus().isSuccessful()
@@ -115,8 +117,20 @@ public class IdmApiClientOrganisationService implements ApiClientOrganisationSer
                         logger.error(errorMessage);
                         throw new ApiClientServiceException(ErrorCode.SERVER_ERROR, errorMessage);
                     }
+
                     // No need to decode the response body as all the fields are known (also 412 Pre-condition failed responses do not contain a json entity)
-                    return new ApiClientOrganisation(organisationId, organisationName);
+                    final ApiClientOrganisation apiClientOrganisation = new ApiClientOrganisation(organisationId, organisationName);
+                    logger.debug("Organisation: {} created or already exists", apiClientOrganisation);
+                    return apiClientOrganisation;
                 }, neverThrown());
+    }
+
+    public static class Heaplet extends BaseIdmServiceHeaplet {
+        @Override
+        public Object create() throws HeapException {
+            return new IdmApiClientOrganisationService(createHttpClient(), getIdmManagedObjectsBaseUri(),
+                                                       getApiClientOrgManagedObjName());
+        }
+
     }
 }

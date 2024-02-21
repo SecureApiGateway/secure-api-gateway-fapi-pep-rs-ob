@@ -21,7 +21,6 @@ import static org.forgerock.openig.util.JsonValues.requiredHeapObject;
 
 import java.util.Map;
 
-import org.forgerock.http.Client;
 import org.forgerock.http.Filter;
 import org.forgerock.http.Handler;
 import org.forgerock.http.oauth2.OAuth2Context;
@@ -44,8 +43,6 @@ import com.forgerock.sapi.gateway.dcr.service.ApiClientService;
 import com.forgerock.sapi.gateway.dcr.service.ApiClientServiceException;
 import com.forgerock.sapi.gateway.dcr.service.ApiClientServiceException.ErrorCode;
 import com.forgerock.sapi.gateway.dcr.models.ApiClient;
-import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoder;
-import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService;
 
 /**
  * Fetches {@link ApiClient} data from IDM using the client_id identified from the access_token provided with this request.
@@ -148,10 +145,7 @@ public class FetchApiClientFilter implements Filter {
      * Responsible for creating the {@link FetchApiClientFilter}
      *
      * Mandatory config:
-     * - idmManagedObjectsBaseUri: the base uri used to build the IDM query to get the apiClient, the client_id is expected
-     * to be appended to this uri (and some query params).
-     * - clientHandler: the clientHandler to use to call out to IDM (must be configured with the credentials required to
-     * query IDM)
+     * - apiClientService: reference to an {@link ApiClientService} implementation heap object to use to retrieve the {@link ApiClient}
      *
      * Optional config:
      * - accessTokenClientIdClaim: name of the claim used to extract the client_id from the access_token, defaults to "aud"
@@ -162,40 +156,20 @@ public class FetchApiClientFilter implements Filter {
      *           "name": "FetchApiClientFilter",
      *           "type": "FetchApiClientFilter",
      *           "config": {
-     *             "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed/apiClient",
-     *             "clientHandler": "IDMClientHandler"
-     *            }
+     *             "apiClientService": "IdmApiClientService"
+     *           }
      * }
      */
-    public static class Heaplet extends BaseFetchApiClientHeaplet {
+    public static class Heaplet extends GenericHeaplet {
         @Override
         public Object create() throws HeapException {
             final String accessTokenClientIdClaim = config.get("accessTokenClientIdClaim")
                                                           .defaultTo(DEFAULT_ACCESS_TOKEN_CLIENT_ID_CLAIM)
                                                           .asString();
-            return new FetchApiClientFilter(createApiClientService(), accessTokenClientIdClaim);
+
+            final ApiClientService apiClientService = config.get("apiClientService").as(requiredHeapObject(heap, ApiClientService.class));
+            return new FetchApiClientFilter(apiClientService, accessTokenClientIdClaim);
         }
-    }
-
-    static abstract class BaseFetchApiClientHeaplet extends GenericHeaplet {
-
-        protected ApiClientService createApiClientService() throws HeapException {
-            return new IdmApiClientService(createHttpClient(), getidmManagedObjectsBaseUri(), new IdmApiClientDecoder());
-        }
-
-        private Client createHttpClient() throws HeapException {
-            final Handler clientHandler = config.get("clientHandler").as(requiredHeapObject(heap, Handler.class));
-            return new Client(clientHandler);
-        }
-
-        private String getidmManagedObjectsBaseUri() {
-            String idmManagedObjectsBaseUri = config.get("idmManagedObjectsBaseUri").required().asString();
-            if (!idmManagedObjectsBaseUri.endsWith("/")) {
-                idmManagedObjectsBaseUri = idmManagedObjectsBaseUri + '/';
-            }
-            return idmManagedObjectsBaseUri;
-        }
-
     }
 
 }

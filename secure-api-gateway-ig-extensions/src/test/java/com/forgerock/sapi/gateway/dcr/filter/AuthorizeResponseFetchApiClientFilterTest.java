@@ -24,22 +24,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.URISyntaxException;
 import java.util.function.Function;
 
+import org.forgerock.http.Client;
 import org.forgerock.http.Handler;
 import org.forgerock.http.protocol.Request;
-import org.forgerock.http.protocol.Response;
-import org.forgerock.http.protocol.Status;
 import org.forgerock.json.JsonValue;
-import org.forgerock.json.JsonValueException;
 import org.forgerock.openig.heap.HeapException;
 import org.forgerock.openig.heap.HeapImpl;
 import org.forgerock.openig.heap.Name;
 import org.forgerock.util.promise.NeverThrowsException;
 import org.forgerock.util.promise.Promise;
-import org.forgerock.util.promise.Promises;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoder;
 import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientDecoderTest;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientServiceTest.MockGetApiClientIdmHandler;
 
 class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFetchApiClientFilterTest {
@@ -63,20 +62,10 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
     @Nested
     public class HeapletTests {
         @Test
-        void failsToConstructIfClientHandlerIsMissing() {
+        void failsToConstructIfApiClientServiceIsMissing() {
             final HeapException heapException = assertThrows(HeapException.class, () -> new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
                     json(object()), new HeapImpl(Name.of("heap"))), "Invalid object declaration");
-            assertEquals(heapException.getCause().getMessage(), "/clientHandler: Expecting a value");
-        }
-
-        @Test
-        void failsToConstructIfIdmUrlIsMissing() {
-            final Handler idmClientHandler = (ctx, req) -> Promises.newResultPromise(new Response(Status.OK));
-            final HeapImpl heap = new HeapImpl(Name.of("heap"));
-            heap.put("idmClientHandler", idmClientHandler);
-
-            assertThrows(JsonValueException.class, () -> new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"),
-                    json(object(field("clientHandler", "idmClientHandler"))), heap), "/idmManagedObjectsBaseUri: Expecting a value");
+            assertEquals(heapException.getCause().getMessage(), "/apiClientService: Expecting a value");
         }
 
         @Test
@@ -85,10 +74,9 @@ class AuthorizeResponseFetchApiClientFilterTest extends BaseAuthorizeResponseFet
             final Handler idmClientHandler = new MockGetApiClientIdmHandler(idmBaseUri, clientId, idmApiClientData);
 
             final HeapImpl heap = new HeapImpl(Name.of("heap"));
-            heap.put("idmClientHandler", idmClientHandler);
+            heap.put("IdmApiClientService", new IdmApiClientService(new Client(idmClientHandler), idmBaseUri, new IdmApiClientDecoder()));
 
-            final JsonValue config = json(object(field("clientHandler", "idmClientHandler"),
-                    field("idmManagedObjectsBaseUri", idmBaseUri)));
+            final JsonValue config = json(object(field("apiClientService", "IdmApiClientService")));
             final AuthorizeResponseFetchApiClientFilter filter = (AuthorizeResponseFetchApiClientFilter) new AuthorizeResponseFetchApiClientFilterHeaplet().create(Name.of("test"), config, heap);
 
             // Test the filter created by the Heaplet

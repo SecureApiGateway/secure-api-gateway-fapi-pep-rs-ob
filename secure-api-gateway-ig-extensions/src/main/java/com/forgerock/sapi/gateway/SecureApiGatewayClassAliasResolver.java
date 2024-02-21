@@ -27,8 +27,13 @@ import com.forgerock.sapi.gateway.common.exception.SapiLogAttachedExceptionFilte
 import com.forgerock.sapi.gateway.consent.ConsentRequestAccessAuthorisationFilter;
 import com.forgerock.sapi.gateway.dcr.filter.AuthorizeResponseFetchApiClientFilterHeaplet;
 import com.forgerock.sapi.gateway.dcr.filter.FetchApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.filter.ManageApiClientFilter;
+import com.forgerock.sapi.gateway.dcr.filter.ManageApiClientFilter.PathParamClientIdRequestParameterLocator;
+import com.forgerock.sapi.gateway.dcr.filter.ManageApiClientFilter.QueryParamClientIdRequestParameterLocator;
 import com.forgerock.sapi.gateway.dcr.filter.ParResponseFetchApiClientFilterHeaplet;
 import com.forgerock.sapi.gateway.dcr.request.RegistrationRequestEntityValidatorFilter;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientOrganisationService;
+import com.forgerock.sapi.gateway.dcr.service.idm.IdmApiClientService;
 import com.forgerock.sapi.gateway.dcr.sigvalidation.RegistrationRequestJwtSignatureValidationFilter;
 import com.forgerock.sapi.gateway.fapi.FapiInteractionIdTracingFilter;
 import com.forgerock.sapi.gateway.fapi.v1.FAPIAdvancedDCRValidationFilter;
@@ -83,6 +88,11 @@ public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
         ALIASES.put("AccessTokenResponseIdTokenReSignFilter", AccessTokenResponseIdTokenReSignFilter.class);
         ALIASES.put("AuthorizeResponseJwtReSignFilter", AuthorizeResponseJwtReSignFilter.class);
         ALIASES.put("FapiInteractionIdTracingFilter", FapiInteractionIdTracingFilter.class);
+        ALIASES.put("IdmApiClientService", IdmApiClientService.class);
+        ALIASES.put("IdmApiClientOrganisationService", IdmApiClientOrganisationService.class);
+        ALIASES.put("ManageApiClientFilter", ManageApiClientFilter.class);
+        ALIASES.put("PathParamClientIdRequestParameterLocator", PathParamClientIdRequestParameterLocator.class);
+        ALIASES.put("QueryParamClientIdRequestParameterLocator", QueryParamClientIdRequestParameterLocator.class);
     }
 
     /**

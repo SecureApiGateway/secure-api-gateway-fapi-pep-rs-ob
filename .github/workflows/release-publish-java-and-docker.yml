@@ -53,13 +53,6 @@ jobs:
           server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
 
-      - name: Build maven
-        run: |
-          mvn clean install
-        env:
-          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-
       # Override maven settings
       - uses: actions/setup-java@v4
         id: override_maven_settings
@@ -72,15 +65,6 @@ jobs:
           server-id: maven.forgerock.org-community # community repo to publish the java artifact
           server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
-
-      # Deploy the java artifact
-      - name: Deploy release
-        id: deploy
-        run: |
-          mvn -B deploy -DskipTests -Ddockerfile.skip
-        env:
-          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
 
       - uses: google-github-actions/auth@v2
         id: gcloud_auth
@@ -101,9 +85,21 @@ jobs:
         run: |
           echo "GIT_SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Build Docker Image
+      - name: Build Code + Test + Create Docker Image
         id: build_docker
         run: |
-          make docker tag=${{ env.GIT_SHA_SHORT }} repo=${{ inputs.GAR_RELEASE_REPO }}
+          make clean docker tag=${{ env.GIT_SHA_SHORT }} repo=${{ inputs.GAR_RELEASE_REPO }}
           docker tag ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }}:${{ inputs.release_version_number }}
           docker push ${{ inputs.GAR_RELEASE_REPO }}/securebanking/${{ inputs.SERVICE_NAME }} --all-tags
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      # Deploy the java artifact
+      - name: Deploy release
+        id: deploy
+        run: |
+          mvn -B deploy -DskipTests -Ddockerfile.skip
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}

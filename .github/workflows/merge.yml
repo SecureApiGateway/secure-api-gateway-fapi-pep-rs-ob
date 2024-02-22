@@ -44,13 +44,6 @@ jobs:
         run: |
           echo "MAVEN_SERVER_COMMUNITY=maven.forgerock.org-community-snapshots" >> $GITHUB_ENV
 
-      - name: Build Maven
-        run: |
-          mvn clean install
-        env:
-          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-
       # Override maven settings
       - uses: actions/setup-java@v4
         name: Set Java and Maven Cache with Community Repository
@@ -63,13 +56,7 @@ jobs:
           server-username: FR_ARTIFACTORY_USER # env variable for username in deploy
           server-password: FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD # env variable for token in deploy
 
-      - name: Deploy Artifact Package
-        run: mvn -B deploy -DskipTests -Ddockerfile.skip
-        env:
-          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-
-      - name: Auth to GCP  
+      - name: Auth to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.DEV_GAR_KEY }}
@@ -82,11 +69,20 @@ jobs:
         run: |
           gcloud auth configure-docker europe-west4-docker.pkg.dev
 
-      - name: Docker Build
+      - name: Build Code + Test + Create Docker Image
         run: |
-          make docker tag=${{ env.GIT_SHA_SHORT }}
+          make clean docker tag=${{ env.GIT_SHA_SHORT }}
           docker tag ${{ vars.GAR_DEV_REPO }}/securebanking/${{ env.SERVICE_NAME }}:${{ env.GIT_SHA_SHORT }} ${{ vars.GAR_DEV_REPO }}/securebanking/${{ env.SERVICE_NAME }}:latest
           docker push ${{ vars.GAR_DEV_REPO }}/securebanking/${{ env.SERVICE_NAME }} --all-tags
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
+
+      - name: Deploy Maven Artifact Package
+        run: mvn -B deploy -DskipTests -Ddockerfile.skip
+        env:
+          FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
+          FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
   
   test:
     runs-on: ubuntu-latest

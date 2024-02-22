@@ -1,12 +1,12 @@
 repo := europe-west4-docker.pkg.dev/sbat-gcr-develop/sapig-docker-artifact
 service := ig
 
-docker: conf
+docker: build-java copy-java-dependencies conf
 ifndef tag
 	$(warning no tag supplied; latest assumed)
 	$(eval tag=latest)
 endif
-	docker build docker/7.3.0/ig/ -t ${repo}/securebanking/${service}:${tag}
+	docker build secure-api-gateway-ob-uk-docker -t ${repo}/securebanking/${service}:${tag}
 	docker push ${repo}/securebanking/${service}:${tag}
 
 conf:
@@ -21,3 +21,14 @@ endif
   	fi; \
 	echo "init config for env: ${env}, igmode: $$IG_MODE\n"; \
 	./bin/config.sh init --env ${env} --igmode $${IG_MODE}
+
+build-java:
+	mvn -U install
+
+copy-java-dependencies:
+	mvn -U dependency:copy-dependencies --projects secure-api-gateway-ob-uk-docker -DoutputDirectory=./7.3.0/ig/lib
+
+clean:
+	mvn clean
+	./bin/config.sh clean
+	rm -rf secure-api-gateway-ob-uk-docker/7.3.0/ig/lib

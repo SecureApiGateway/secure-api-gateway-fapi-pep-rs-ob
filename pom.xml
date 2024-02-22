@@ -37,6 +37,7 @@
 
     <modules>
         <module>secure-api-gateway-ig-extensions</module>
+        <module>secure-api-gateway-ob-uk-docker</module>
     </modules>
 
     <parent>

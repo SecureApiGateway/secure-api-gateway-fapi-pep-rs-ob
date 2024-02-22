@@ -179,7 +179,6 @@ clean_config()
     elif [ "$1" == "ig" ]; then
         rm -rf "$DOCKER_ROOT/$1/config"
         rm -rf "$DOCKER_ROOT/$1/scripts"
-        rm -rf "$DOCKER_ROOT/$1/lib"
         rm -rf "$DOCKER_ROOT/$1/audit-schemas"
     fi
 }
@@ -192,8 +191,6 @@ init_config()
     echo "*********************************************************************************************"
     echo "copy ${PROFILE_ROOT}/$1/audit-schemas to $DOCKER_ROOT/$1/"
     cp -r "${PROFILE_ROOT}/$1/audit-schemas" "$DOCKER_ROOT/$1/"
-    echo "copy ${PROFILE_ROOT}/$1/lib to $DOCKER_ROOT/$1/"
-    cp -r "${PROFILE_ROOT}/$1/lib" "$DOCKER_ROOT/$1/"
     echo "copy ${PROFILE_ROOT}/$1/scripts to $DOCKER_ROOT/$1/"
     cp -r "${PROFILE_ROOT}/$1/scripts" "$DOCKER_ROOT/$1/"
     echo "copy ${PROFILE_ROOT}/$1/config/$_arg_environment/config to $DOCKER_ROOT/$1/"
@@ -233,7 +230,7 @@ diff_config()
 # chdir to the script root/..
 cd "$script_dir/.."
 PROFILE_ROOT="config/$_arg_version/$_arg_profile"
-DOCKER_ROOT="docker/$_arg_version"
+DOCKER_ROOT="secure-api-gateway-ob-uk-docker/$_arg_version"
 
 
 # if [ "$_arg_component" == "all" ]; then

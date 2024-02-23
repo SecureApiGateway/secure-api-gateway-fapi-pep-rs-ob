@@ -43,3 +43,4 @@ secure-api-gateway-ob-uk-docker/7.3.0/ig/audit-schemas/
 **/.java-version
 /config/7.3.0/securebanking/ig/lib/*
 /config/7.3.0/securebanking/ig/lib/secure-api-gateway-ig-extensions-*.jar
+pom.xml.versionsBackup

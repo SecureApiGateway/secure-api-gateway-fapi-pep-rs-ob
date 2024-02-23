@@ -33,11 +33,6 @@ based on the [Secure API Gateway assets](https://github.com/SecureApiGateway/Sec
 
 > Each environment on `kustomize/overlay/7.2.0/securebanking` can override the defaults map values
 
-## IG extensions
-### Maven modules
-- [secure api gateway IG extensions](secure-api-gateway-ig-extensions/README.md)
-  - Support for fetching (and optionally caching) JSON Web Key Set (JWKS) data                                                                                                         |
-
 ## Quick Start
 **Steps**
 - Build IG extensions

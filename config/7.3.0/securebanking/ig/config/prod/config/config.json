@@ -252,29 +252,19 @@
       "config": {
         "filters": [
           {
-            "type": "ClientCredentialsOAuth2ClientFilter",
+            "type": "ResourceOwnerOAuth2ClientFilter",
             "config": {
               "tokenEndpoint": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/access_token",
+              "username": "&{ig.idm.user}",
+              "passwordSecretId": "ig.idm.password",
+              "secretsProvider": "SystemAndEnvSecretStore-IAM",
               "scopes": [
                 "fr:idm:*"
               ],
               "endpointHandler": {
-                "name": "ClientCredentialsOAuth2ClientFilterHandler",
                 "type": "Chain",
                 "config": {
-                  "handler": {
-                    "name": "TokenRequestHandler",
-                    "type": "ScriptableHandler",
-                    "config": {
-                      "type": "application/x-groovy",
-                      "args": {
-                        "userId": "&{ig.idm.user}",
-                        "password": "&{ig.idm.password}"
-                      },
-                      "file": "SetIdmPasswordGrantCredentials.groovy",
-                      "clientHandler": "ForgeRockClientHandler"
-                    }
-                  },
+                  "handler": "ForgeRockClientHandler",
                   "filters": [
                     {
                       "type": "ClientSecretBasicAuthenticationFilter",

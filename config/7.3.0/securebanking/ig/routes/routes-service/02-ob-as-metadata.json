@@ -20,8 +20,7 @@
               "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",
               "mtlsEndpoints": ["registration_endpoint", "token_endpoint"],
               "igHost": "&{ig.fqdn}",
-              "mtlsHost": "&{mtls.fqdn}",
-              "jwksUri": "https://&{hosts.obJwks}/&{ob.aspsp.org.id}/&{ob.aspsp.software.id}.jwks"
+              "mtlsHost": "&{mtls.fqdn}"
             }
           }
         },

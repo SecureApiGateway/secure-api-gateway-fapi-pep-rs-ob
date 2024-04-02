@@ -28,6 +28,25 @@
           }
         },
         {
+          "name": "RemoveRequestHeaders",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "ssl-client-verify",
+              "X-Forwarded-For",
+              "X-Forwarded-Host",
+              "X-Forwarded-Port",
+              "X-Forwarded-Proto",
+              "X-Forwarded-Scheme",
+              "X-Real-IP",
+              "X-Request-ID",
+              "X-Scheme",
+              "Host"
+            ]
+          }
+        },
+        {
           "name": "ReplaceEncodingFilter",
           "type": "HeaderFilter",
           "config": {
@@ -43,7 +62,7 @@
           }
         }
       ],
-      "handler": "OBReverseProxyHandler"
+      "handler": "OBClientHandler"
     }
   }
 }

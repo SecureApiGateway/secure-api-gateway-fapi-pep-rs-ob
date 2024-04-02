@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM gcr.io/forgerock-io/ig:2023.4.0
+FROM gcr.io/forgerock-io/ig:2024.3.0
 # Switching back to forgerock user, app will run as this
 USER forgerock
 # Create dir where secrets can be mounted into
@@ -31,4 +31,3 @@ RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-*.jar
 
 COPY --chown=forgerock:root 7.3.0/ig/config /var/ig/config/
 COPY --chown=forgerock:root 7.3.0/ig/scripts /var/ig/scripts/
-

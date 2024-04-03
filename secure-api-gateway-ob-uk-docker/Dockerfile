@@ -25,6 +25,9 @@ COPY --chown=forgerock:root 7.3.0/ig/bin/import-pem-certs.sh /home/forgerock
 # The default ig directory is /var/ig, and it expects subfolders config/ and scripts/ (if required)
 COPY --chown=forgerock:root 7.3.0/ig/audit-schemas /var/ig/audit-schemas/
 COPY --chown=forgerock:root 7.3.0/ig/lib /opt/ig/lib
+# Removing the bouncy castle jar that exists in the docker image as it clashes with the version used by SAPI-G.
+# This version clash results in the JwkmsIssueCert.groovy script hanging
+RUN rm -f /opt/ig/lib/bcprov-jdk18on-1.74.jar
 
 # Check that the IG jar exists before continuing
 RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-*.jar

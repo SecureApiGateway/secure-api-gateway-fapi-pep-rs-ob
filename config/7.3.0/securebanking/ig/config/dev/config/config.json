@@ -12,9 +12,6 @@
       "idmManagedObjectsBaseUri": "https://&{identity.platform.fqdn}/openidm/managed",
       "rsBaseUri": "http://&{rs.internal.svc}:8080"
     },
-    "hosts": {
-      "obJwks": "&{ig.ob.jwks.host|keystore.openbankingtest.org.uk}"
-    },
     "vertxConfig": {
       "maxHeaderSize": 16384,
       "initialSettings": {

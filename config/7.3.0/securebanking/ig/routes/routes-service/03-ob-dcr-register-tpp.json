@@ -74,10 +74,6 @@
             "type": "application/x-groovy",
             "file": "ProcessRegistration.groovy",
             "args": {
-              "routeArgObJwksHosts": [
-                "&{hosts.obJwks}"
-              ],
-              "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
               "jwkSetService": "${heap['OBJwkSetService']}",
               "allowIgIssuedTestCerts": "${security.enableTestTrustedDirectory}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",

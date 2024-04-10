@@ -189,6 +189,25 @@ switch (method.toUpperCase()) {
         // Verify that the tls transport cert is registered for the TPP's software statement
         if ( softwareStatement.hasJwksUri() ) {
             URL softwareStatementJwksUri = softwareStatement.getJwksUri();
+            // We need to set the jwks_uri claim in the registration request because the software statement might not
+            // have the jwks URI in the jwks_uri claim in the software statement. For example, the OB Test Directory
+            // issued SSAs have thw jwks URI claim in the software_jwks_endpoint claim - which is unknown to AM and
+            // will be ignored. This will result in an OAuth2 Client with an empty Json Web Key URI field. This will
+            // Result AM being unable to validate client credential jws used in `private_key_jwt` as the
+            // `token_endpoint_auth_method`.
+            if (routeArgObJwksHosts) {
+                // If the JWKS URI host is in our list of private JWKS hosts, then proxy back through IG
+                if (routeArgObJwksHosts && routeArgObJwksHosts.contains(softwareStatementJwksUri.getHost())) {
+                    String newUri = routeArgProxyBaseUrl + "/" + softwareStatementJwksUri.getHost() + softwareStatementJwksUri.getPath();
+                    logger.debug(SCRIPT_NAME + "Updating private JWKS URI from {} to {}", softwareStatementJwksUri, newUri);
+                    try {
+                        softwareStatementJwksUri = new URL(newUri);
+                    } catch (MalformedURLException e){
+                        logger.error(SCRIPT_NAME + "Failed to create URL from new URI string {}", newUri);
+                        return new Response(Status.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
             regRequestClaimsSet.setClaim("jwks_uri", softwareStatementJwksUri.toString());
 
             // AM doesn't understand JWS encoded registration requests, so we need to convert the jwt JSON and pass it on

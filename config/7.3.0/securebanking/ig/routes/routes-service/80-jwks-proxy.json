@@ -1,0 +1,68 @@
+{
+  "comment": "JWK set proxy - provides publicly trusted route to Open Banking JWK publishing points protected with non-public SSL certs",
+  "name": "80 - Open Banking JWKS Proxy",
+  "auditService": "AuditService-OB-Route",
+  "condition": "${find(request.uri.path, '^/jwkms/jwksproxy')}",
+  "handler": {
+    "type": "Chain",
+    "config": {
+      "filters": [
+        "SBATFapiInteractionFilterChain",
+        {
+          "name": "JWKSProxyProcessRequest",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "JWKSProxyProcessRequest.groovy",
+            "args": {
+              "routeArgObJwksHosts": [
+                "&{hosts.obJwks}"
+              ]
+            }
+          }
+        },
+        {
+          "type": "ForwardedRequestFilter",
+          "config": {
+            "host": "${split(request.uri.path, '/')[1]}"
+          }
+        },
+        {
+          "name": "RemoveRequestHeaders",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "REQUEST",
+            "remove": [
+              "ssl-client-verify",
+              "X-Forwarded-For",
+              "X-Forwarded-Host",
+              "X-Forwarded-Port",
+              "X-Forwarded-Proto",
+              "X-Forwarded-Scheme",
+              "X-Real-IP",
+              "X-Request-ID",
+              "X-Scheme",
+              "Host"
+            ]
+          }
+        },
+        {
+          "name": "ReplaceEncodingFilter",
+          "type": "HeaderFilter",
+          "config": {
+            "messageType": "RESPONSE",
+            "remove": [
+              "Content-Type"
+            ],
+            "add": {
+              "Content-Type": [
+                "application/json"
+              ]
+            }
+          }
+        }
+      ],
+      "handler": "OBClientHandler"
+    }
+  }
+}

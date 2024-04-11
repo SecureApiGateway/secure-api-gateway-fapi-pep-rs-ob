@@ -13,8 +13,11 @@ import com.forgerock.securebanking.uk.gateway.jwks.*
 import java.security.interfaces.RSAPublicKey
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
 import com.forgerock.sapi.gateway.jwks.JwkSetService
+import org.forgerock.util.time.Duration
 
 import java.text.ParseException
+import java.time.Instant
+
 import static org.forgerock.util.promise.Promises.newResultPromise
 
 /*
@@ -37,6 +40,10 @@ def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id");
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id";
 SCRIPT_NAME = "[ProcessDetachedSig] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
+
+// routeArgClockSkewAllowance is a org.forgerock.util.time.Duration (see docs: https://backstage.forgerock.com/docs/ig/2024.3/reference/preface.html#definition-duration)
+clockSkewAllowance = Duration.duration(routeArgClockSkewAllowance).toJavaDuration()
+logger.info(SCRIPT_NAME + "Configured clock skew allowance: " + clockSkewAllowance)
 
 def method = request.method
 if (method != "POST") {
@@ -278,10 +285,19 @@ def validateCriticalParameters(JWSHeader jwsHeader) {
     }
     logger.debug(SCRIPT_NAME + "Found valid type!")
 
-    long currentTimestamp = System.currentTimeMillis() / 1000;
-    if (jwsHeader.getCustomParam(IAT_CRIT_CLAIM) == null || !(Long.valueOf(jwsHeader.getCustomParam(IAT_CRIT_CLAIM)) < currentTimestamp)) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Invalid issued at timestamp - value from JWT: " + jwsHeader.getCustomParam(IAT_CRIT_CLAIM) + " and current timestamp: " + currentTimestamp)
-        return false;
+    def iatClaim = jwsHeader.getCustomParam(IAT_CRIT_CLAIM)
+    if (iatClaim == null) {
+        logger.error(SCRIPT_NAME + "Could not validate detached JWT - required claim: " + IAT_CRIT_CLAIM + " not found")
+        return false
+    }
+
+    def iatTimestamp = Instant.ofEpochSecond(Long.valueOf(iatClaim))
+    def skewedIatTimestamp = iatTimestamp.minus(clockSkewAllowance)
+    def currentTimestamp = Instant.now()
+    if (skewedIatTimestamp.isAfter(currentTimestamp)) {
+        logger.error(SCRIPT_NAME + "Could not validate detached JWT - claim: " + IAT_CRIT_CLAIM + " must be in the past, value: " + iatTimestamp.getEpochSecond()
+                + ", current time: " + currentTimestamp.getEpochSecond() + ", clockSkewAllowance: " + clockSkewAllowance)
+        return false
     }
     logger.debug(SCRIPT_NAME + "Found valid iat!")
 

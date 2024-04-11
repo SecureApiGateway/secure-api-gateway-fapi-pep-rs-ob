@@ -114,7 +114,8 @@
             "file": "ProcessDetachedSig.groovy",
             "args": {
               "routeArgHeaderName": "x-jws-signature",
-              "routeArgTrustedAnchor": "openbanking.org.uk"
+              "routeArgTrustedAnchor": "openbanking.org.uk",
+              "routeArgClockSkewAllowance": "&{jwtValidation.clockSkewAllowanceDuration}"
             }
           }
         },

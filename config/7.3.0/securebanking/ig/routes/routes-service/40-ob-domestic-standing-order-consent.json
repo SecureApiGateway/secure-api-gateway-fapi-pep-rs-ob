@@ -80,7 +80,7 @@
             }
           }
         },
-        "FetchApiClientResourcesChain",
+        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Ensure ApiClient includesPISP role",
           "name": "ApiClientRoleCheck",

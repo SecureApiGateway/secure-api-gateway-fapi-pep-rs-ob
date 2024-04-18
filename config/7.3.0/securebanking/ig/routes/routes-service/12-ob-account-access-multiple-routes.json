@@ -89,7 +89,7 @@
             }
           }
         },
-        "FetchApiClientResourcesChain",
+        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Ensure ApiClient includesAISP role",
           "name": "ApiClientRoleCheck",

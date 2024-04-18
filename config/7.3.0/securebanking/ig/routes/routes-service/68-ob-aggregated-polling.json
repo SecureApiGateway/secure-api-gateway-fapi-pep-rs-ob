@@ -99,7 +99,7 @@
             }
           }
         },
-        "FetchApiClientResourcesChain",
+        "ValidateApiClientMtlsCertChain",
         {
           "comment": "The access token required for accessing the API must have at last one scope of 'allowedScopes'",
           "name": "Token Scopes Verifier",

@@ -64,7 +64,7 @@
             }
           }
         },
-        "FetchApiClientResourcesChain",
+        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Make sure client certificate includes AISP role",
           "name": "ApiClientRoleCheck",

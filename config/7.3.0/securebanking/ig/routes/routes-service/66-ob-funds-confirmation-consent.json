@@ -61,7 +61,7 @@
             }
           }
         },
-        "FetchApiClientResourcesChain",
+        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Ensure ApiClient includes CBPII role",
           "name": "ApiClientRoleCheck",

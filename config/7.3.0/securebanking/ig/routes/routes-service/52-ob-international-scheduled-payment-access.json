@@ -65,8 +65,7 @@
           "type": "OAuth2ResourceServerFilter",
           "config": {
             "scopes": [
-              "payments",
-              "openid"
+              "payments"
             ],
             "requireHttps": false,
             "realm": "OpenIG",

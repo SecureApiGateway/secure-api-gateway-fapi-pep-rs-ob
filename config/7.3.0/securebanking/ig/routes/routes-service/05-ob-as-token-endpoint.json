@@ -74,15 +74,21 @@
         },
         {
           "comment": "Verify that the client's transport cert is valid and is mapped to their SSA",
-          "name": "TokenEndpointTransportCertValidationFilter",
-          "type": "TokenEndpointTransportCertValidationFilter",
+          "name": "ResponsePathTransportCertValidationFilter",
+          "type": "ResponsePathTransportCertValidationFilter",
           "config": {
-            "idmManagedObjectsBaseUri": "&{urls.idmManagedObjectsBaseUri}",
-            "idmClientHandler": "IDMClientHandler",
             "trustedDirectoryService": "TrustedDirectoriesService",
             "jwkSetService": "OBJwkSetService",
             "certificateRetriever": "HeaderCertificateRetriever",
             "transportCertValidator": "OBTransportCertValidator"
+          }
+        },
+        {
+          "name": "TokenEndpointResponseFetchApiClientFilter",
+          "type": "TokenEndpointResponseFetchApiClientFilter",
+          "comment": "Fetches the ApiClient and adds it to the attributes context if the AS returns with a success response",
+          "config": {
+            "apiClientService": "IdmApiClientService"
           }
         },
         {

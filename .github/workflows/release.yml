@@ -1,58 +1,23 @@
-name: create-release
-run-name: Create release '${{ inputs.release_version_number }}'
-# What it does:
-# - Call release-prepare workflow
-# - Call local repository release-publish-java-and-docker workflow
-# - Call release-publish-draft-and-pr
+name: Release - Build, Deploy & Create Releas
+run-name: "${{ inputs.releaseVersion }}: Release - Build, Deploy & Create Release"
 on:
   workflow_dispatch:
     inputs:
-      notes:
-        description: "Release notes"
+      releaseNotes:
+        description: "Release Notes - Issues Included in Release"
         required: false
         type: string
-        default: ''
-      release_version_number:
-        description: "Provide release version number"
+      releaseVersion:
+        description: "The version to be Released (#.#.# | #.#.#-rc#)"
         required: true
         type: string
-
 jobs:
-
-  release_prepare: # prepare for a release in scm, creates the tag and release branch with the proper release versions
-    name: Call local release prepare
-    uses: ./.github/workflows/release-prepare.yml
+  run_release-template:
+    name: Release - Build, Deploy & Create Release
+    uses: SecureApiGateway/secure-api-gateway-ci/.github/workflows/reusable-release.yml@main
+    secrets: inherit
     with:
-      release_version_number: ${{ inputs.release_version_number }}
-    secrets:
-      FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-      GPG_PRIVATE_KEY_BOT: ${{ secrets.GPG_PRIVATE_KEY_BOT }}
-      GPG_KEY_PASSPHRASE_BOT: ${{ secrets.GPG_KEY_PASSPHRASE_BOT }}
-      GIT_COMMIT_USERNAME_BOT: ${{ secrets.GIT_COMMIT_USERNAME_BOT }}
-      GIT_COMMIT_AUTHOR_EMAIL_BOT: ${{ secrets.GIT_COMMIT_AUTHOR_EMAIL_BOT }}
-      release_github_token: ${{ secrets.RELEASE_PAT }}
-
-  release_java_and_docker:
-    name: Call local publish java and docker
-    needs: [ release_prepare ]
-    uses: ./.github/workflows/release-publish-java-and-docker.yml
-    with:
-      release_version_number: ${{ inputs.release_version_number }}
-      release_tag_ref: ${{ needs.release_prepare.outputs.release_tag_ref }}
-      GAR_RELEASE_REPO: ${{ vars.GAR_RELEASE_REPO }}
-    secrets:
-      FR_ARTIFACTORY_USER: ${{ secrets.FR_ARTIFACTORY_USER }}
-      FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD: ${{ secrets.FR_ARTIFACTORY_USER_ENCRYPTED_PASSWORD }}
-      GCR_CREDENTIALS_JSON: ${{ secrets.DEV_GAR_KEY }}
-
-  release_publish:
-    name: Call publish
-    needs: [ release_prepare, release_java_and_docker ]
-    uses: SecureApiGateway/secure-api-gateway-parent/.github/workflows/release-publish.yml@master
-    with:
-      release_version_number: ${{ inputs.release_version_number }}
-      release_tag_ref: ${{ needs.release_prepare.outputs.release_tag_ref }}
-      release_notes: ${{ inputs.notes }}
-    secrets:
-      release_github_token: ${{ secrets.RELEASE_PAT }}
+      componentName: secure-api-gateway-ob-uk
+      dockerTag: $(echo ${{ github.sha }} | cut -c1-7)
+      releaseNotes: ${{ inputs.releaseNotes }}
+      releaseVersion: ${{ inputs.releaseVersion }}

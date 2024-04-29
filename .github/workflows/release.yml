@@ -1,4 +1,4 @@
-name: Release - Build, Deploy & Create Releas
+name: Release - Build, Deploy & Create Release
 run-name: "${{ inputs.releaseVersion }}: Release - Build, Deploy & Create Release"
 on:
   workflow_dispatch:

@@ -43,7 +43,7 @@
           "name": "RegistrationRequestBuilderFilter",
           "type": "RegistrationRequestBuilderFilter",
           "config": {
-            "trustedDirectoryService": "TrustedDirectoriesService"
+            "trustedDirectoryService": "TrustedDirectoryService"
           }
         },
         {
@@ -82,7 +82,7 @@
               "allowIgIssuedTestCerts": "${security.enableTestTrustedDirectory}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",
               "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",
-              "trustedDirectoryService": "${heap['TrustedDirectoriesService']}"
+              "trustedDirectoryService": "${heap['TrustedDirectoryService']}"
             }
           }
         },

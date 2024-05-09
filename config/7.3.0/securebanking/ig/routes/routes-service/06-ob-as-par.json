@@ -38,9 +38,9 @@
           "comment": "Ensure authorize request object is FAPI compliant"
         },
         {
-          "name": "ResponsePathTransportCertValidationFilter",
-          "type": "ResponsePathTransportCertValidationFilter",
-          "comment": "Verify that the client's transport cert is valid and is mapped to their SSA",
+          "name": "ParEndpointTransportCertValidationFilter",
+          "type": "ParEndpointTransportCertValidationFilter",
+          "comment": "Verify that the client's transport cert is valid (if supplied for mTLS auth) and is mapped to their SSA",
           "config": {
             "trustedDirectoryService": "TrustedDirectoriesService",
             "jwkSetService": "OBJwkSetService",

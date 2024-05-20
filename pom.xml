@@ -42,11 +42,11 @@
     <parent>
         <groupId>com.forgerock.sapi.gateway</groupId>
         <artifactId>secure-api-gateway-parent</artifactId>
-        <version>2.3.1</version>
+        <version>3.0.0</version>
     </parent>
 
     <properties>
-        <secure-api-gateway.version>3.0.0-SNAPSHOT</secure-api-gateway.version>
+        <secure-api-gateway.version>3.0.0</secure-api-gateway.version>
         <nimbus-jose.version>9.37.3</nimbus-jose.version>
         <bouncy-castle.version>1.77</bouncy-castle.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>

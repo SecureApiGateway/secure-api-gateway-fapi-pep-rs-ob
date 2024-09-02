@@ -1,9 +1,8 @@
 {
-  "comment": "Passthrough for any unprotected AM endpoints (such as the XUI)",
-  "name": "99 - OBIE AS pass-through",
+  "comment": "Pass-through for any unprotected Identity Platform endpoints (such as the XUI) - the name of this route needs to be last alphabetically so that more specific routes can be used if they exist.",
+  "name": "999 - OBIE AS pass-through",
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
-  "condition": "${find(request.uri.path, '^/am')}",
   "handler": {
     "type": "Chain",
     "config": {

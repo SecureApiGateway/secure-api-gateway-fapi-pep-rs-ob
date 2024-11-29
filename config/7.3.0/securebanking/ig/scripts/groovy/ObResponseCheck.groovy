@@ -22,7 +22,7 @@ SCRIPT_NAME = "[ObResponseCheck] (" + fapiInteractionId + ") - ";
 logger.debug(SCRIPT_NAME + "Running...")
 
 String HEADER_INTERACTION_ID = "x-fapi-interaction-id"
-Map<String, String> getGenericError(Status status, String responseBody) {
+Map<String, String> getGenericError(Status status, String responseBody, boolean isV4Request) {
 
   String errorCode
   String message
@@ -31,13 +31,13 @@ Map<String, String> getGenericError(Status status, String responseBody) {
   switch (status) {
 
     case Status.NOT_FOUND:
-         errorCode = "UK.OBIE.NotFound"
-         message = "Resource not found"
+         errorCode = isV4Request ? "U011" : "UK.OBIE.NotFound"
+         message = isV4Request ? "Resource cannot be found" : "Resource not found"
          break
 
     case Status.BAD_REQUEST:
-      errorCode = "UK.OBIE.Field.Invalid"
-      message = "Bad request"
+      errorCode = isV4Request ? "U002" : "UK.OBIE.Field.Invalid"
+      message = isV4Request ? "Field is invalid" : "Bad request"
       break
 
     case Status.UNAUTHORIZED:
@@ -46,17 +46,17 @@ Map<String, String> getGenericError(Status status, String responseBody) {
       break
 
     case Status.FORBIDDEN:
-      errorCode = "UK.OBIE.Reauthenticate"
-      message = "Forbidden"
+      errorCode = isV4Request ? "U028" : "UK.OBIE.Reauthenticate"
+      message = isV4Request ? "Reauthentication is required by PSU" : "Forbidden"
       break
 
     case Status.INTERNAL_SERVER_ERROR:
-      errorCode = "UK.OBIE.UnexpectedError"
+      errorCode = isV4Request ? "U000" : "UK.OBIE.UnexpectedError"
       message = "Internal error"
       break
 
     default:
-      errorCode = "UK.OBIE.UnexpectedError"
+      errorCode = isV4Request ? "U000" : "UK.OBIE.UnexpectedError"
       message = "Internal error"
   }
 
@@ -99,6 +99,8 @@ static isObCompliantError(responseBody) {
   return false
 }
 
+def v4Request = (request.uri.pathElements.size() > 2) && request.uri.pathElements[2].startsWith("v4")
+
 next.handle(context, request).thenOnResult({response ->
 
   // Check for OB compliant error response
@@ -123,7 +125,7 @@ next.handle(context, request).thenOnResult({response ->
 
     newBody.put("Message",  status.toString())
 
-    def obErrorObject = getGenericError(status, responseBody)
+    def obErrorObject = getGenericError(status, responseBody, v4Request)
     errorList = [obErrorObject]
     newBody.put("Errors", errorList)
     logger.debug(SCRIPT_NAME + "Final Error Response: " + newBody)

@@ -46,7 +46,8 @@
     </parent>
 
     <properties>
-        <secure-api-gateway.version>3.2.0</secure-api-gateway.version>
+        <secure-api-gateway.version>4.0.2-SNAPSHOT</secure-api-gateway.version>
+        <openig.version>2024.11.0</openig.version>
         <nimbus-jose.version>9.40</nimbus-jose.version>
         <bouncy-castle.version>1.78.1</bouncy-castle.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
@@ -58,6 +59,30 @@
         <url>https://github.com/SecureApiGateway/secure-api-gateway-ob-uk.git</url>
         <tag>HEAD</tag>
     </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- IG BOM -->
+            <dependency>
+                <groupId>org.forgerock.openig</groupId>
+                <artifactId>openig-bom</artifactId>
+                <version>${openig.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.forgerock.openig</groupId>
+                <artifactId>openig-fapi</artifactId>
+                <version>${openig.version}</version>
+            </dependency>
+            <!-- Third party -->
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <repositories>
         <repository>

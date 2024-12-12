@@ -78,9 +78,9 @@
           "type": "TokenEndpointTransportCertValidationFilter",
           "config": {
             "trustedDirectoryService": "TrustedDirectoryService",
-            "jwkSetService": "OBJwkSetService",
+            "jwkSetService": "JwkSetService",
             "certificateRetriever": "HeaderCertificateRetriever",
-            "transportCertValidator": "OBTransportCertValidator"
+            "transportCertValidator": "TransportCertValidator"
           }
         },
         {

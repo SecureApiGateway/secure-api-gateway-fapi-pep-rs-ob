@@ -123,7 +123,7 @@
             "name": "FetchApiClientJwksFilter",
             "type": "FetchApiClientJwksFilter",
             "config": {
-              "jwkSetService": "OBJwkSetService"
+              "jwkSetService": "JwkSetService"
             }
           },
           {
@@ -132,7 +132,7 @@
             "type": "TransportCertValidationFilter",
             "config": {
               "certificateRetriever": "HeaderCertificateRetriever",
-              "transportCertValidator": "OBTransportCertValidator"
+              "transportCertValidator": "TransportCertValidator"
             }
           }
         ]
@@ -185,7 +185,7 @@
       }
     },
     {
-      "name" : "AmService-OBIE",
+      "name" : "AmService",
       "type" : "AmService",
       "config" : {
         "url" : "https://&{identity.platform.fqdn}/am",
@@ -380,7 +380,7 @@
       }
     },
     {
-      "name": "OBJwkSetService",
+      "name": "JwkSetService",
       "type": "CaffeineCachingJwkSetService",
       "config": {
         "handler": "OBClientHandler",
@@ -433,7 +433,7 @@
       "type": "RsaJwtSignatureValidator"
     },
     {
-      "name": "OBTransportCertValidator",
+      "name": "TransportCertValidator",
       "type": "DefaultTransportCertValidator",
       "config": {
         "validKeyUse": "tls"

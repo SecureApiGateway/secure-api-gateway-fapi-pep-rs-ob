@@ -43,17 +43,8 @@
           "name": "RegistrationRequestBuilderFilter",
           "type": "RegistrationRequestBuilderFilter",
           "config": {
-            "trustedDirectoryService": "TrustedDirectoryService"
-          }
-        },
-        {
-          "comment": "Validate the signature of the request Jwt and it's embedded SSA",
-          "name": "RegistrationRequestJwtSignatureValidationFilter",
-          "type": "RegistrationRequestJwtSignatureValidationFilter",
-          "config": {
-            "clientHandler": "OBClientHandler",
-            "jwkSetService": "OBJwkSetService",
-            "jwtSignatureValidator": "RsaJwtSignatureValidator"
+            "trustedDirectoryService": "TrustedDirectoryService",
+            "jwkSetService": "JwkSetService"
           }
         },
         {
@@ -63,7 +54,7 @@
           "config": {
             "certificateRetriever": "ContextCertificateRetriever",
             "supportedSigningAlgorithms": ["PS256"],
-            "supportedTokenEndpointAuthMethods": ["tls_client_auth", "private_key_jwt"]
+            "supportedTokenEndpointAuthMethods": "${oauth2.tokenEndpointAuthMethodsSupported}"
           }
         },
         {
@@ -74,11 +65,7 @@
             "type": "application/x-groovy",
             "file": "ProcessRegistration.groovy",
             "args": {
-              "routeArgObJwksHosts": [
-                "&{hosts.obJwks}"
-              ],
-              "routeArgProxyBaseUrl": "https://&{ig.fqdn}/jwkms/jwksproxy",
-              "jwkSetService": "${heap['OBJwkSetService']}",
+              "jwkSetService": "${heap['JwkSetService']}",
               "allowIgIssuedTestCerts": "${security.enableTestTrustedDirectory}",
               "jwtSignatureValidator": "${heap['RsaJwtSignatureValidator']}",
               "tokenEndpointAuthMethodsSupported": "${oauth2.tokenEndpointAuthMethodsSupported}",

@@ -148,6 +148,33 @@
             "type": "FapiInteractionIdFilter"
           },
           {
+            "comment": "Dev filter to log access to the route",
+            "name": "RouteAccessLog",
+            "type": "ScriptableFilter",
+            "config": {
+              "type": "application/x-groovy",
+              "source": [
+                "import org.forgerock.openig.handler.router.RoutingContext",
+                "import org.forgerock.http.protocol.Header",
+                "import static org.forgerock.json.JsonValue.json",
+                "import static org.forgerock.json.JsonValue.object",
+                "import static org.forgerock.json.JsonValue.field",
+                "JsonValue debug = json(object(",
+                "    field(\"routeId\", context.asContext(RoutingContext.class).getRouteId()), ",
+                "    field(\"URI\", request.getUri()), ",
+                "    field(\"referrer\", request.getHeaders().getFirst(\"Referrer\")), ",
+                "    field(\"x-fapi-interaction-id\", request.getHeaders().getFirst(\"x-fapi-interaction-id\"))))",
+                "logger.debug(\"[RouteAccessLog] ENTER: {}\", debug)",
+                "next.handle(context, request)",
+                "    .then({ response ->",
+                "      logger.debug(\"[RouteAccessLog] EXIT: routeId={}\", context.asContext(RoutingContext.class).getRouteId())",
+                "      //response.getEntity().setJson(debug)",
+                "      return response",
+                "  })"
+              ]
+            }
+          },
+          {
             "name": "FapiInteractionIdTracingFilter",
             "type": "FapiInteractionIdTracingFilter",
             "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext"

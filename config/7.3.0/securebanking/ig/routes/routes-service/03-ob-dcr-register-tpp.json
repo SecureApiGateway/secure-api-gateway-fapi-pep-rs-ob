@@ -4,6 +4,17 @@
   "auditService": "AuditService-OB-Route",
   "baseURI": "https://&{identity.platform.fqdn}",
   "condition": "${find(request.uri.path, '^/am/oauth2/realms/root/realms/&{am.realm}/register')}",
+  "heap": [
+    {
+      "name": "capture",
+      "type": "CaptureDecorator",
+      "config": {
+        "base": "capture.route.logger",
+        "captureContext": true,
+        "captureEntity": true
+      }
+    }
+  ],
   "handler": {
     "type": "Chain",
     "config": {

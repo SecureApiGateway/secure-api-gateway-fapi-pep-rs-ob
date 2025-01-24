@@ -422,7 +422,7 @@
       "config": {
         "trustedDirectories": [
           "OpenBankingTestDirectory",
-          "Secure API Gateway Test Directory"
+          "SecureAPIGatewayTestDirectory"
         ]
       }
     },
@@ -457,7 +457,7 @@
       }
     },
     {
-      "name": "Secure API Gateway Test Directory",
+      "name": "SecureAPIGatewayTestDirectory",
       "type": "TrustedDirectory",
       "config": {
         "issuer": "test-publisher",

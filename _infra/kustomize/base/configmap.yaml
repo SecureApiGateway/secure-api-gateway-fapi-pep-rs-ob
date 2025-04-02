@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-deployment-config
+data:
+  #--Fully Qualified Domain Names--
+  BASE_FQDN: "dev.forgerock.financial"
+  IDENTITY_PLATFORM_FQDN: "iam.dev.forgerock.financial"
+  IG_FQDN: "sapig.dev.forgerock.financial"
+  MTLS_FQDN: "mtls.sapig.dev.forgerock.financial"
+  # --Environment Settings for SAPIG & Cloud Platform--
+  # ---SAPIG---
+  # core: base sapig
+  # ob: Open Banking specification of sapig
+  SAPIG_TYPE: "ob"
+  # ---Cloud---
+  # CDK value: (Cloud Developer's Kit) development identity platform
+  # CDM value: CDM (Cloud Deployment Model)
+  # FIDC value: FIDC (Forgerock Identity Cloud) identity cloud platform
+  CLOUD_TYPE: "CDK"
+  #--Additional Config--
+  AM_REALM: "alpha"
+  CERT_ISSUER: "null-issuer" #Needed?
+  # Connection settings for the IG hosted data repo
+  GATEWAY_DATA_REPO_URI: "http://ig:80" # Needed for RCS and RS
+  # Wherever to use additional TTD other than OB
+  IG_TEST_DIRECTORY_ENABLED: "true"
+  # Where to store the IG Truststore
+  IG_TRUSTSTORE_PATH: "/secrets/truststore/igtruststore"
+  USER_OBJECT: "user"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ob-deployment-config
+data:
+  # Connection settings for the IG hosted data repo
+  IG_OB_ASPSP_SIGNING_KEYSTORE_ALIAS: "jwtsigner"
+  IG_OB_ASPSP_SIGNING_KEYSTORE_TYPE: "PKCS12"
+  IG_OB_ASPSP_SIGNING_KEYSTORE_PATH: "/secrets/open-banking/ig-ob-signing-key.p12"
+  IG_OB_ASPSP_SIGNING_KID: "sU72Qz8tTtH9W6EoG-vhEYiQTJc"
+  OB_ASPSP_ORG_ID: "0015800001041REAAY"
+  OB_ASPSP_SOFTWARE_ID: "YZyyZHejcCGRrWkh3OfkLI"
+  RCS_API_INTERNAL_SVC: "remote-consent-service"
+  RCS_CONSENT_RESPONSE_JWT_ISSUER: "secure-open-banking-rcs"
+  RCS_CONSENT_RESPONSE_JWT_SIGNINGKEYID: "rcs-jwt-signer"
+  RCS_CONSENT_STORE_URI: "http://remote-consent-service:8080/consent/store"
+  RCS_UI_INTERNAL_SVC: "remote-consent-service-user-interface"
+  # RCS connection settings for the RS API
+  RS_API_URI: "http://test-facility-bank:8080"
+  RS_INTERNAL_SVC: "test-facility-bank"

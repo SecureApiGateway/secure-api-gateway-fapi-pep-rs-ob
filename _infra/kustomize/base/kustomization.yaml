@@ -1,5 +1,10 @@
 generatorOptions:
   disableNameSuffixHash: true
+# For PINGID use only, Docker images are not public - customers will need to provide their own repo name and tag
+images:
+  - name: ig
+    newName:  europe-west4-docker.pkg.dev/sbat-gcr-develop/sapig-docker-artifact/securebanking/ig
+    newTag:  latest
 labels:
   - includeSelectors: true
     pairs:

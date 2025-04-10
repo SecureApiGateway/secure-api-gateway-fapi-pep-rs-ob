@@ -5,7 +5,7 @@ metadata:
   name: ob-deployment-config
 data:
   #--Fully Qualified Domain Names--
-  BASE_FQDN: "dev.forgerock.financial"
+  BASE_FQDN: "dev-cdk-core.forgerock.financial"
   IDENTITY_PLATFORM_FQDN: "iam.dev.forgerock.financial"
   IG_FQDN: "sapig.dev.forgerock.financial"
   MTLS_FQDN: "mtls.sapig.dev.forgerock.financial"

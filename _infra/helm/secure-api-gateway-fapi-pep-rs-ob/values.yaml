@@ -3,19 +3,18 @@ configmap:
   # Version of the Kubernetes API to use
   apiVersion: "v1"
   amRealm: "alpha"
-  baseFQDN: "dev-cdk-core.forgerock.financial"
+  asFQDN: "as-sapig.dev-cdk-ob.forgerock.financial"
+  baseFQDN: "dev-cdk-ob.forgerock.financial"
   certIssuer: "null-issuer"
   cloudType: "CDK"
-  gatewayDataRepoURI: "http://ig:80"
+  gatewayDataRepoURI: "http://fapi-pep-rs:80"
   identityPlatformFQDN: "iam.dev-cdk-ob.forgerock.financial"
-  igFQDN: "sapig.dev-cdk-ob.forgerock.financial"
   igOBASPSPSigningKeystoreAlias: "jwtsigner"
   igOBASPSPSigningKeystorePath: "/secrets/open-banking/ig-ob-signing-key.p12"
   igOBASPSPSigningKeystoreType: "PKCS12"
   igOBASPSPSigningKid: "sU72Qz8tTtH9W6EoG-vhEYiQTJc"
   igTestDirectoryEnabled: "true"
   igTruststorePath: "/secrets/truststore/igtruststore"
-  mtlsFQDN: "mtls.sapig.dev-cdk-ob.forgerock.financial"
   obASPSPOrgID: "0015800001041REAAY"
   obASPSPSoftwareID: "YZyyZHejcCGRrWkh3OfkLI"
   rcsAPIInternalSVC: "remote-consent-service"
@@ -24,7 +23,9 @@ configmap:
   rcsConsentStoreURI: "http://remote-consent-service:8080/consent/store"
   rcsUIInternalSVC: "remote-consent-service-user-interface"
   rsAPIURI: "http://test-facility-bank:8080"
+  rsFQDN: "rs-sapig.dev-cdk-ob.forgerock.financial"
   rsInternalSVC: "test-facility-bank"
+  rsMtlsFQDN: "rs-mtls.sapig.dev-cdk-ob.forgerock.financial"
   sapigType: "ob"
   testDirectoryFQDN: "test-trusted-directory.dev-cdk-ob.forgerock.financial"
   userObject: "user"
@@ -88,23 +89,24 @@ deployment:
   strategyType: "RollingUpdate"
 
 ingress:
-  sapig:
-    host: "replace-me"
-    tls:
-      host: "replace-me"
-      secretName: ob-tls-cert
-  mtls:
+  rsMtls:
     annotations:
-      authTlsSecret: ob-mtls-ca-certs
+      authTlsSecret: fapi-pep-rs-mtls-ca-certs
     host: "replace-me"
     tls:
       host: "replace-me"
-      secretName: ob-mtls-tls-cert
-  igWeb:
+      secretName: fapi-pep-rs-mtls-tls-cert
+  rsSapig:
     host: "replace-me"
     tls:
       host: "replace-me"
-      secretName: ob-tls-cert
+      secretName: fapi-pep-rs-tls-cert
+  rsIGSstudio:
+    host: "replace-me"
+    tls:
+      host: "replace-me"
+      secretName: fapi-pep-rs-tls-cert
+
 
 secrets:
   igAgentID: "replace-me"

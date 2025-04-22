@@ -5,7 +5,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
-    nginx.ingress.kubernetes.io/auth-tls-secret: {{ .Release.Namespace }}/{{ .Values.ingress.mtls.annotations.authTlsSecret }}
+    nginx.ingress.kubernetes.io/auth-tls-secret: {{ .Release.Namespace }}/{{ .Values.ingress.rsMtls.annotations.authTlsSecret }}
     nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
     nginx.ingress.kubernetes.io/large-client-header-buffers: "4 128k"
     nginx.ingress.kubernetes.io/proxy-body-size: "64m"
@@ -14,34 +14,13 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
     nginx.ingress.kubernetes.io/proxy-busy-buffers_size: "256k"
     nginx.ingress.kubernetes.io/error-log-level: "debug"
-  name: mtls
+  name: rs-mtls
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.mtls.host }}
+    - host: {{ .Values.ingress.rsMtls.host }}
       http:
         paths:
-          - backend:
-              service:
-                name: {{ .Chart.Name }}
-                port:
-                  number: 80
-            path: /am/oauth2/realms/root/realms/{{ .Values.configmap.amRealm }}/access_token
-            pathType: Exact
-          - backend:
-              service:
-                name: {{ .Chart.Name }}
-                port:
-                  number: 80
-            path: /am/oauth2/realms/root/realms/{{ .Values.configmap.amRealm }}/register
-            pathType: Prefix
-          - backend:
-              service:
-                name: {{ .Chart.Name }}
-                port:
-                  number: 80
-            path: /am/oauth2/realms/root/realms/{{ .Values.configmap.amRealm }}/par
-            pathType: Prefix
           - backend:
               service:
                 name: {{ .Chart.Name }}
@@ -51,8 +30,8 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - {{ .Values.ingress.mtls.tls.host }}
-      secretName: {{ .Values.ingress.mtls.tls.secretName }}
+        - {{ .Values.ingress.rsMtls.tls.host }}
+      secretName: {{ .Values.ingress.rsMtls.tls.secretName }}
 ---
 # Ingress for access to routes protected with TLS by a ForgeRock cert
 apiVersion: networking.k8s.io/v1
@@ -67,11 +46,11 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
     nginx.ingress.kubernetes.io/proxy-busy-buffers_size: "256k"
     nginx.ingress.kubernetes.io/error-log-level: "debug"
-  name: sapig
+  name: rs-sapig
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.sapig.host }}
+    - host: {{ .Values.ingress.rsSapig.host }}
       http:
         paths:
           - backend:
@@ -83,21 +62,21 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - {{ .Values.ingress.sapig.tls.host }}
-      secretName: {{ .Values.ingress.sapig.tls.secretName }}
+        - {{ .Values.ingress.rsSapig.tls.host }}
+      secretName: {{ .Values.ingress.rsSapig.tls.secretName }}
 ---
 # Ingress for dev only, provides access to the IG Studio UI
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ig-web
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+  name: rs-ig-studio
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.igWeb.host }}
+    - host: {{ .Values.ingress.rsIGSstudio.host }}
       http:
         paths:
           - backend:
@@ -109,5 +88,5 @@ spec:
             pathType: ImplementationSpecific
   tls:
     - hosts:
-        - {{ .Values.ingress.igWeb.tls.host }}
-      secretName: {{ .Values.ingress.igWeb.tls.secretName }}
+        - {{ .Values.ingress.rsIGSstudio.tls.host }}
+      secretName: {{ .Values.ingress.rsIGSstudio.tls.secretName }}

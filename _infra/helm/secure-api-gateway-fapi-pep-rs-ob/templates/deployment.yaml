@@ -69,9 +69,6 @@ spec:
             - mountPath: /var/ig/secrets/open-banking
               name: ig-ob-signing-key
               readOnly: true
-            - mountPath: /var/ig/secrets/test-trusted-directory
-              name: test-trusted-directory-keystore
-              readOnly: true
           env:
             - name: NAMESPACE
               valueFrom:
@@ -83,9 +80,9 @@ spec:
                   fieldPath: status.podIP
           envFrom:
             - secretRef:
-                name: ob-secrets
+                name: rs-sapig-secrets
             - configMapRef:
-                name: ob-deployment-config
+                name: rs-sapig-deployment-config
             {{ if eq .Values.configmap.cloudType "FIDC" }}
             - configMapRef:
                 name: ob-aic-deployment-config
@@ -110,7 +107,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: IG_TRUSTSTORE_PASSWORD
-                  name: ob-secrets
+                  name: rs-sapig-secrets
             - name: IG_PEM_TRUSTSTORE
               value: /var/run/secrets/truststore/ig-truststore.pem
       securityContext:
@@ -131,7 +128,3 @@ spec:
           secret:
             optional: false
             secretName: ig-ob-signing-key
-        - name: test-trusted-directory-keystore
-          secret:
-            optional: false
-            secretName: test-trusted-directory-keystore

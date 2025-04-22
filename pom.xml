@@ -20,14 +20,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.forgerock.sapi.gateway</groupId>
-    <artifactId>secure-api-gateway-ob-uk</artifactId>
+    <artifactId>secure-api-gateway-fapi-pep-rs-ob</artifactId>
     <version>4.0.5-SNAPSHOT</version>
 
     <packaging>pom</packaging>
-    <name>secure-api-gateway-ob-uk</name>
+    <name>secure-api-gateway-fapi-pep-rs-ob</name>
     <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for Secure API Gateway
     </description>
-    <url>https://github.com/SecureApiGateway/secure-api-gateway-ob-uk.git</url>
+    <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -36,7 +36,7 @@
     </licenses>
 
     <modules>
-        <module>secure-api-gateway-ob-uk-docker</module>
+        <module>secure-api-gateway-fapi-pep-rs-ob-docker</module>
     </modules>
 
     <parent>
@@ -56,7 +56,7 @@
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:${project.scm.url}</developerConnection>
-        <url>https://github.com/SecureApiGateway/secure-api-gateway-ob-uk.git</url>
+        <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
         <tag>HEAD</tag>
     </scm>
 

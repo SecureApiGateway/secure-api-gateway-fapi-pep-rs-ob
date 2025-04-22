@@ -28,7 +28,7 @@
             "idToken": "${request.queryParams.getFirst('consent_request')}",
             "verificationSecretId": "any.value.in.regex.format",
             "secretsProvider": "SecretsProvider-AmJWK",
-            "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+            "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
             "audience": "&{rcs.consent.response.jwt.issuer}",
             "skewAllowance": "&{jwtValidation.clockSkewAllowanceDuration}"
           }

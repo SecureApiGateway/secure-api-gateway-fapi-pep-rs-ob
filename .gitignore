@@ -33,10 +33,10 @@ dev/
 !config/7.3.0/securebanking/ig/config/dev
 .CONFIGURED
 forgeops-toolbox/
-secure-api-gateway-ob-uk-docker/7.3.0/ig/config/
-secure-api-gateway-ob-uk-docker/7.3.0/ig/lib/
-secure-api-gateway-ob-uk-docker/7.3.0/ig/scripts/
-secure-api-gateway-ob-uk-docker/7.3.0/ig/audit-schemas/
+secure-api-gateway-fapi-pep-rs-ob-docker/7.3.0/ig/config/
+secure-api-gateway-fapi-pep-rs-ob-docker/7.3.0/ig/lib/
+secure-api-gateway-fapi-pep-rs-ob-docker/7.3.0/ig/scripts/
+secure-api-gateway-fapi-pep-rs-ob-docker/7.3.0/ig/audit-schemas/
 /docker/gatling/gradlew
 /docker/gatling/gradlew.bat
 /docker/gatling/gradle/

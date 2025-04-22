@@ -44,7 +44,7 @@
             ],
             "add": {
               "X-Forwarded-Host": [
-                "&{mtls.fqdn}"
+                "&{rs.mtls.fqdn}"
               ],
               "X-Forwarded-Prefix": [
                 "/rs"

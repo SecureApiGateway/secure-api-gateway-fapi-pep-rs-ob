@@ -10,6 +10,6 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "docker"
-    directory: "/secure-api-gateway-ob-uk-docker"
+    directory: "/secure-api-gateway-fapi-pep-rs-ob-docker"
     schedule:
       interval: "weekly"

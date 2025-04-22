@@ -2,12 +2,13 @@
 apiVersion: {{ .Values.configmap.apiVersion }}
 kind: ConfigMap
 metadata:
-  name: ob-deployment-config
+  name: rs-sapig-deployment-config
 data:
   BASE_FQDN: {{ .Values.configmap.baseFQDN }}
   IDENTITY_PLATFORM_FQDN: {{ .Values.configmap.identityPlatformFQDN }}
-  IG_FQDN: {{ .Values.configmap.igFQDN }}
-  MTLS_FQDN: {{ .Values.configmap.mtlsFQDN }}
+  RS_FQDN: {{ .Values.configmap.rsFQDN }}
+  AS_FQDN: {{ .Values.configmap.asFQDN }}
+  RS_MTLS_FQDN: {{ .Values.configmap.rsMtlsFQDN }}
   # --Environment Settings for SAPIG & Cloud Platform--
   # ---SAPIG---
   # core: base sapig

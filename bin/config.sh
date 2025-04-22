@@ -230,7 +230,7 @@ diff_config()
 # chdir to the script root/..
 cd "$script_dir/.."
 PROFILE_ROOT="config/$_arg_version/$_arg_profile"
-DOCKER_ROOT="secure-api-gateway-ob-uk-docker/$_arg_version"
+DOCKER_ROOT="secure-api-gateway-fapi-pep-rs-ob-docker/$_arg_version"
 
 
 # if [ "$_arg_component" == "all" ]; then

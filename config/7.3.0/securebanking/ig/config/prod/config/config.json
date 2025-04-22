@@ -1,15 +1,5 @@
 {
   "properties": {
-    "security": {
-      "enableTestTrustedDirectory": {
-        "$bool": "&{ig.test.directory.enabled|false}"
-      }
-    },
-    "oauth2": {
-      "tokenEndpointAuthMethodsSupported": {
-        "$list": "&{ig.oauth2.token.endpoint.auth.methods|private_key_jwt,tls_client_auth}"
-      }
-    },
     "jwtValidation": {
       "clockSkewAllowanceDuration": "5s"
     },
@@ -76,59 +66,14 @@
       }
     },
     {
-      "name": "ReverseProxyHandlerNoCapture",
-      "type": "ReverseProxyHandler",
-      "comment": "ReverseProxyHandler with no capture decorator configuration",
-      "config": {
-        "vertx": "${vertxConfig}"
-      }
-    },
-    {
       "name": "JwtSession",
       "type": "JwtSession"
-    },
-    {
-      "name" : "ForgeRockClientHandler",
-      "type" : "Chain",
-      "config" : {
-        "filters" : [
-          "TransactionIdOutboundFilter"
-       ],
-        "handler" : "ClientHandler"
-      },
-      "capture" : [ "response", "request" ]
-    },
-    {
-      "name": "ValidateApiClientMtlsCertChain",
-      "type": "ChainOfFilters",
-      "comment": "This filter chain validates the ApiClient's MTLS cert using the Trusted Directory, it first fetches all of the resources it needs to perform the validation",
-      "config" : {
-        "filters": [
-          {
-            "comment": "Add ApiClient data to the context attributes.apiClient",
-            "name": "FetchApiClientFilter",
-            "type": "FetchApiClientFilter",
-            "config": {
-              "apiClientService": "IdmApiClientService"
-            }
-          },
-          {
-            "comment": "Validate the MTLS transport cert",
-            "name": "TransportCertValidationFilter",
-            "type": "TransportCertValidationFilter",
-            "config": {
-              "certificateRetriever": "HeaderCertificateRetriever",
-              "transportCertValidator": "TransportCertValidator"
-            }
-          }
-        ]
-      }
     },
     {
       "name": "SBATFapiInteractionFilterChain",
       "type": "ChainOfFilters",
       "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",
-      "config" : {
+      "config": {
         "filters": [
           {
             "comment": "Add x-fapi-interaction-id header if one was not present in the request",
@@ -149,90 +94,10 @@
       }
     },
     {
-      "name": "FRReverseProxyHandlerNoCapture",
-      "comment": "ReverseProxyHandler for calls to the FR services, with the capture decorator disabled",
-      "type": "Chain",
-      "config": {
-        "filters" : [
-          "TransactionIdOutboundFilter"
-        ],
-        "handler" : "ReverseProxyHandlerNoCapture"
-      }
-    },
-    {
-      "name": "FRReverseProxyHandler",
-      "comment": "ReverseProxyHandler for calls to the FR services",
-      "type": "Chain",
-      "config": {
-        "filters": [
-          "TransactionIdOutboundFilter"
-        ],
-        "handler": "ReverseProxyHandler"
-      }
-    },
-    {
-      "name" : "AmService",
-      "type" : "AmService",
-      "config" : {
-        "url" : "https://&{identity.platform.fqdn}/am",
-        "realm" : "/&{am.realm}",
-        "agent" : {
-          "username" : "ig-agent",
-          "passwordSecretId" : "ig.agent.password"
-        },
-        "secretsProvider": "SystemAndEnvSecretStore-IAM",
-        "sessionCache" : {
-          "enabled" : false
-        },
-        "notifications" : {
-          "enabled" : false
-        }
-      }
-    },
-    {
       "name": "SystemAndEnvSecretStore-IAM",
       "type": "SystemAndEnvSecretStore",
       "config": {
         "format": "PLAIN"
-      }
-    },
-    {
-      "name": "SecretsProvider-AmJWK",
-      "type": "SecretsProvider",
-      "config": {
-        "stores": [
-          {
-            "type": "JwkSetSecretStore",
-            "config": {
-              "jwkUrl": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/connect/jwk_uri"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "SecretsProvider-ASPSP",
-      "type": "SecretsProvider",
-      "config": {
-        "stores": [
-          {
-            "name":"KeyStoreSecretStore-ASPSP",
-            "type": "KeyStoreSecretStore",
-            "config": {
-              "file": "&{ig.instance.dir}&{ig.ob.aspsp.signing.keystore.path}",
-              "storeType": "&{ig.ob.aspsp.signing.keystore.type}",
-              "storePasswordSecretId": "ig.ob.aspsp.signing.keystore.storepass",
-              "entryPasswordSecretId": "ig.ob.aspsp.signing.keystore.keypass",
-              "secretsProvider": "SystemAndEnvSecretStore-IAM",
-              "mappings": [
-                {
-                "secretId": "jwt.signer",
-                "aliases": [ "&{ig.ob.aspsp.signing.keystore.alias}" ]
-                }
-              ]
-            }
-          }
-        ]
       }
     },
     {
@@ -273,73 +138,6 @@
       }
     },
     {
-      "name": "AuditService-OB-Route",
-      "type": "AuditService",
-      "config": {
-        "config": {
-          "filterPolicies": {
-            "field": {
-              "includeIf": [
-                "/access/http/request/headers/x-fapi-interaction-id"
-              ]
-            }
-          }
-        },
-        "eventHandlers": [
-          {
-            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
-            "config": {
-              "name": "jsonstdout",
-              "elasticsearchCompatible": false,
-              "topics": [
-                "access"
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AuditService-OB-Consent",
-      "type": "AuditService",
-      "config": {
-        "config": {
-        },
-        "eventHandlers": [
-          {
-            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
-            "config": {
-              "name": "jsonstdout",
-              "elasticsearchCompatible": false,
-              "topics": [
-                "ObConsentTopic"
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "SecretKeyPropertyFormat-Gateway",
-      "type": "SecretKeyPropertyFormat",
-      "config": {
-        "format": "PLAIN",
-        "algorithm": "AES"
-      }
-    },
-    {
-      "name": "SystemAndEnvSecretStore-Gateway",
-      "type": "SystemAndEnvSecretStore",
-      "config": {
-        "mappings": [
-          {
-          "secretId": "ig.gw.secret",
-          "format": "SecretKeyPropertyFormat-Gateway"
-          }
-        ]
-      }
-    },
-    {
       "name": "TrustManager-OB",
       "type": "TrustManager",
       "config": {
@@ -377,118 +175,50 @@
       }
     },
     {
-      "name": "TrustedDirectoryService",
-      "type": "TrustedDirectoryService",
-      "comment": "Used to obtain meta information about a trusted directory by look up using the 'iss' field value",
+      "name": "ValidateApiClientMtlsCertChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain validates the ApiClient's MTLS cert using the Trusted Directory, it first fetches all of the resources it needs to perform the validation",
       "config": {
-        "trustedDirectories": [
-          "OpenBankingTestDirectory",
-          "SecureAPIGatewayTestDirectory"
+        "filters": [
+          {
+            "comment": "Add ApiClient data to the context attributes.apiClient",
+            "name": "FetchApiClientFilter",
+            "type": "FetchApiClientFilter",
+            "config": {
+              "apiClientService": "IdmApiClientService"
+            }
+          },
+          {
+            "comment": "Validate the MTLS transport cert",
+            "name": "TransportCertValidationFilter",
+            "type": "TransportCertValidationFilter",
+            "config": {
+              "certificateRetriever": "HeaderCertificateRetriever",
+              "transportCertValidator": "TransportCertValidator"
+            }
+          }
         ]
       }
     },
     {
-      "name": "OpenBankingTestDirectory",
-      "type": "TrustedDirectory",
+      "name": "SecretsProvider-AmJWK",
+      "type": "SecretsProvider",
       "config": {
-        "issuer": "OpenBanking Ltd",
-        "softwareStatementClaims": {
-          "organisationIdClaimName": "org_id",
-          "organisationNameClaimName": "org_name",
-          "softwareIdClaimName": "software_id",
-          "clientNameClaimName": "software_client_name",
-          "redirectUrisClaimName": "software_redirect_uris",
-          "rolesClaimName": "software_roles",
-          "jwksUriClaimName": "software_jwks_endpoint"
-        },
-        "secretsProvider": {
-          "type": "SecretsProvider",
-          "config": {
-            "stores": [
-              {
-                "type": "JwkSetSecretStore",
-                "config": {
-                  "jwkUrl": "https://keystore.openbankingtest.org.uk/keystore/openbanking.jwks",
-                  "handler": "OBClientHandler"
-                }
-              }
-            ]
+        "stores": [
+          {
+            "type": "JwkSetSecretStore",
+            "config": {
+              "jwkUrl": "https://&{identity.platform.fqdn}/am/oauth2/realms/root/realms/&{am.realm}/connect/jwk_uri"
+            }
           }
-        }
+        ]
       }
-    },
-    {
-      "name": "SecureAPIGatewayTestDirectory",
-      "type": "TrustedDirectory",
-      "config": {
-        "issuer": "test-publisher",
-        "softwareStatementClaims": {
-          "organisationIdClaimName": "org_id",
-          "organisationNameClaimName": "org_name",
-          "softwareIdClaimName": "software_id",
-          "clientNameClaimName": "software_client_name",
-          "redirectUrisClaimName": "software_redirect_uris",
-          "rolesClaimName": "software_roles",
-          "jwksUriClaimName": "software_jwks_endpoint",
-          "disabled": "${!security.enableTestTrustedDirectory}"
-        },
-        "secretsProvider": {
-          "type": "SecretsProvider",
-          "config": {
-            "stores": [
-              {
-                "type": "JwkSetSecretStore",
-                "config": {
-                  "jwkUrl": "https://&{test.directory.fqdn}/jwkms/testdirectory/jwks",
-                  "handler": "OBClientHandler"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "name": "RsaJwtSignatureValidator",
-      "type": "RsaJwtSignatureValidator"
     },
     {
       "name": "TransportCertValidator",
       "type": "DefaultTransportCertValidator",
       "config": {
         "validKeyUse": "tls"
-      }
-    },
-    {
-      "name": "CompactSerializationJwsSigner-RSASSA-PSS",
-      "type": "CompactSerializationJwsSigner",
-      "config": {
-        "algorithm": "PS256",
-        "signingKeyId": "jwt.signer",
-        "kid": "&{ig.ob.aspsp.signing.kid}",
-        "secretsProvider": "SecretsProvider-ASPSP"
-      }
-    },
-    {
-      "name": "HeaderCertificateRetriever",
-      "type": "HeaderCertificateRetriever",
-      "config": {
-        "certificateHeaderName": "ssl-client-cert"
-      }
-    },
-    {
-      "name": "ContextCertificateRetriever",
-      "type": "ContextCertificateRetriever"
-    },
-    {
-      "name": "ObJwtReSigner",
-      "type": "JwtReSigner",
-      "config": {
-        "verificationSecretsProvider": "SecretsProvider-AmJWK",
-        "verificationSecretId": "any.value.in.regex.format",
-        "signingKeyId": "&{ig.ob.aspsp.signing.kid}",
-        "signingSecretsProvider": "SecretsProvider-ASPSP",
-        "signingKeySecretId": "jwt.signer"
       }
     },
     {
@@ -508,10 +238,106 @@
       }
     },
     {
-      "name": "IdmApiClientOrganisationService",
-      "type": "IdmApiClientOrganisationService",
+      "name": "CompactSerializationJwsSigner-RSASSA-PSS",
+      "type": "CompactSerializationJwsSigner",
       "config": {
-        "idmService": "IdmService"
+        "algorithm": "PS256",
+        "signingKeyId": "jwt.signer",
+        "kid": "&{ig.ob.aspsp.signing.kid}",
+        "secretsProvider": "SecretsProvider-ASPSP"
+      }
+    },
+    {
+      "name": "ContextCertificateRetriever",
+      "type": "ContextCertificateRetriever"
+    },
+    {
+      "name": "HeaderCertificateRetriever",
+      "type": "HeaderCertificateRetriever",
+      "config": {
+        "certificateHeaderName": "ssl-client-cert"
+      }
+    },
+    {
+      "name": "SecretsProvider-ASPSP",
+      "type": "SecretsProvider",
+      "config": {
+        "stores": [
+          {
+            "name": "KeyStoreSecretStore-ASPSP",
+            "type": "KeyStoreSecretStore",
+            "config": {
+              "file": "&{ig.instance.dir}&{ig.ob.aspsp.signing.keystore.path}",
+              "storeType": "&{ig.ob.aspsp.signing.keystore.type}",
+              "storePasswordSecretId": "ig.ob.aspsp.signing.keystore.storepass",
+              "entryPasswordSecretId": "ig.ob.aspsp.signing.keystore.keypass",
+              "secretsProvider": "SystemAndEnvSecretStore-IAM",
+              "mappings": [
+                {
+                  "secretId": "jwt.signer",
+                  "aliases": ["&{ig.ob.aspsp.signing.keystore.alias}"]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AuditService-OB-Route",
+      "type": "AuditService",
+      "config": {
+        "config": {
+          "filterPolicies": {
+            "field": {
+              "includeIf": [
+                "/access/http/request/headers/x-fapi-interaction-id"
+              ]
+            }
+          }
+        },
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "access"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "FRReverseProxyHandler",
+      "comment": "ReverseProxyHandler for calls to the FR services",
+      "type": "Chain",
+      "config": {
+        "filters": [
+          "TransactionIdOutboundFilter"
+        ],
+        "handler": "ReverseProxyHandler"
+      }
+    },
+    {
+      "name": "AmService",
+      "type": "AmService",
+      "config": {
+        "url": "https://&{identity.platform.fqdn}/am",
+        "realm": "/&{am.realm}",
+        "agent": {
+          "username": "ig-agent",
+          "passwordSecretId": "ig.agent.password"
+        },
+        "secretsProvider": "SystemAndEnvSecretStore-IAM",
+        "sessionCache": {
+          "enabled": false
+        },
+        "notifications": {
+          "enabled": false
+        }
       }
     }
   ],

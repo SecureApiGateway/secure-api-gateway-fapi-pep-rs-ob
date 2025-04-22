@@ -13,5 +13,5 @@ jobs:
     uses: SecureApiGateway/secure-api-gateway-ci/.github/workflows/reusable-pr.yml@main
     secrets: inherit
     with:
-      componentName: secure-api-gateway-ob-uk
+      componentName: secure-api-gateway-fapi-pep-rs-ob
       dockerTag: pr-${{ github.event.number }}

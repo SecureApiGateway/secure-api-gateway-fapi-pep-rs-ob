@@ -71,7 +71,7 @@
                   "type": "StatelessAccessTokenResolver",
                   "config": {
                     "secretsProvider": "SecretsProvider-AmJWK",
-                    "issuer": "https://&{ig.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
                     "verificationSecretId": "any.value.in.regex.format"
                   }
                 }
@@ -156,7 +156,7 @@
                 "${contexts.oauth2.accessToken.info.sub}"
               ],
               "X-Forwarded-Host": [
-                "&{mtls.fqdn}"
+                "&{rs.mtls.fqdn}"
               ],
               "X-Forwarded-Prefix": [
                 "/rs"

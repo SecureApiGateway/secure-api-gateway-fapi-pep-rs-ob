@@ -3,13 +3,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: {{ .Chart.Name }}
-    app.kubernetes.io/component: {{ .Chart.Name }}
-    app.kubernetes.io/instance: {{ .Chart.Name }}
+    app: fapi-pep-rs
+    app.kubernetes.io/component: fapi-pep-rs
+    app.kubernetes.io/instance: fapi-pep-rs
     app.kubernetes.io/name: pingid
     app.kubernetes.io/part-of: pingid
     tier: middle
-  name: {{ .Chart.Name }}
+  name: fapi-pep-rs
 spec:
   replicas: {{ .Values.deployment.replicas }}
   strategy:
@@ -21,18 +21,18 @@ spec:
     {{ end }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
-      app.kubernetes.io/component: {{ .Chart.Name }}
-      app.kubernetes.io/instance: {{ .Chart.Name }}
+      app: fapi-pep-rs
+      app.kubernetes.io/component: fapi-pep-rs
+      app.kubernetes.io/instance: fapi-pep-rs
       app.kubernetes.io/name: pingid
       app.kubernetes.io/part-of: pingid
       tier: middle
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
-        app.kubernetes.io/component: {{ .Chart.Name }}
-        app.kubernetes.io/instance: {{ .Chart.Name }}
+        app: fapi-pep-rs
+        app.kubernetes.io/component: fapi-pep-rs
+        app.kubernetes.io/instance: fapi-pep-rs
         app.kubernetes.io/name: pingid
         app.kubernetes.io/part-of: pingid
         tier: middle
@@ -40,7 +40,7 @@ spec:
       affinity:
         {{- toYaml .Values.deployment.affinity | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: fapi-pep-rs
           image: {{ .Values.deployment.image.repo }}:{{ default .Chart.AppVersion .Values.deployment.image.tag }}
           imagePullPolicy: {{ .Values.deployment.image.imagePullPolicy }}
           ports:

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
 jobs:
   run_rebase-template:
     name: Rebase
@@ -11,5 +11,5 @@ jobs:
     secrets: inherit
     with:
       componentName: secure-api-gateway-fapi-pep-rs-ob
-      sourceBranch: master
+      sourceBranch: main
       targetBranch: ob-v4

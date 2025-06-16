@@ -12,6 +12,16 @@
     "type": "Chain",
     "config": {
       "filters": [
+        {
+          "name": "AsCorsFilter",
+          "type": "CorsFilter",
+          "config": {
+            "policies": [ {
+              "acceptedOrigins": [ "https://&{as.fqdn}" ],
+              "allowCredentials": true
+            }]
+          }
+        },
         "SBATFapiInteractionFilterChain",
         {
           "name": "SingleSignOnFilter",

@@ -10,11 +10,18 @@
   "handler": {
     "type": "Chain",
     "config": {
-      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
         {
           "name": "RouteMetricsFilter",
           "type": "RouteMetricsFilter"
+        },
+        {
+          "comment": "FAPI Resource Filter Chain",
+          "name": "fapiResourceUnprotectedFilterChain",
+          "type": "FapiResourceUnprotectedFilterChain",
+          "config": {
+            "auditService": "fapiAuditService"
+          }
         },
         "FAPIRSFilterChain",
         {

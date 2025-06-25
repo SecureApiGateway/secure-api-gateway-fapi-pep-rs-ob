@@ -7,8 +7,9 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "name": "SingleSignOnFilter",
           "type": "SingleSignOnFilter",

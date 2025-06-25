@@ -67,6 +67,24 @@
       }
     },
     {
+      "name": "fapiAuditService",
+      "type": "AuditService",
+      "config": {
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "fapi"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "ReverseProxyHandler",
       "type": "ReverseProxyHandler",
       "capture": [
@@ -82,16 +100,10 @@
       "type": "JwtSession"
     },
     {
-      "name": "SBATFapiInteractionFilterChain",
+      "name": "FAPIRSFilterChain",
       "type": "ChainOfFilters",
-      "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",
       "config": {
         "filters": [
-          {
-            "comment": "Add x-fapi-interaction-id header if one was not present in the request",
-            "name": "FapiInteractionIdFilter",
-            "type": "FapiInteractionIdFilter"
-          },
           {
             "comment": "Dev filter to log access to the route",
             "name": "RouteAccessLog",
@@ -118,16 +130,6 @@
                 "  })"
               ]
             }
-          },
-          {
-            "name": "FapiInteractionIdTracingFilter",
-            "type": "FapiInteractionIdTracingFilter",
-            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext"
-          },
-          {
-            "comment": "Log any unhandled exceptions, installed after the FapiTransactionIdFilter so that the txId being logged is set to the x-fapi-interaction-id",
-            "name": "SapiLogAttachedExceptionFilter",
-            "type": "SapiLogAttachedExceptionFilter"
           }
         ]
       }
@@ -214,32 +216,6 @@
       }
     },
     {
-      "name": "ValidateApiClientMtlsCertChain",
-      "type": "ChainOfFilters",
-      "comment": "This filter chain validates the ApiClient's MTLS cert using the Trusted Directory, it first fetches all of the resources it needs to perform the validation",
-      "config": {
-        "filters": [
-          {
-            "comment": "Add ApiClient data to the context attributes.apiClient",
-            "name": "FetchApiClientFilter",
-            "type": "FetchApiClientFilter",
-            "config": {
-              "apiClientService": "IdmApiClientService"
-            }
-          },
-          {
-            "comment": "Validate the MTLS transport cert",
-            "name": "TransportCertValidationFilter",
-            "type": "TransportCertValidationFilter",
-            "config": {
-              "certificateRetriever": "HeaderCertificateRetriever",
-              "transportCertValidator": "TransportCertValidator"
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "SecretsProvider-AmJWK",
       "type": "SecretsProvider",
       "config": {
@@ -251,13 +227,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "name": "TransportCertValidator",
-      "type": "DefaultTransportCertValidator",
-      "config": {
-        "validKeyUse": "tls"
       }
     },
     {
@@ -278,23 +247,13 @@
     },
     {
       "name": "CompactSerializationJwsSigner-RSASSA-PSS",
+      "SHTODO": "MigratedToOpenIG",
       "type": "CompactSerializationJwsSigner",
       "config": {
         "algorithm": "PS256",
         "signingKeyId": "jwt.signer",
         "kid": "&{ig.ob.aspsp.signing.kid}",
         "secretsProvider": "SecretsProvider-ASPSP"
-      }
-    },
-    {
-      "name": "ContextCertificateRetriever",
-      "type": "ContextCertificateRetriever"
-    },
-    {
-      "name": "HeaderCertificateRetriever",
-      "type": "HeaderCertificateRetriever",
-      "config": {
-        "certificateHeaderName": "ssl-client-cert"
       }
     },
     {

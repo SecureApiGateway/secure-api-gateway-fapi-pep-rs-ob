@@ -11,8 +11,9 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Ensure the response is Open Banking compliant",
           "name": "ObResponseCheck",

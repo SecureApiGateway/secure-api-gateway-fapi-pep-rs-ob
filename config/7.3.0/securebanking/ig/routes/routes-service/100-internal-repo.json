@@ -6,8 +6,9 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "name": "SwitchFilter-RequestRouter",
           "type": "SwitchFilter",

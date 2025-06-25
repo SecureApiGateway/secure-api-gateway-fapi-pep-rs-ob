@@ -11,12 +11,13 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
         {
           "name": "RouteMetricsFilter",
           "type": "RouteMetricsFilter"
         },
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",

@@ -6,12 +6,13 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
         {
           "name": "RouteMetricsFilter",
           "type": "RouteMetricsFilter"
         },
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",

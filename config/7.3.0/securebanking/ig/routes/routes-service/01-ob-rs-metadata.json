@@ -7,8 +7,9 @@
   "handler": {
     "type": "Chain",
     "config": {
+      "SHTODO": "UnprotectedFAPIRSFilterChain",
       "filters": [
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Adjust inbound URL to resource server base URL",
           "name": "UriPathRewriteFilter-RS",

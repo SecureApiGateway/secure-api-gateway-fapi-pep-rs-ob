@@ -6,4 +6,4 @@
 # to such license between the licensee and ForgeRock AS.
 #
 
-com.forgerock.sapi.gateway.SecureApiGatewayClassAliasResolver
+com.forgerock.sapi.gateway.ob.SecureApiGatewayObClassAliasResolver

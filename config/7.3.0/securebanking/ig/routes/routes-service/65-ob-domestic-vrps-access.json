@@ -13,10 +13,6 @@
     "config": {
       "filters": [
         {
-          "name": "RouteMetricsFilter",
-          "type": "RouteMetricsFilter"
-        },
-        {
           "comment": "FAPI Resource Filter Chain",
           "name": "fapiResourceUnprotectedFilterChain",
           "type": "FapiResourceUnprotectedFilterChain",

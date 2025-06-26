@@ -208,7 +208,7 @@
     },
     {
       "name": "JwkSetService",
-      "type": "CaffeineCachingJwkSetService",
+      "type": "CachingJwkSetService",
       "config": {
         "handler": "OBClientHandler",
         "maxCacheEntries": 500,

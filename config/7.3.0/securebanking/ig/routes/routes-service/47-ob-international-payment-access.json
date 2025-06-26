@@ -13,10 +13,14 @@
     "config": {
       "filters": [
         {
-          "name": "RouteMetricsFilter",
-          "type": "RouteMetricsFilter"
+          "comment": "FAPI Resource Filter Chain",
+          "name": "fapiResourceUnprotectedFilterChain",
+          "type": "FapiResourceUnprotectedFilterChain",
+          "config": {
+            "auditService": "fapiAuditService"
+          }
         },
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Add a detached signature to the response",
           "name": "AddDetachedSig",
@@ -84,7 +88,6 @@
             }
           }
         },
-        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Ensure ApiClient includesPISP role",
           "name": "ApiClientRoleCheck",

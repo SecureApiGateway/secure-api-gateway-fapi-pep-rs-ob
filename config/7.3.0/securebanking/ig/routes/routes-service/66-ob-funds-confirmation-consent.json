@@ -8,10 +8,14 @@
     "config": {
       "filters": [
         {
-          "name": "RouteMetricsFilter",
-          "type": "RouteMetricsFilter"
+          "comment": "FAPI Resource Filter Chain",
+          "name": "fapiResourceUnprotectedFilterChain",
+          "type": "FapiResourceUnprotectedFilterChain",
+          "config": {
+            "auditService": "fapiAuditService"
+          }
         },
-        "SBATFapiInteractionFilterChain",
+        "FAPIRSFilterChain",
         {
           "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",
@@ -61,7 +65,6 @@
             }
           }
         },
-        "ValidateApiClientMtlsCertChain",
         {
           "comment": "Ensure ApiClient includes CBPII role",
           "name": "ApiClientRoleCheck",

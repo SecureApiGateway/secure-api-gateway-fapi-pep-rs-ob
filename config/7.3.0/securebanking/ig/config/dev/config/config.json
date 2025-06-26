@@ -247,7 +247,6 @@
     },
     {
       "name": "CompactSerializationJwsSigner-RSASSA-PSS",
-      "SHTODO": "MigratedToOpenIG",
       "type": "CompactSerializationJwsSigner",
       "config": {
         "algorithm": "PS256",

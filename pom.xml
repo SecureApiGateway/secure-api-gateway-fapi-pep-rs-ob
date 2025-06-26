@@ -25,8 +25,7 @@
 
     <packaging>pom</packaging>
     <name>secure-api-gateway-fapi-pep-rs-ob</name>
-    <description>Gateway (IG) Extensions modules that are used by IG to extend uk spec functionalities for Secure API Gateway
-    </description>
+    <description>Secure API Gateway FAPI PEP RS OB components</description>
     <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
     <licenses>
         <license>
@@ -47,19 +46,12 @@
     </parent>
 
     <properties>
-        <secure-api-gateway.version>4.0.4</secure-api-gateway.version>
-        <openig.version>2024.11.0</openig.version>
+        <secure-api-gateway.version>4.0.5-SNAPSHOT</secure-api-gateway.version>
+        <openig.version>2025.6.0-SNAPSHOT</openig.version>
         <nimbus-jose.version>9.40</nimbus-jose.version>
         <bouncy-castle.version>1.78.1</bouncy-castle.version>
-        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     </properties>
-
-    <scm>
-        <connection>scm:git:${project.scm.url}</connection>
-        <developerConnection>scm:git:${project.scm.url}</developerConnection>
-        <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
-        <tag>HEAD</tag>
-    </scm>
 
     <dependencyManagement>
         <dependencies>
@@ -85,6 +77,13 @@
         </dependencies>
     </dependencyManagement>
 
+    <scm>
+        <connection>scm:git:${project.scm.url}</connection>
+        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <repositories>
         <repository>
             <id>maven.forgerock.org-community</id>
@@ -107,7 +106,7 @@
         </repository>
         <repository>
             <id>forgerock-internal-releases</id>
-            <name>ForgeRock Internal Releases Repository</name>
+            <name>ForgeRock Private Releases Repository</name>
             <url>https://maven.forgerock.org/artifactory/internal-releases</url>
             <snapshots>
                 <enabled>false</enabled>
@@ -115,6 +114,17 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
+        </repository>
+        <repository>
+        <id>forgerock-internal-snapshots</id>
+        <name>ForgeRock Internal Snapshots Repository</name>
+        <url>https://maven.forgerock.org/artifactory/internal-snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
         </repository>
     </repositories>
     <build>

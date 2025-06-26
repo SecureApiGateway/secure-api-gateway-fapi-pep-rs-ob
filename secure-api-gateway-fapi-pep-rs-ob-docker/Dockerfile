@@ -30,8 +30,5 @@ COPY --chown=forgerock:root 7.3.0/ig/lib /opt/ig/lib
 # This version clash results in the JwkmsIssueCert.groovy script hanging
 RUN rm -f /opt/ig/lib/bcprov-jdk18on-1.74.jar
 
-# Check that the IG jar exists before continuing
-RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-*.jar
-
 COPY --chown=forgerock:root 7.3.0/ig/config /var/ig/config/
 COPY --chown=forgerock:root 7.3.0/ig/scripts /var/ig/scripts/

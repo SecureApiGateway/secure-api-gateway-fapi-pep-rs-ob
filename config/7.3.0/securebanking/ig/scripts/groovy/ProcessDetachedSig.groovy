@@ -15,6 +15,7 @@ import org.forgerock.json.jose.jwk.JWKSet
 import org.forgerock.json.jose.jwk.RsaJWK
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
 import org.forgerock.json.jose.jwk.store.JwksStore.*
+import org.forgerock.openig.fapi.apiclient.ApiClientFapiContext;
 import com.forgerock.securebanking.uk.gateway.jwks.*
 import java.security.interfaces.RSAPublicKey
 import org.forgerock.util.time.Duration
@@ -373,12 +374,14 @@ def validateIssCritClaim(issCritClaim) {
 }
 
 def apiClient() {
-    def apiClient = attributes.apiClient
-    if (apiClient == null) {
+    def apiClientFapiContext = context.asContext(ApiClientFapiContext.class)
+    def apiClientOpt = apiClientFapiContext.getApiClient()
+    if (apiClientOpt.isEmpty()) {
+        logger.error("apiClient must be identified before this script - it should exist in the ApiClientFapiContext")
         throw new IllegalStateException("Route is configured incorrectly, " + SCRIPT_NAME +
                                                 "requires apiClient context attribute")
     }
-    return apiClient
+    return apiClientOpt.get()
 }
 
 /**

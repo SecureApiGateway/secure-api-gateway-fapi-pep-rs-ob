@@ -15,6 +15,7 @@ import org.forgerock.json.jose.jwk.JWKSet
 import org.forgerock.json.jose.jwk.RsaJWK
 import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
 import org.forgerock.json.jose.jwk.store.JwksStore.*
+import org.forgerock.openig.fapi.apiclient.ApiClientFapiContext;
 import com.forgerock.securebanking.uk.gateway.jwks.*
 import java.security.interfaces.RSAPublicKey
 import org.forgerock.util.time.Duration

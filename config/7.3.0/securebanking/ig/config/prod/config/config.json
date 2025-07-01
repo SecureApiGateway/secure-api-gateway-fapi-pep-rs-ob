@@ -296,6 +296,26 @@
       }
     },
     {
+      "name": "AuditService-OB-Consent",
+      "type": "AuditService",
+      "config": {
+        "config": {
+        },
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "ObConsentTopic"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "FRReverseProxyHandler",
       "comment": "ReverseProxyHandler for calls to the FR services",
       "type": "Chain",

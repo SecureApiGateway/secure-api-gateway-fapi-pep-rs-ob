@@ -79,6 +79,7 @@
             "type": "application/x-groovy",
             "file": "ProcessDetachedSig.groovy",
             "args": {
+              "clock": "${heap['Clock']}",
               "routeArgHeaderName": "x-jws-signature",
               "routeArgTrustedAnchor": "openbanking.org.uk",
               "routeArgClockSkewAllowance": "&{jwtValidation.clockSkewAllowanceDuration}"

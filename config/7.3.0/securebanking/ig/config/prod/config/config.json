@@ -1,7 +1,7 @@
 {
   "properties": {
     "jwtValidation": {
-      "clockSkewAllowanceDuration": "5s"
+      "clockSkewAllowanceDuration": "5 seconds"
     },
     "urls": {
       "idmBaseUri": "https://&{identity.platform.fqdn}/openidm",
@@ -198,7 +198,7 @@
       "name": "JwkSetService",
       "type": "CachingJwkSetService",
       "config": {
-        "handler": "OBClientHandler",
+        "endpointHandler": "OBClientHandler",
         "maxCacheEntries": 500,
         "expireAfterWriteDuration": "30 minutes"
       }
@@ -289,6 +289,26 @@
               "elasticsearchCompatible": false,
               "topics": [
                 "access"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AuditService-OB-Consent",
+      "type": "AuditService",
+      "config": {
+        "config": {
+        },
+        "eventHandlers": [
+          {
+            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
+            "config": {
+              "name": "jsonstdout",
+              "elasticsearchCompatible": false,
+              "topics": [
+                "ObConsentTopic"
               ]
             }
           }

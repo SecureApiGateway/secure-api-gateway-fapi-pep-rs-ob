@@ -8,15 +8,7 @@
     "type": "Chain",
     "config": {
       "filters": [
-        {
-          "comment": "FAPI Resource Filter Chain",
-          "name": "fapiResourceUnprotectedFilterChain",
-          "type": "FapiResourceUnprotectedFilterChain",
-          "config": {
-            "auditService": "fapiAuditService"
-          }
-        },
-        "FAPIRSFilterChain",
+        "SBATFapiInteractionFilterChain",
         {
           "name": "SingleSignOnFilter",
           "type": "SingleSignOnFilter",

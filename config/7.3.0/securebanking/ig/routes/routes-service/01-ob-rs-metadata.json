@@ -8,15 +8,7 @@
     "type": "Chain",
     "config": {
       "filters": [
-        {
-          "comment": "FAPI Resource Filter Chain",
-          "name": "fapiResourceUnprotectedFilterChain",
-          "type": "FapiResourceUnprotectedFilterChain",
-          "config": {
-            "auditService": "fapiAuditService"
-          }
-        },
-        "FAPIRSFilterChain",
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Adjust inbound URL to resource server base URL",
           "name": "UriPathRewriteFilter-RS",

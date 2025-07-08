@@ -12,30 +12,10 @@
     "config": {
       "filters": [
         {
-          "comment": "FAPI Resource Filter Chain",
-          "name": "fapiResourceFilterChain",
-          "type": "FapiResourceFilterChain",
-          "config": {
-            "auditService" : "fapiAuditService",
-            "clientCertificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
-            "scopes": [
-              "accounts",
-              "openid"
-            ],
-            "realm": "OpenIG",
-            "accessTokenResolver": {
-              "name": "token-resolver",
-              "type": "StatelessAccessTokenResolver",
-              "config": {
-                "secretsProvider": "SecretsProvider-AmJWK",
-                "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
-                "verificationSecretId": "any.value.in.regex.format"
-              }
-            },
-            "apiClientService": "IdmApiClientService"
-          }
+          "name": "RouteMetricsFilter",
+          "type": "RouteMetricsFilter"
         },
-        "FAPIRSFilterChain",
+        "SBATFapiInteractionFilterChain",
         {
           "comment": "Ensure OB compliant response",
           "name": "ObResponseCheck",
@@ -67,6 +47,50 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Extracts the access_token from the request header. Uses the resolver to resolve the access_token and validate the token claims. Checks that the token has the scopes required by the filter configuration. Injects the access_token info into the OAuth2Context.",
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "accounts",
+              "openid"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
+              "comment": "Check certificate-bound OAuth 2.0 bearer tokens presented by clients use the same mTLS-authenticated HTTP connection",
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
+              "config": {
+                "delegate": {
+                  "name": "token-resolver-1",
+                  "type": "StatelessAccessTokenResolver",
+                  "config": {
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ValidateApiClientMtlsCertChain",
+        {
           "comment": "Ensure ApiClient includesAISP role",
           "name": "ApiClientRoleCheck",
           "type": "ScriptableFilter",
@@ -75,6 +99,18 @@
             "file": "ApiClientRoleCheck.groovy",
             "args": {
               "routeArgRole": "AISP"
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "authorization_code"
             }
           }
         },

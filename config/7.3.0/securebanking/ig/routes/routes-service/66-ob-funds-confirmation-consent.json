@@ -9,26 +9,10 @@
       "filters": [
         {
           "comment": "FAPI Resource Filter Chain",
-          "name": "fapiResourceFilterChain",
-          "type": "FapiResourceFilterChain",
+          "name": "fapiResourceUnprotectedFilterChain",
+          "type": "FapiResourceUnprotectedFilterChain",
           "config": {
-            "auditService": "fapiAuditService",
-            "clientCertificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
-            "scopes": [
-              "fundsconfirmations"
-            ],
-            "allowedGrantType": "client_credentials",
-            "realm": "OpenIG",
-            "accessTokenResolver": {
-              "name": "token-resolver",
-              "type": "StatelessAccessTokenResolver",
-              "config": {
-                "secretsProvider": "SecretsProvider-AmJWK",
-                "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
-                "verificationSecretId": "any.value.in.regex.format"
-              }
-            },
-            "apiClientService": "IdmApiClientService"
+            "auditService": "fapiAuditService"
           }
         },
         "FAPIRSFilterChain",
@@ -42,6 +26,46 @@
           }
         },
         {
+          "comment": "Extract client certificate thumbprint for cert bound access tokens",
+          "name": "CertificateThumbprintFilter-1",
+          "type": "CertificateThumbprintFilter",
+          "config": {
+            "certificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
+            "failureHandler": {
+              "type": "ScriptableHandler",
+              "config": {
+                "type": "application/x-groovy",
+                "file": "ReturnInvalidCnfKeyError.groovy"
+              }
+            }
+          }
+        },
+        {
+          "comment": "Check certificate bound access token",
+          "name": "OAuth2ResourceServerFilter-OB",
+          "type": "OAuth2ResourceServerFilter",
+          "config": {
+            "scopes": [
+              "fundsconfirmations"
+            ],
+            "requireHttps": false,
+            "realm": "OpenIG",
+            "accessTokenResolver": {
+              "type": "ConfirmationKeyVerifierAccessTokenResolver",
+              "config": {
+                "delegate": {
+                  "type": "StatelessAccessTokenResolver",
+                  "config": {
+                    "secretsProvider": "SecretsProvider-AmJWK",
+                    "issuer": "https://&{as.fqdn}/am/oauth2/realms/root/realms/&{am.realm}",
+                    "verificationSecretId": "any.value.in.regex.format"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
           "comment": "Ensure ApiClient includes CBPII role",
           "name": "ApiClientRoleCheck",
           "type": "ScriptableFilter",
@@ -50,6 +74,18 @@
             "file": "ApiClientRoleCheck.groovy",
             "args": {
               "routeArgRole": "CBPII"
+            }
+          }
+        },
+        {
+          "comment": "Check grant type",
+          "name": "Grant Type Verifier",
+          "type": "ScriptableFilter",
+          "config": {
+            "type": "application/x-groovy",
+            "file": "GrantTypeVerifier.groovy",
+            "args": {
+              "allowedGrantType": "client_credentials"
             }
           }
         },

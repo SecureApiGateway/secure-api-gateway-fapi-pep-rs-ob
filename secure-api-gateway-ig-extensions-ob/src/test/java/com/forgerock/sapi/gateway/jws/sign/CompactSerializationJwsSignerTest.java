@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.ob.jws.sign;
+package com.forgerock.sapi.gateway.jws.sign;
 
-import static com.forgerock.sapi.gateway.ob.util.CryptoUtils.generateRsaKeyPair;
+import static com.forgerock.sapi.gateway.util.CryptoUtils.*;
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.forgerock.json.JsonValue.field;
@@ -51,8 +51,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.forgerock.sapi.gateway.ob.jws.signer.CompactSerializationJwsSigner;
-import com.forgerock.sapi.gateway.ob.jws.signer.JwsSignerException;
+import com.forgerock.sapi.gateway.jws.signer.CompactSerializationJwsSigner;
+import com.forgerock.sapi.gateway.jws.signer.JwsSignerException;
+import com.forgerock.sapi.gateway.util.CryptoUtils;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;

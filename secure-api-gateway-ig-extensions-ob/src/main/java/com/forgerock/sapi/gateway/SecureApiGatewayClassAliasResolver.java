@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.ob;
+package com.forgerock.sapi.gateway;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.forgerock.openig.alias.ClassAliasResolver;
 
-import com.forgerock.sapi.gateway.ob.consent.ConsentRequestAccessAuthorisationFilter;
-import com.forgerock.sapi.gateway.ob.jws.signer.CompactSerializationJwsSigner;
+import com.forgerock.sapi.gateway.jws.signer.CompactSerializationJwsSigner;
 
-public class SecureApiGatewayObClassAliasResolver implements ClassAliasResolver {
+public class SecureApiGatewayClassAliasResolver implements ClassAliasResolver {
     private static final Map<String, Class<?>> ALIASES = new HashMap<>();
 
     static {
-        ALIASES.put("ConsentRequestAccessAuthorisationFilter", ConsentRequestAccessAuthorisationFilter.class);
         ALIASES.put("CompactSerializationJwsSigner", CompactSerializationJwsSigner.class);
     }
 

@@ -82,6 +82,10 @@
             <artifactId>openig-fapi</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -94,11 +98,6 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>${bouncy-castle.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.forgerock.sapi.gateway.ob.util;
+package com.forgerock.sapi.gateway.util;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+
+import com.nimbusds.jose.crypto.RSASSASigner;
 
 /**
  * Collection of util methods to aid in the generation of crypto related objects such as: KeyPair, X509Certificate, JWK

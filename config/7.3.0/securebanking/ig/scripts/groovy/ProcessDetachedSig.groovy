@@ -155,6 +155,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     return apiClient().getJwkSetSecretStore()
                       .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))
                       .thenAsync(ignored -> next.handle(context, request))
+    logger.debug(SCRIPT_NAME + "Exiting...")
 }
 
 private Promise<Void, NeverThrowsException> validateJwt(final SignedJwt signedJwt,

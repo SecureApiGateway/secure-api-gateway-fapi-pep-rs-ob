@@ -137,7 +137,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
         logger.error(SCRIPT_NAME + message)
         return fail(Status.UNAUTHORIZED, "Signature validation failed")
     }
-
+     logger.debug(SCRIPT_NAME + "Got Passed JWT Header...")
     // Validate the signed-JWT (against the "sig" keys).
     String[] jwtElements = detachedSignatureValue.split("\\.")
     String requestPayload = request.entity.getString()
@@ -147,10 +147,12 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     } else {
         // v3.1.4 and higher
         // The payload must be encoded with base64Url
+         logger.debug(SCRIPT_NAME + "Rebuilding...")
         rebuiltJwt = jwtElements[ 0 ] + "." +
                 Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." +
                 jwtElements[ 2 ]
     }
+     logger.debug(SCRIPT_NAME + "Signing...")
     def signedJwt = jwtReconstruction.reconstructJwt(rebuiltJwt, SignedJwt.class)
     return apiClient().getJwkSetSecretStore()
                       .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))

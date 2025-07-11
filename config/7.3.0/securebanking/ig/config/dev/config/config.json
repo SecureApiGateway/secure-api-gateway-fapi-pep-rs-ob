@@ -210,7 +210,7 @@
       "name": "JwkSetService",
       "type": "CachingJwkSetService",
       "config": {
-        "handler": "OBClientHandler",
+        "endpointHandler": "OBClientHandler",
         "maxCacheEntries": 500,
         "expireAfterWriteDuration": "24 hours"
       }

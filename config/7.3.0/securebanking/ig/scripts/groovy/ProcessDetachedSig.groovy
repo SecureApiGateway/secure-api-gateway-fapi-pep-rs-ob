@@ -1,29 +1,29 @@
+import static java.lang.String.format
 import static org.forgerock.json.JsonValue.json
 import static org.forgerock.json.JsonValue.object
 import static org.forgerock.json.JsonValue.field
 
-import com.nimbusds.jose.*
-import com.nimbusds.jose.crypto.*
-import com.nimbusds.jose.jwk.*
 import groovy.json.JsonSlurper
 import org.forgerock.http.protocol.*
 import org.forgerock.json.JsonValueFunctions.*
 import org.forgerock.json.JsonValue
 import org.forgerock.json.jose.*
-import org.forgerock.json.jose.jwk.JWK
-import org.forgerock.json.jose.jwk.JWKSet
-import org.forgerock.json.jose.jwk.RsaJWK
-import org.forgerock.json.jose.exceptions.FailedToLoadJWKException
+import org.forgerock.json.jose.jws.*
+import org.forgerock.json.jose.common.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
-import org.forgerock.openig.fapi.apiclient.ApiClientFapiContext;
+import org.forgerock.openig.fapi.apiclient.*
+import org.forgerock.openig.tools.jwt.validation.*
+import org.forgerock.secrets.jwkset.*
+import org.forgerock.secrets.*
 import com.forgerock.securebanking.uk.gateway.jwks.*
-import java.security.interfaces.RSAPublicKey
 import org.forgerock.util.time.Duration
 
 import java.text.ParseException
 import java.time.Instant
 
 import static org.forgerock.http.protocol.Response.newResponsePromise
+import static org.forgerock.openig.fapi.jwks.JwkSetServicePurposes.signingPurpose;
+import static org.forgerock.util.promise.NeverThrowsException.neverThrown;
 
 /*
  * JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
@@ -38,14 +38,13 @@ import static org.forgerock.http.protocol.Response.newResponsePromise
  * If ASPSPs have updated to v3.1.4 or later, they must not include the b64 claim in the header,
  * and any TPPs using these ASPSPs must do the same.
  *
- * This script relies on the apiClient attribute being set, therefore must be installed after the FetchApiClientFilter
  */
 
 SCRIPT_NAME = null
-
 IAT_CRIT_CLAIM = "http://openbanking.org.uk/iat"
 ISS_CRIT_CLAIM = "http://openbanking.org.uk/iss"
 TAN_CRIT_CLAIM = "http://openbanking.org.uk/tan"
+SUPPORTED_SIGNING_ALGORITHMS = List.of("PS256")
 
 scriptInit(request)
 filter(context, request, next)
@@ -59,6 +58,7 @@ void scriptInit(Request request) {
     if (fapiInteractionId == null) {
         fapiInteractionId = "No x-fapi-interaction-id"
     }
+    jwtReconstruction = new JwtReconstruction().recognizedHeaders(IAT_CRIT_CLAIM, ISS_CRIT_CLAIM, TAN_CRIT_CLAIM)
     SCRIPT_NAME = "[ProcessDetachedSig] (" + fapiInteractionId + ") - "
     logger.debug(SCRIPT_NAME + "Running...")
 }
@@ -120,59 +120,190 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     logger.debug(SCRIPT_NAME + "Got JWT header: " + jwsHeaderDecoded)
     def jwsHeaderDataStructure = new JsonSlurper().parseText(jwsHeaderDecoded)
 
-    apiClient().getJwkSet().thenAsync(jwkSet -> {
-        if (!jwkSet) {
-            logger.error(SCRIPT_NAME + "apiClient JwkSet not found, ensure that filter which configures the " +
-                                   "apiClient JwkSet is installed prior to this filter in the chain")
-            return newResponsePromise(new Response(Status.INTERNAL_SERVER_ERROR))
+    if ([ 'v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3' ].contains(apiVersion)) {
+        //Processing pre v3.1.4 requests
+        if (jwsHeaderDataStructure.b64 == null) {
+            message = "B64 header must be presented in JWT header before v3.1.3"
+            logger.error(SCRIPT_NAME + message)
+            return getSignatureValidationErrorResponse()
+        } else if (jwsHeaderDataStructure.b64 != false) {
+            message = "B64 header must be false in JWT header before v3.1.3"
+            logger.error(SCRIPT_NAME + message)
+            return getSignatureValidationErrorResponse()
         }
+        //Processing post v3.1.4 requests
+    } else if (jwsHeaderDataStructure.b64 != null) {
+        message = "B64 header not permitted in JWT header after v3.1.3"
+        logger.error(SCRIPT_NAME + message)
+        return fail(Status.UNAUTHORIZED, "Signature validation failed")
+    }
 
-        if ([ 'v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3' ].contains(apiVersion)) {
-            //Processing pre v3.1.4 requests
-            if (jwsHeaderDataStructure.b64 == null) {
-                message = "B64 header must be presented in JWT header before v3.1.3"
-                logger.error(SCRIPT_NAME + message)
-                return getSignatureValidationErrorResponse()
-            } else if (jwsHeaderDataStructure.b64 != false) {
-                message = "B64 header must be false in JWT header before v3.1.3"
-                logger.error(SCRIPT_NAME + message)
-                return getSignatureValidationErrorResponse()
-            } else {
-                String requestPayload = request.entity.getString()
-                try {
-                    logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
-                    if (!validateUnencodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
-                        return fail(Status.UNAUTHORIZED, "Signature validation failed")
-                    }
-                    return next.handle(context, request)
-                }
-                catch (Exception e) {
-                    logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e)
-                    return fail(Status.UNAUTHORIZED, "Signature validation failed")
-                }
+    // Validate the signed-JWT (against the "sig" keys).
+    String[] jwtElements = detachedSignatureValue.split("\\.")
+    String requestPayload = request.entity.getString()
+    String rebuiltJwt
+    if ([ 'v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3' ].contains(apiVersion)) {
+        rebuiltJwt = jwtElements[ 0 ] + "." + requestPayload + "." + jwtElements[ 2 ]
+    } else {
+        // v3.1.4 and higher
+        // The payload must be encoded with base64Url
+        rebuiltJwt = jwtElements[ 0 ] + "." +
+                Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." +
+                jwtElements[ 2 ]
+    }
+    def signedJwt = jwtReconstruction.reconstructJwt(rebuiltJwt, SignedJwt.class)
+    return apiClient().getJwkSetSecretStore()
+                      .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))
+                      .thenAsync(ignored -> next.handle(context, request))
+}
+
+private Promise<Void, NeverThrowsException> validateJwt(final SignedJwt signedJwt,
+                                                                       final JwkSetSecretStore jwkSetSecretStore) {
+    return buildJwtValidator(jwkSetSecretStore).report(signedJwt)
+                                               .then(handleValidationResult(signedJwt),
+                                                     neverThrown());
+}
+
+private JwtValidator buildJwtValidator(jwkSetSecretStore) {
+    // XXX: This could be partially built on construction, and just add the call specific parts and #build() here
+    // - e.g. the `hasValidSignature`, "iat", "exp", "tan"... are request specific.
+    return JwtValidator.builder(clock)
+                       .withSkewAllowance(routeArgClockSkewAllowance)
+                       .jwt(hasSupportedSigningAlgorithm())
+                       .jwt(hasValidSignature(new SecretsProvider(clock).setDefaultStores(jwkSetSecretStore),
+                                              signingPurpose()))
+                       .jwt(validateIss())
+                       .jwt(validateType())
+                       .jwt(validateIat())
+                       .jwt(validateTan())
+                       .build()
+}
+
+private JwtConstraint hasSupportedSigningAlgorithm() {
+    return { context ->
+        {
+            if (SUPPORTED_SIGNING_ALGORITHMS.contains(context.getJwt().getHeader().getAlgorithm())) {
+                return success().asPromise();
             }
-        } else {
-            //Processing post v3.1.4 requests
-            if (jwsHeaderDataStructure.b64 != null) {
-                message = "B64 header not permitted in JWT header after v3.1.3"
-                logger.error(SCRIPT_NAME + message)
-                return fail(Status.UNAUTHORIZED, "Signature validation failed")
+            return failure(new Violation("Expected JWT to be signed using one of the supported 'alg' values: "
+                                                 + SUPPORTED_SIGNING_ALGORITHMS)).asPromise();
+        }
+    } as JwtConstraint
+}
+
+// Validate the "http://openbanking.org.uk/iss" claim
+//
+// OB Spec:
+// If the issuer is using a signing key lodged with a Trust Anchor, the value is defined by the Trust Anchor and
+// should uniquely identify the PSP.
+// For example, when using the Open Banking Directory, the value must be:
+// - When issued by a TPP, of the form {{org-id}}/{{software-statement-id}},
+private JwtConstraint validateIss() {
+    return { context ->
+        {
+            def issCritClaim = context.getJwt().getHeader().getParameter(ISS_CRIT_CLAIM)
+            if (issCritClaim == null) {
+                return failure(new Violation(format("Expected value for header '%s' to be not null", ISS_CRIT_CLAIM))).
+                        asPromise();
+            }
+            def apiClient = apiClient()
+            def orgId = apiClient.getOrganisation().id()
+            def softwareStatementId = apiClient.getSoftwareId()
+            def expectedIssuerValue = orgId + "/" + softwareStatementId
+            if (expectedIssuerValue != issCritClaim) {
+                logger.error(SCRIPT_NAME + "Invalid " + ISS_CRIT_CLAIM +
+                                     " value, expected: " + expectedIssuerValue +
+                                     " actual: " + issCritClaim)
+                return failure(new Violation(format("Expected value for header '%s' to be equal to %s",
+                                                    ISS_CRIT_CLAIM,
+                                                    expectedIssuerValue))).asPromise();
+            }
+            logger.debug(SCRIPT_NAME + ISS_CRIT_CLAIM + " is valid")
+            return success().asPromise();
+        }
+    } as JwtConstraint
+}
+
+//optional header - only if it's found verify that it's mandatory equal to "JOSE"
+private JwtConstraint validateType() {
+    return { context ->
+        {
+            def type = context.getJwt().getHeader().getType()
+            if (type == null) {
+                return success().asPromise();
+            }
+            if (type.equals("JOSE")) {
+                return success().asPromise()
+            }
+            return failure(new Violation("Expected value for type to be to 'JOSE'")).asPromise()
+        }
+    } as JwtConstraint
+}
+
+private JwtConstraint validateIat() {
+    return { context ->
+        {
+            def iatClaim = context.getJwt().getHeader().getParameter(IAT_CRIT_CLAIM)
+            if (iatClaim == null) {
+                logger
+                        .error(SCRIPT_NAME + "Could not validate detached JWT - required claim: " + IAT_CRIT_CLAIM +
+                                       " " +
+                                       "not found")
+                return false
             }
 
-            String requestPayload = request.entity.getString()
-            try {
-                logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
-                if (!validateEncodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
-                    return fail(Status.UNAUTHORIZED, "Signature validation failed")
-                }
-                return next.handle(context, request)
+            def iatTimestamp = Instant.ofEpochSecond(Long.valueOf(iatClaim))
+            def skewedIatTimestamp = iatTimestamp.minus(clockSkewAllowance)
+            def currentTimestamp = Instant.now()
+            if (skewedIatTimestamp.isAfter(currentTimestamp)) {
+                logger.error(SCRIPT_NAME + "Could not validate detached JWT - claim: " + IAT_CRIT_CLAIM +
+                                     " must be in the past, value: " + iatTimestamp.getEpochSecond() +
+                                     ", current time: " + currentTimestamp.getEpochSecond() +
+                                     ", clockSkewAllowance: " + clockSkewAllowance)
+                return false
             }
-            catch (Exception e) {
-                logger.error(SCRIPT_NAME + "Exception validating the detached jws: " + e)
-                return fail(Status.UNAUTHORIZED, "Signature validation failed")
+            logger.debug(SCRIPT_NAME + "Found valid iat!")
+        }
+    } as JwtConstraint
+}
+
+private JwtConstraint validateTan() {
+    return { context ->
+        {
+            def tanClaim = context.getJwt().getHeader().getParameter(TAN_CRIT_CLAIM)
+            if (tanClaim == null || tanClaim != routeArgTrustedAnchor) {
+                logger.error(SCRIPT_NAME + "Could not validate detached JWT - Invalid trusted anchor found: " +
+                                     tanClaim + " expected: " + routeArgTrustedAnchor)
+                return failure(new Violation(format("Expected value for '%s' to be to '%s'", TAN_CRIT_CLAIM,
+                                                    routeArgTrustedAnchor))).asPromise()
+            }
+            return success().asPromise()
+        }
+    } as JwtConstraint
+}
+
+private Function<JwtValidatorResult, Void, NeverThrowsException> handleValidationResult() {
+    return { validationResult ->
+        {
+            if (!validationResult.isValid()) {
+                logger.debug("Request JWT is invalid - constraint violations: {}",
+                             validationResult.getViolationsAsString())
+                throw new IllegalStateException("Registration Request JWT is invalid: "
+                                                        + validationResult.getViolationsAsString());
             }
         }
-    })
+    } as Function<JwtValidatorResult, Void, NeverThrowsException>
+}
+
+ApiClient apiClient() {
+    def apiClientFapiContext = context.asContext(ApiClientFapiContext.class)
+    def apiClientOpt = apiClientFapiContext.getApiClient()
+    if (apiClientOpt.isEmpty()) {
+        logger.error("apiClient must be identified before this script - it should exist in the ApiClientFapiContext")
+        throw new IllegalStateException("Route is configured incorrectly, " + SCRIPT_NAME +
+                                                "requires apiClient context attribute")
+    }
+    return apiClientOpt.get()
 }
 
 /**
@@ -188,213 +319,4 @@ Promise<Response, NeverThrowsException> fail(Status status, String message) {
     response.getEntity().setJson(json(object(field("error", message))))
     return newResponsePromise(response)
 }
-
-/**
- * Validates a request with unencoded payload. Between Version 3.1.3 and later versions,
- * the key point of divergence is the removal of the b64 claim. Participants using Version 3.1.3 or earlier
- * must support and process correctly signatures that are set to have b64 as false. b64=false indicates that
- * the detached payload is not base64 encoded when calculating the signature.<br>
- *
- * The correct way to verify this version of detached signature with unencoded payload:
- * <b> b64Encode(header).payload.sign( concatenate( b64UrlEncode(header), ".", payload )) </b>
- *
- * @param detachedSignatureValue the detached signature value from the x-jws-signature header
- * @param jwkSet containing the signing keys for this apiClient
- * @param requestPayload the request payload that will not be encoded before validating the detached signature
- * @return true if signature validation is successful, false otherwise
- */
-def validateUnencodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
-    Payload payload = new Payload(requestPayload);
-    JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue, payload)
-    JWSHeader jwsHeader = parsedJWSObject.getHeader()
-
-    boolean criticalParamsValid = validateCriticalParameters(jwsHeader)
-    logger.debug(SCRIPT_NAME + "Critical headers valid: " + criticalParamsValid)
-    if (!criticalParamsValid) {
-        return false
-    }
-
-    var rsaPublicKey = getRSAKeyFromJwks(jwkSet, jwsHeader)
-    RSASSAVerifier verifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters());
-    return parsedJWSObject.verify(verifier)
-}
-
-/**
- * Validates a request with encoded payload. For version 3.1.4 onward, ASPSPs must not include the
- * b64 claim in the header, and any TPPs using these ASPSPs must do the same. By default b64 will be considered as true
- *
- * The correct way to verify this version of detached signature with encoded payload:
- * <b> b64Encode(header).b64UrlEncode(payload)
- *                      .sign(concatenate(b64UrlEncode(header), ".", b64UrlEncode(payload)))
- * </b>
- *
- * @param detachedSignatureValue the request payload
- * @param jwkSet containing the signing keys for this apiClient
- * @param requestPayload the request payload that will be encoded before validating the detached signature.
- * @return true if signature validation is successful, false otherwise
- */
-def validateEncodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
-    JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue)
-    JWSHeader jwsHeader = parsedJWSObject.getHeader()
-    var rsaPublicKey = getRSAKeyFromJwks(jwkSet, jwsHeader)
-    return isJwsSignatureValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader)
-}
-
-def getRSAKeyFromJwks(JWKSet jwkSet, JWSHeader jwsHeader) {
-    var keyId = jwsHeader.getKeyID()
-    logger.debug(SCRIPT_NAME + "Fetching key for keyId: " + keyId)
-    JWK jwk = jwkSet.findJwk(keyId);
-    if (jwk == null) {
-        throw new FailedToLoadJWKException("Failed to find keyId: " + keyId + " in JWKSet");
-    }
-    return ((RsaJWK) jwk).toRSAPublicKey()
-}
-
-/**
- * Encodes the payload for an encoded payload request and performs the signature validation. Defers the validation of
- * critical claims during the process of the signature validation.
- *
- * @param detachedSignatureValue The detached signature header value - x-jws-signature
- * @param rsaPublicKey The JWK used to validate the signature
- * @param requestPayload The request payload or request body. Will be encoded before rebuilding the JWT
- * @param jwsHeader The header of the detached signature
- * @return true if the signatures validation is successful, false otherwise
- */
-def isJwsSignatureValid(String detachedSignatureValue,
-                        RSAPublicKey rsaPublicKey,
-                        String requestPayload,
-                        JWSHeader jwsHeader) throws JOSEException, ParseException {
-    // Validate crit claims - If this fails stop the flow, no point in continuing with the signature validation.
-    boolean criticalParamsValid = validateCriticalParameters(jwsHeader)
-    if (!criticalParamsValid) {
-        logger.error(SCRIPT_NAME + "Critical params validations failed. Stopping further validations.")
-        return false
-    }
-
-    //Validate Signature
-    logger.debug(SCRIPT_NAME + "JWT from header signature: " + detachedSignatureValue)
-
-    RSASSAVerifier jwsVerifier = new RSASSAVerifier(rsaPublicKey, getCriticalHeaderParameters())
-
-    String[] jwtElements = detachedSignatureValue.split("\\.")
-
-    // The payload must be encoded with base64Url
-    String rebuiltJwt = jwtElements[0] + "." +
-            Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." +
-            jwtElements[2]
-
-    logger.debug(SCRIPT_NAME + "JWT rebuilt using the request body: " + rebuiltJwt)
-    JWSObject jwsObject = JWSObject.parse(rebuiltJwt)
-
-    boolean isValidJws = jwsObject.verify(jwsVerifier)
-    logger.debug(SCRIPT_NAME + "Signature validation result: " + isValidJws)
-
-    return isValidJws
-}
-
-/**
- * Validates the critical parameters from the detached signature header.
- *
- * @param jwsHeader The header of the detached signature
- * @return true if the critical parameters are valid, false otherwise
- */
-def validateCriticalParameters(JWSHeader jwsHeader) {
-    logger.debug(SCRIPT_NAME + "Starting validation of critical parameters")
-
-    if (jwsHeader.getAlgorithm() == null || !jwsHeader.getAlgorithm().getName().equals("PS256")) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Invalid algorithm was used: " +
-                             jwsHeader.getAlgorithm().getName())
-        return false;
-    }
-    logger.debug(SCRIPT_NAME + "Found valid algorithm!")
-
-    //optional header - only if it's found verify that it's mandatory equal to "JOSE"
-    if (jwsHeader.getType() != null && !jwsHeader.getType().getType().equals("JOSE")) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Invalid type detected: " +
-                             jwsHeader.getType().getType())
-        return false
-    }
-    logger.debug(SCRIPT_NAME + "Found valid type!")
-
-    def iatClaim = jwsHeader.getCustomParam(IAT_CRIT_CLAIM)
-    if (iatClaim == null) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - required claim: " + IAT_CRIT_CLAIM + " not found")
-        return false
-    }
-
-    def iatTimestamp = Instant.ofEpochSecond(Long.valueOf(iatClaim))
-    def skewedIatTimestamp = iatTimestamp.minus(clockSkewAllowance)
-    def currentTimestamp = Instant.now()
-    if (skewedIatTimestamp.isAfter(currentTimestamp)) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - claim: " + IAT_CRIT_CLAIM +
-                             " must be in the past, value: " + iatTimestamp.getEpochSecond() +
-                             ", current time: " + currentTimestamp.getEpochSecond() +
-                             ", clockSkewAllowance: " + clockSkewAllowance)
-        return false
-    }
-    logger.debug(SCRIPT_NAME + "Found valid iat!")
-
-    if (jwsHeader.getCustomParam(TAN_CRIT_CLAIM) == null
-            || !jwsHeader.getCustomParam(TAN_CRIT_CLAIM).equals(routeArgTrustedAnchor)) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Invalid trusted anchor found: " +
-                             jwsHeader.getCustomParam(TAN_CRIT_CLAIM) + " expected: " + routeArgTrustedAnchor)
-        return false
-    }
-    logger.debug(SCRIPT_NAME + "Found valid tan!")
-
-
-    def issCritClaim = jwsHeader.getCustomParam(ISS_CRIT_CLAIM)
-    return validateIssCritClaim(issCritClaim)
-}
-
-// Validate the "http://openbanking.org.uk/iss" claim
-//
-// OB Spec:
-// If the issuer is using a signing key lodged with a Trust Anchor, the value is defined by the Trust Anchor and
-// should uniquely identify the PSP.
-// For example, when using the Open Banking Directory, the value must be:
-// - When issued by a TPP, of the form {{org-id}}/{{software-statement-id}},
-def validateIssCritClaim(issCritClaim) {
-    if (issCritClaim == null) {
-        logger.error(SCRIPT_NAME + "Could not validate detached JWT - Missing required header value: " + ISS_CRIT_CLAIM)
-        return false
-    }
-    def apiClient = apiClient()
-    def orgId = apiClient.getOrganisation().id()
-    def softwareStatementId = apiClient.getSoftwareId()
-    def expectedIssuerValue = orgId + "/" + softwareStatementId
-    if (expectedIssuerValue != issCritClaim) {
-        logger.error(SCRIPT_NAME + "Invalid " + ISS_CRIT_CLAIM +
-                             " value, expected: " + expectedIssuerValue +
-                             " actual: " + issCritClaim)
-        return false
-    }
-    logger.debug(SCRIPT_NAME + ISS_CRIT_CLAIM + " is valid")
-    return true
-}
-
-def apiClient() {
-    def apiClientFapiContext = context.asContext(ApiClientFapiContext.class)
-    def apiClientOpt = apiClientFapiContext.getApiClient()
-    if (apiClientOpt.isEmpty()) {
-        logger.error("apiClient must be identified before this script - it should exist in the ApiClientFapiContext")
-        throw new IllegalStateException("Route is configured incorrectly, " + SCRIPT_NAME +
-                                                "requires apiClient context attribute")
-    }
-    return apiClientOpt.get()
-}
-
-/**
- * Builds a Set of expected critical claims. These must be ignored during the signature validation, and validated
- * separately.
- * @return Set of crit claims
- */
-def getCriticalHeaderParameters() {
-    Set<String> criticalParameters = new HashSet<String>()
-    criticalParameters.add(IAT_CRIT_CLAIM)
-    criticalParameters.add(ISS_CRIT_CLAIM)
-    criticalParameters.add(TAN_CRIT_CLAIM)
-    return criticalParameters
-}
-
 

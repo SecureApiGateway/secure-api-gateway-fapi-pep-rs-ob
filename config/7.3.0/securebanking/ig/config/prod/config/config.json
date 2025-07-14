@@ -1,7 +1,7 @@
 {
   "properties": {
     "jwtValidation": {
-      "clockSkewAllowanceDuration": "5s"
+      "clockSkewAllowanceDuration": "5 seconds"
     },
     "urls": {
       "idmBaseUri": "https://&{identity.platform.fqdn}/openidm",

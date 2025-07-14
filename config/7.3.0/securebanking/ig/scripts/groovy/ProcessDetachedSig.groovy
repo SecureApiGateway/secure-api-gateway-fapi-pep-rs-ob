@@ -13,6 +13,8 @@ import org.forgerock.json.jose.common.*
 import org.forgerock.json.jose.jwk.store.JwksStore.*
 import org.forgerock.openig.fapi.apiclient.*
 import org.forgerock.openig.tools.jwt.validation.*
+import static org.forgerock.openig.tools.jwt.validation.Result.failure
+import static org.forgerock.openig.tools.jwt.validation.Result.success
 import org.forgerock.secrets.jwkset.*
 import org.forgerock.secrets.*
 import com.forgerock.securebanking.uk.gateway.jwks.*
@@ -158,9 +160,9 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
 }
 
 private Promise<Void, NeverThrowsException> validateJwt(final SignedJwt signedJwt,
-                                                                       final JwkSetSecretStore jwkSetSecretStore) {
+                                                        final JwkSetSecretStore jwkSetSecretStore) {
     return buildJwtValidator(jwkSetSecretStore).report(signedJwt)
-                                               .then(handleValidationResult(signedJwt),
+                                               .then(handleValidationResult(),
                                                      neverThrown());
 }
 
@@ -168,7 +170,7 @@ private JwtValidator buildJwtValidator(jwkSetSecretStore) {
     // XXX: This could be partially built on construction, and just add the call specific parts and #build() here
     // - e.g. the `hasValidSignature`, "iat", "exp", "tan"... are request specific.
     return JwtValidator.builder(clock)
-                       .withSkewAllowance(routeArgClockSkewAllowance)
+                       .withSkewAllowance(clockSkewAllowance)
                        .jwt(hasSupportedSigningAlgorithm())
                        .jwt(hasValidSignature(new SecretsProvider(clock).setDefaultStores(jwkSetSecretStore),
                                               signingPurpose()))
@@ -182,7 +184,8 @@ private JwtValidator buildJwtValidator(jwkSetSecretStore) {
 private JwtConstraint hasSupportedSigningAlgorithm() {
     return { context ->
         {
-            if (SUPPORTED_SIGNING_ALGORITHMS.contains(context.getJwt().getHeader().getAlgorithm())) {
+            def alg = context.getJwt().getHeader().getAlgorithmString()
+            if (SUPPORTED_SIGNING_ALGORITHMS.contains(alg)) {
                 return success().asPromise();
             }
             return failure(new Violation("Expected JWT to be signed using one of the supported 'alg' values: "
@@ -232,7 +235,7 @@ private JwtConstraint validateType() {
             if (type == null) {
                 return success().asPromise();
             }
-            if (type.equals("JOSE")) {
+            if ("JOSE".equals(type.name())) {
                 return success().asPromise()
             }
             return failure(new Violation("Expected value for type to be to 'JOSE'")).asPromise()
@@ -249,7 +252,8 @@ private JwtConstraint validateIat() {
                         .error(SCRIPT_NAME + "Could not validate detached JWT - required claim: " + IAT_CRIT_CLAIM +
                                        " " +
                                        "not found")
-                return false
+                return failure(new Violation(format("Expected value for '%s' to have a value", IAT_CRIT_CLAIM)))
+                        .asPromise()
             }
 
             def iatTimestamp = Instant.ofEpochSecond(Long.valueOf(iatClaim))
@@ -260,9 +264,10 @@ private JwtConstraint validateIat() {
                                      " must be in the past, value: " + iatTimestamp.getEpochSecond() +
                                      ", current time: " + currentTimestamp.getEpochSecond() +
                                      ", clockSkewAllowance: " + clockSkewAllowance)
-                return false
-            }
+                return failure(new Violation(format("Expected value for '%s' to be in the past", IAT_CRIT_CLAIM)))
+                        .asPromise()            }
             logger.debug(SCRIPT_NAME + "Found valid iat!")
+            return success().asPromise()
         }
     } as JwtConstraint
 }

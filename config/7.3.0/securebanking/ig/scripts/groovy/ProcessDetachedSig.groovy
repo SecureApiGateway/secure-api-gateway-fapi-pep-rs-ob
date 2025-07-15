@@ -148,6 +148,8 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     // Validate the signed-JWT (against the "sig" keys).
     String[] jwtElements = detachedSignatureValue.split("\\.")
     String requestPayload = request.entity.getString()
+    logger.debug("XXX: requestPayload: {}", requestPayload)
+
     String rebuiltJwt
     if ([ 'v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3' ].contains(apiVersion)) {
         rebuiltJwt = jwtElements[ 0 ] + "." + requestPayload + "." + jwtElements[ 2 ]
@@ -158,6 +160,8 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
                 Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." +
                 jwtElements[ 2 ]
     }
+
+    logger.debug("XXX: apiVersion '{}', signedJwt: {}", apiVersion, rebuiltJwt)
     def signedJwt = jwtReconstruction.reconstructJwt(rebuiltJwt, SignedJwt.class)
     return apiClient().getJwkSetSecretStore()
                       .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))

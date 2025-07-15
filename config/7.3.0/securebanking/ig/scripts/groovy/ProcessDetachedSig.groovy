@@ -1,31 +1,34 @@
 import static java.lang.String.format
+import static java.util.Objects.requireNonNull
+import static org.forgerock.http.protocol.Response.newResponsePromise
+import static org.forgerock.json.JsonValue.field
 import static org.forgerock.json.JsonValue.json
 import static org.forgerock.json.JsonValue.object
-import static org.forgerock.json.JsonValue.field
-
-import groovy.json.JsonSlurper
-import org.forgerock.http.protocol.*
-import org.forgerock.json.JsonValueFunctions.*
-import org.forgerock.json.JsonValue
-import org.forgerock.json.jose.*
-import org.forgerock.json.jose.jws.*
-import org.forgerock.json.jose.common.*
-import org.forgerock.json.jose.jwk.store.JwksStore.*
-import org.forgerock.openig.fapi.apiclient.*
-import org.forgerock.openig.tools.jwt.validation.*
+import static org.forgerock.json.jose.utils.JoseSecretConstraints.allowedAlgorithm
+import static org.forgerock.openig.fapi.jwks.JwkSetServicePurposes.signingPurpose
 import static org.forgerock.openig.tools.jwt.validation.Result.failure
 import static org.forgerock.openig.tools.jwt.validation.Result.success
-import org.forgerock.secrets.jwkset.*
-import org.forgerock.secrets.*
-import com.forgerock.securebanking.uk.gateway.jwks.*
-import org.forgerock.util.time.Duration
+import static org.forgerock.util.promise.NeverThrowsException.neverThrown
 
-import java.text.ParseException
 import java.time.Instant
 
-import static org.forgerock.http.protocol.Response.newResponsePromise
-import static org.forgerock.openig.fapi.jwks.JwkSetServicePurposes.signingPurpose;
-import static org.forgerock.util.promise.NeverThrowsException.neverThrown;
+import org.forgerock.json.jose.common.JwtReconstruction
+import org.forgerock.json.jose.jws.JwsAlgorithm
+import org.forgerock.json.jose.jws.SignedJwt
+import org.forgerock.json.jose.jws.SigningManager
+import org.forgerock.openig.fapi.apiclient.ApiClient
+import org.forgerock.openig.fapi.apiclient.ApiClientFapiContext
+import org.forgerock.openig.tools.jwt.validation.JwtConstraint
+import org.forgerock.openig.tools.jwt.validation.JwtValidator
+import org.forgerock.openig.tools.jwt.validation.JwtValidatorResult
+import org.forgerock.openig.tools.jwt.validation.Violation
+import org.forgerock.secrets.Purpose
+import org.forgerock.secrets.SecretsProvider
+import org.forgerock.secrets.jwkset.JwkSetSecretStore
+import org.forgerock.secrets.keys.VerificationKey
+import org.forgerock.util.time.Duration
+
+import groovy.json.JsonSlurper
 
 /*
  * JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
@@ -73,6 +76,8 @@ void scriptInit(Request request) {
  * @return A promise containing a response
  */
 Promise<Response, NeverThrowsException> filter(Context context, Request request, Handler next) {
+    validateArgs()
+
     // routeArgClockSkewAllowance is a org.forgerock.util.time.Duration
     // (see docs: https://backstage.forgerock.com/docs/ig/2024.3/reference/preface.html#definition-duration)
     clockSkewAllowance = Duration.duration(routeArgClockSkewAllowance).toJavaDuration()
@@ -167,18 +172,43 @@ private Promise<Void, NeverThrowsException> validateJwt(final SignedJwt signedJw
 }
 
 private JwtValidator buildJwtValidator(jwkSetSecretStore) {
-    // XXX: This could be partially built on construction, and just add the call specific parts and #build() here
-    // - e.g. the `hasValidSignature`, "iat", "exp", "tan"... are request specific.
     return JwtValidator.builder(clock)
                        .withSkewAllowance(clockSkewAllowance)
                        .jwt(hasSupportedSigningAlgorithm())
-                       .jwt(hasValidSignature(new SecretsProvider(clock).setDefaultStores(jwkSetSecretStore),
-                                              signingPurpose()))
+                       .jwt(hasValidSignatureWithNamedKidOnly(jwkSetSecretStore))
                        .jwt(validateIss())
                        .jwt(validateType())
                        .jwt(validateIat())
                        .jwt(validateTan())
                        .build()
+}
+
+private JwtConstraint hasValidSignatureWithNamedKidOnly(final JwkSetSecretStore jwkSetSecretStore) {
+    // IG Constraints#hasValidSignature tests with named or falls back valid secrets, but for FAPI we want to
+    // test onlg for the kid supplied in the JwsHeader
+    SecretsProvider secretsProvider = new SecretsProvider(clock).setDefaultStores(jwkSetSecretStore)
+    SigningManager signingManager = new SigningManager(secretsProvider)
+
+    return { context ->
+        if (context.getJwt() instanceof SignedJwt) {
+            SignedJwt signedJwt = context.getJwt()
+            JwsAlgorithm algorithm = signedJwt.getHeader().getAlgorithm()
+            Purpose<VerificationKey> constrainedPurpose = signingPurpose().withConstraints(allowedAlgorithm(algorithm))
+            String keyId = signedJwt.getHeader().getKeyId()
+            return secretsProvider.getNamedSecret(requireNonNull(constrainedPurpose), keyId)
+                                  .then(signingManager::newVerificationHandler)
+                                  .then(signedJwt::verify)
+                                  .then({result ->
+                                      if (result) {
+                                          return success()
+                                      }
+                                      return failure(new Violation("Expected JWT to have a valid signature"))
+                                  })
+                                  .thenCatch(nsse -> failure(new Violation("Expected JWT to have a valid signature"))
+)
+        }
+        return failure(new Violation("Expected JWT to have a valid signature")).asPromise()
+    }
 }
 
 private JwtConstraint hasSupportedSigningAlgorithm() {
@@ -325,3 +355,9 @@ Promise<Response, NeverThrowsException> fail(Status status, String message) {
     return newResponsePromise(response)
 }
 
+void validateArgs() {
+    requireNonNull(clock)
+    requireNonNull(routeArgHeaderName)
+    requireNonNull(routeArgTrustedAnchor)
+    requireNonNull(routeArgClockSkewAllowance)
+}

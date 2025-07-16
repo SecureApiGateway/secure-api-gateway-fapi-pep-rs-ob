@@ -55,24 +55,6 @@
       }
     },
     {
-      "name": "fapiAuditService",
-      "type": "AuditService",
-      "config": {
-        "eventHandlers": [
-          {
-            "class": "org.forgerock.audit.handlers.json.stdout.JsonStdoutAuditEventHandler",
-            "config": {
-              "name": "jsonstdout",
-              "elasticsearchCompatible": false,
-              "topics": [
-                "fapi"
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "ReverseProxyHandler",
       "type": "ReverseProxyHandler",
       "capture": [
@@ -88,36 +70,25 @@
       "type": "JwtSession"
     },
     {
-      "name": "FAPIRSFilterChain",
+      "name": "SBATFapiInteractionFilterChain",
       "type": "ChainOfFilters",
+      "comment": "This filter chain will set the x-fapi-interaction-id (if not provided in the request), and also set the transaction context to the x-fapi-interaction-id value. This means that if the 'TransactionIdOutboundFilter' is specified on any handlers used by the chain the x-fapi-interaction-id value will be passed onward in the X-ForgeRock-TransactionId header",
       "config": {
         "filters": [
           {
-            "comment": "Dev filter to log access to the route",
-            "name": "RouteAccessLog",
-            "type": "ScriptableFilter",
-            "config": {
-              "type": "application/x-groovy",
-              "source": [
-                "import org.forgerock.openig.handler.router.RoutingContext",
-                "import org.forgerock.http.protocol.Header",
-                "import static org.forgerock.json.JsonValue.json",
-                "import static org.forgerock.json.JsonValue.object",
-                "import static org.forgerock.json.JsonValue.field",
-                "JsonValue debug = json(object(",
-                "    field(\"routeId\", context.asContext(RoutingContext.class).getRouteId()), ",
-                "    field(\"URI\", request.getUri()), ",
-                "    field(\"referrer\", request.getHeaders().getFirst(\"Referrer\")), ",
-                "    field(\"x-fapi-interaction-id\", request.getHeaders().getFirst(\"x-fapi-interaction-id\"))))",
-                "logger.debug(\"[RouteAccessLog] ENTER: {}\", debug)",
-                "next.handle(context, request)",
-                "    .then({ response ->",
-                "      logger.debug(\"[RouteAccessLog] EXIT: routeId={}\", context.asContext(RoutingContext.class).getRouteId())",
-                "      //response.getEntity().setJson(debug)",
-                "      return response",
-                "  })"
-              ]
-            }
+            "comment": "Add x-fapi-interaction-id header if one was not present in the request",
+            "name": "FapiInteractionIdFilter",
+            "type": "FapiInteractionIdFilter"
+          },
+          {
+            "name": "FapiInteractionIdTracingFilter",
+            "type": "FapiInteractionIdTracingFilter",
+            "comment": "Copy the x-fapi-interaction-id header to TransactionIdContext"
+          },
+          {
+            "comment": "Log any unhandled exceptions, installed after the FapiTransactionIdFilter so that the txId being logged is set to the x-fapi-interaction-id",
+            "name": "SapiLogAttachedExceptionFilter",
+            "type": "SapiLogAttachedExceptionFilter"
           }
         ]
       }
@@ -196,11 +167,37 @@
     },
     {
       "name": "JwkSetService",
-      "type": "CachingJwkSetService",
+      "type": "CaffeineCachingJwkSetService",
       "config": {
         "handler": "OBClientHandler",
         "maxCacheEntries": 500,
         "expireAfterWriteDuration": "30 minutes"
+      }
+    },
+    {
+      "name": "ValidateApiClientMtlsCertChain",
+      "type": "ChainOfFilters",
+      "comment": "This filter chain validates the ApiClient's MTLS cert using the Trusted Directory, it first fetches all of the resources it needs to perform the validation",
+      "config": {
+        "filters": [
+          {
+            "comment": "Add ApiClient data to the context attributes.apiClient",
+            "name": "FetchApiClientFilter",
+            "type": "FetchApiClientFilter",
+            "config": {
+              "apiClientService": "IdmApiClientService"
+            }
+          },
+          {
+            "comment": "Validate the MTLS transport cert",
+            "name": "TransportCertValidationFilter",
+            "type": "TransportCertValidationFilter",
+            "config": {
+              "certificateRetriever": "HeaderCertificateRetriever",
+              "transportCertValidator": "TransportCertValidator"
+            }
+          }
+        ]
       }
     },
     {
@@ -215,6 +212,13 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "TransportCertValidator",
+      "type": "DefaultTransportCertValidator",
+      "config": {
+        "validKeyUse": "tls"
       }
     },
     {
@@ -241,6 +245,17 @@
         "signingKeyId": "jwt.signer",
         "kid": "&{ig.ob.aspsp.signing.kid}",
         "secretsProvider": "SecretsProvider-ASPSP"
+      }
+    },
+    {
+      "name": "ContextCertificateRetriever",
+      "type": "ContextCertificateRetriever"
+    },
+    {
+      "name": "HeaderCertificateRetriever",
+      "type": "HeaderCertificateRetriever",
+      "config": {
+        "certificateHeaderName": "ssl-client-cert"
       }
     },
     {

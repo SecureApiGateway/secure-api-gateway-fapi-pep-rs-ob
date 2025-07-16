@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ARG base_image=gcr.io/forgerock-io/ig:2025.6.1-fapi
+ARG base_image=gcr.io/forgerock-io/ig:2024.11.0
 FROM ${base_image}
 # Switching back to forgerock user, app will run as this
 USER forgerock
@@ -31,8 +31,7 @@ COPY --chown=forgerock:root 7.3.0/ig/lib /opt/ig/lib
 RUN rm -f /opt/ig/lib/bcprov-jdk18on-1.74.jar
 
 # Check that the IG jar exists before continuing
-RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-[0-9.]*.jar
-RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-ob-[0-9.]*.jar
+RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-*.jar
 
 COPY --chown=forgerock:root 7.3.0/ig/config /var/ig/config/
 COPY --chown=forgerock:root 7.3.0/ig/scripts /var/ig/scripts/

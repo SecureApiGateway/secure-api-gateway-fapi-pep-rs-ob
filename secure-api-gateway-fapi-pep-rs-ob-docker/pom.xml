@@ -45,6 +45,20 @@
             <version>${bouncy-castle.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.forgerock.openig</groupId>
+            <artifactId>openig-fapi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.errorprone</groupId>
+                    <artifactId>error_prone_annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
@@ -58,11 +72,6 @@
             <groupId>com.forgerock.sapi.gateway</groupId>
             <artifactId>secure-api-gateway-ig-extensions</artifactId>
             <version>${secure-api-gateway.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgerock.sapi.gateway</groupId>
-            <artifactId>secure-api-gateway-ig-extensions-ob</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

@@ -93,6 +93,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     } else {
         return fail(Status.BAD_REQUEST, "Can't parse API version for inbound request")
     }
+    logger.debug("XXX: apiVersion '{}', signedJwt: not-yet-available", apiVersion)
 
     logger.debug(SCRIPT_NAME + "Building JWT from detached header")
     // JWS detached signature pattern: 'JWSHeader..JWSSignature' with no JWS payload
@@ -138,6 +139,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
                 return getSignatureValidationErrorResponse()
             } else {
                 String requestPayload = request.entity.getString()
+                logger.debug("XXX: requestPayload: {}", requestPayload)
                 try {
                     logger.debug(SCRIPT_NAME + "Processing Unencoded payload request")
                     if (!validateUnencodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
@@ -159,6 +161,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
             }
 
             String requestPayload = request.entity.getString()
+            logger.debug("XXX: requestPayload: {}", requestPayload)
             try {
                 logger.debug(SCRIPT_NAME + "Standard base64 encoded payload for detached sig")
                 if (!validateEncodedPayload(detachedSignatureValue, jwkSet, requestPayload)) {
@@ -204,8 +207,12 @@ Promise<Response, NeverThrowsException> fail(Status status, String message) {
  */
 def validateUnencodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
     Payload payload = new Payload(requestPayload);
+    logger.debug("YYY: payload: {}", payload)
+    logger.debug("YYY: detachedSignatureValue: {}", detachedSignatureValue)
+
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue, payload)
     JWSHeader jwsHeader = parsedJWSObject.getHeader()
+    logger.debug("YYY: parsedJWSObject: {}", parsedJWSObject)
 
     boolean criticalParamsValid = validateCriticalParameters(jwsHeader)
     logger.debug(SCRIPT_NAME + "Critical headers valid: " + criticalParamsValid)
@@ -234,6 +241,8 @@ def validateUnencodedPayload(String detachedSignatureValue, JWKSet jwkSet, Strin
  */
 def validateEncodedPayload(String detachedSignatureValue, JWKSet jwkSet, String requestPayload) {
     JWSObject parsedJWSObject = JWSObject.parse(detachedSignatureValue)
+    logger.debug("YYY: detachedSignatureValue: {}", detachedSignatureValue)
+    logger.debug("YYY: parsedJWSObject: {}", parsedJWSObject)
     JWSHeader jwsHeader = parsedJWSObject.getHeader()
     var rsaPublicKey = getRSAKeyFromJwks(jwkSet, jwsHeader)
     return isJwsSignatureValid(detachedSignatureValue, rsaPublicKey, requestPayload, jwsHeader)
@@ -281,6 +290,8 @@ def isJwsSignatureValid(String detachedSignatureValue,
     String rebuiltJwt = jwtElements[0] + "." +
             Base64.getUrlEncoder().withoutPadding().encodeToString(requestPayload.getBytes()) + "." +
             jwtElements[2]
+
+    logger.debug("XXX: apiVersion: ignore, signedJwt: {}", rebuiltJwt)
 
     logger.debug(SCRIPT_NAME + "JWT rebuilt using the request body: " + rebuiltJwt)
     JWSObject jwsObject = JWSObject.parse(rebuiltJwt)

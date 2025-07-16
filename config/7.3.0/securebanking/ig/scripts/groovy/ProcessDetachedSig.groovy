@@ -1,10 +1,8 @@
 import static java.lang.String.format
 import static java.util.Objects.requireNonNull
-import static org.forgerock.http.protocol.Response.newResponsePromise
-import static org.forgerock.json.JsonValue.field
-import static org.forgerock.json.JsonValue.json
-import static org.forgerock.json.JsonValue.object
 import static org.forgerock.json.jose.utils.JoseSecretConstraints.allowedAlgorithm
+import static org.forgerock.openig.fapi.dcr.common.ErrorCode.UNKNOWN
+import static org.forgerock.openig.fapi.error.ErrorResponseUtils.errorResponseAsync
 import static org.forgerock.openig.fapi.jwks.JwkSetServicePurposes.signingPurpose
 import static org.forgerock.openig.tools.jwt.validation.Result.failure
 import static org.forgerock.openig.tools.jwt.validation.Result.success
@@ -50,6 +48,29 @@ IAT_CRIT_CLAIM = "http://openbanking.org.uk/iat"
 ISS_CRIT_CLAIM = "http://openbanking.org.uk/iss"
 TAN_CRIT_CLAIM = "http://openbanking.org.uk/tan"
 SUPPORTED_SIGNING_ALGORITHMS = List.of("PS256")
+
+/**
+ * ProcessDetachedSig-specific Exception.
+ */
+class ProcessDetachedSigException extends Exception {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private String errorDescription
+
+    /**
+     * Constructs a new {@link ProcessDetachedSigException}.
+     * @param errorDescription the error description
+     * @param cause the cause
+     */
+    ProcessDetachedSigException(final String errorDescription) {
+        this.errorDescription = requireNonNull(errorDescription)
+    }
+
+    String getErrorDescription() {
+        return errorDescription;
+    }
+}
 
 scriptInit(request)
 filter(context, request, next)
@@ -130,18 +151,15 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     if ([ 'v3.0', 'v3.1.0', 'v3.1.1', 'v3.1.2', 'v3.1.3' ].contains(apiVersion)) {
         //Processing pre v3.1.4 requests
         if (jwsHeaderDataStructure.b64 == null) {
-            message = "B64 header must be presented in JWT header before v3.1.3"
-            logger.error(SCRIPT_NAME + message)
-            return getSignatureValidationErrorResponse()
+            logger.error(SCRIPT_NAME + "B64 header must be presented in JWT header before v3.1.3")
+            return fail(Status.UNAUTHORIZED, "Signature validation failed")
         } else if (jwsHeaderDataStructure.b64 != false) {
-            message = "B64 header must be false in JWT header before v3.1.3"
-            logger.error(SCRIPT_NAME + message)
-            return getSignatureValidationErrorResponse()
+            logger.error(SCRIPT_NAME + "B64 header must be false in JWT header before v3.1.3")
+            return fail(Status.UNAUTHORIZED, "Signature validation failed")
         }
         //Processing post v3.1.4 requests
     } else if (jwsHeaderDataStructure.b64 != null) {
-        message = "B64 header not permitted in JWT header after v3.1.3"
-        logger.error(SCRIPT_NAME + message)
+        logger.error(SCRIPT_NAME + "B64 header not permitted in JWT header after v3.1.3")
         return fail(Status.UNAUTHORIZED, "Signature validation failed")
     }
 
@@ -165,14 +183,15 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     def signedJwt = jwtReconstruction.reconstructJwt(rebuiltJwt, SignedJwt.class)
     return apiClient().getJwkSetSecretStore()
                       .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))
-                      .thenAsync(ignored -> next.handle(context, request))
+                      .thenAsync(ignored -> next.handle(context, request),
+                                 sigException -> fail(Status.UNAUTHORIZED, sigException.getErrorDescription()))
 }
 
-private Promise<Void, NeverThrowsException> validateJwt(final SignedJwt signedJwt,
-                                                        final JwkSetSecretStore jwkSetSecretStore) {
+private Promise<Void, ProcessDetachedSigException> validateJwt(final SignedJwt signedJwt,
+                                                               final JwkSetSecretStore jwkSetSecretStore) {
     return buildJwtValidator(jwkSetSecretStore).report(signedJwt)
                                                .then(handleValidationResult(),
-                                                     neverThrown());
+                                                     neverThrown())
 }
 
 private JwtValidator buildJwtValidator(jwkSetSecretStore) {
@@ -206,13 +225,17 @@ private JwtConstraint hasValidSignatureWithNamedKidOnly(final JwkSetSecretStore 
                                       if (result) {
                                           return success()
                                       }
+                                      logger.error(SCRIPT_NAME + "SignedJwt failed verification")
                                       return failure(new Violation("Expected JWT to have a valid signature"))
                                   })
-                                  .thenCatch(nsse -> failure(new Violation("Expected JWT to have a valid signature"))
-)
+                                  .thenCatch({nsse ->
+                                      logger.error(SCRIPT_NAME + "Named secret not found for keyId {}", keyId, nsse)
+                                      failure(new Violation("Expected JWT to have a valid signature"))
+                                  })
         }
+        logger.error(SCRIPT_NAME + "Supplied JWT is not a SignedJWT")
         return failure(new Violation("Expected JWT to have a valid signature")).asPromise()
-    }
+    } as JwtConstraint
 }
 
 private JwtConstraint hasSupportedSigningAlgorithm() {
@@ -321,17 +344,16 @@ private JwtConstraint validateTan() {
     } as JwtConstraint
 }
 
-private Function<JwtValidatorResult, Void, NeverThrowsException> handleValidationResult() {
-    return { validationResult ->
+private Function<JwtValidatorResult, Void, ProcessDetachedSigException> handleValidationResult() {
+    return { result ->
         {
-            if (!validationResult.isValid()) {
-                logger.debug("Request JWT is invalid - constraint violations: {}",
-                             validationResult.getViolationsAsString())
-                throw new IllegalStateException("Registration Request JWT is invalid: "
-                                                        + validationResult.getViolationsAsString());
+            if (!result.isValid()) {
+                logger.debug("Request JWT is invalid - constraint violations: {}", result.getViolationsAsString())
+                throw new ProcessDetachedSigException("Registration Request JWT is invalid: "
+                                                              + result.getViolationsAsString());
             }
         }
-    } as Function<JwtValidatorResult, Void, NeverThrowsException>
+    } as Function<JwtValidatorResult, Void, ProcessDetachedSigException>
 }
 
 ApiClient apiClient() {
@@ -353,10 +375,7 @@ ApiClient apiClient() {
  */
 Promise<Response, NeverThrowsException> fail(Status status, String message) {
     logger.error(SCRIPT_NAME + message)
-    response = new Response(status)
-    response.headers[ 'Content-Type' ] = "application/json"
-    response.getEntity().setJson(json(object(field("error", message))))
-    return newResponsePromise(response)
+    return errorResponseAsync(status, UNKNOWN.getCode(), message)
 }
 
 void validateArgs() {

@@ -102,6 +102,7 @@
             "type": "application/x-groovy",
             "file": "ProcessDetachedSig.groovy",
             "args": {
+              "clock": "${heap['Clock']}",
               "routeArgHeaderName": "x-jws-signature",
               "routeArgTrustedAnchor": "openbanking.org.uk",
               "routeArgClockSkewAllowance": "&{jwtValidation.clockSkewAllowanceDuration}"
@@ -138,7 +139,7 @@
             "args": {
               "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
-              "consentIdLocator": "contexts.attributes.openbanking_intent_id",
+              "consentIdLocator": "contexts.attributes.attributes.openbanking_intent_id",
               "role": "PISP",
               "event": "EXEC"
             }

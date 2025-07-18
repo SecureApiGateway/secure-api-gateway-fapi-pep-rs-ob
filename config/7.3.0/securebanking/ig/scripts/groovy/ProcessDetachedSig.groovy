@@ -10,7 +10,11 @@ import static org.forgerock.util.promise.NeverThrowsException.neverThrown
 
 import java.time.Instant
 
-import org.forgerock.json.jose.common.JwtReconstruction
+// OPENI-9436: Use local reimplementation of JwtReconstruction to handle XML payloads
+// import org.forgerock.json.jose.common.JwtReconstruction
+import com.forgerock.sapi.gateway.jwt.JwtReconstruction
+
+import org.forgerock.json.jose.exceptions.InvalidJwtException
 import org.forgerock.json.jose.jws.JwsAlgorithm
 import org.forgerock.json.jose.jws.SignedJwt
 import org.forgerock.json.jose.jws.SigningManager
@@ -180,11 +184,22 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     }
 
     logger.debug("XXX: apiVersion '{}', signedJwt: {}", apiVersion, rebuiltJwt)
-    def signedJwt = jwtReconstruction.reconstructJwt(rebuiltJwt, SignedJwt.class)
+    SignedJwt signedJwt = reconstructJwt(rebuiltJwt, SignedJwt.class)
     return apiClient().getJwkSetSecretStore()
                       .thenAsync(jwkSetSecretStore -> validateJwt(signedJwt, jwkSetSecretStore))
                       .thenAsync(ignored -> next.handle(context, request),
                                  sigException -> fail(Status.UNAUTHORIZED, sigException.getErrorDescription()))
+}
+
+private SignedJwt reconstructJwt(String jwtString, Class jwtClass) {
+    try {
+        // First try reconstructing JSON-based JWT
+        return jwtReconstruction.reconstructJwtFromJsonClaims(jwtString, jwtClass);
+    } catch (InvalidJwtException ignored) {
+        // Presuming a JSON failure, let's assume XML, and manage through the basic String representation
+        logger.debug("Failed to parse JSON-based JWT payload, assuming XML and trying string-based payload")
+        return jwtReconstruction.reconstructJwtFromString(jwtString, jwtClass);
+    }
 }
 
 private Promise<Void, ProcessDetachedSigException> validateJwt(final SignedJwt signedJwt,

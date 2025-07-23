@@ -43,7 +43,7 @@ spec:
                 name: ob-secrets
             - configMapRef:
                 name: ob-deployment-config
-          image: sapig-ig
+          image: ig
           imagePullPolicy: Always
           livenessProbe:
             httpGet:

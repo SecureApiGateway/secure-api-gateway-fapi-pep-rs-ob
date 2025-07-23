@@ -3,28 +3,28 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ig
-    app.kubernetes.io/component: ig
-    app.kubernetes.io/instance: ig
+    app: sapig-ig
+    app.kubernetes.io/component: sapig-ig
+    app.kubernetes.io/instance: sapig-ig
     app.kubernetes.io/part-of: pingid
     tier: middle
-  name: ig
+  name: sapig-ig
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ig
-      app.kubernetes.io/component: ig
-      app.kubernetes.io/instance: ig
+      app: sapig-ig
+      app.kubernetes.io/component: sapig-ig
+      app.kubernetes.io/instance: sapig-ig
       app.kubernetes.io/part-of: pingid
       tier: middle
   template:
     metadata:
       labels:
-        app: ig
-        app.kubernetes.io/component: ig
-        app.kubernetes.io/instance: ig
+        app: sapig-ig
+        app.kubernetes.io/component: sapig-ig
+        app.kubernetes.io/instance: sapig-ig
         app.kubernetes.io/part-of: pingid
         tier: middle
     spec:
@@ -43,7 +43,7 @@ spec:
                 name: ob-secrets
             - configMapRef:
                 name: ob-deployment-config
-          image: ig
+          image: sapig-ig
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
@@ -51,7 +51,7 @@ spec:
               port: 8080
             periodSeconds: 30
             timeoutSeconds: 5
-          name: ig
+          name: sapig-ig
           ports:
             - containerPort: 8080
           readinessProbe:

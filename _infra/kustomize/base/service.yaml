@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ig
+  name: sapig-ig
 spec:
   ports:
-    - name: ig
+    - name: sapig-ig
       port: 80
       protocol: TCP
       targetPort: 8080
   selector:
-    app: ig
+    app: sapig-ig
   type: ClusterIP

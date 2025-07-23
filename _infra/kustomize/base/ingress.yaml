@@ -23,28 +23,28 @@ spec:
         paths:
           - backend:
               service:
-                name: ig
+                name: sapig-ig
                 port:
                   number: 80
             path: /am/oauth2/realms/root/realms/alpha/access_token
             pathType: Exact
           - backend:
               service:
-                name: ig
+                name: sapig-ig
                 port:
                   number: 80
             path: /am/oauth2/realms/root/realms/alpha/register
             pathType: Prefix
           - backend:
               service:
-                name: ig
+                name: sapig-ig
                 port:
                   number: 80
             path: /am/oauth2/realms/root/realms/alpha/par
             pathType: Prefix
           - backend:
               service:
-                name: ig
+                name: sapig-ig
                 port:
                   number: 80
             path: /rs/
@@ -76,7 +76,7 @@ spec:
         paths:
           - backend:
               service:
-                name: ig
+                name: sapig-ig
                 port:
                   number: 80
             path: /

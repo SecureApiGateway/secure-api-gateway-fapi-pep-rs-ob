@@ -31,7 +31,7 @@
 
     <properties>
         <legal.path.header>../legal/LICENSE-HEADER.txt</legal.path.header>
-        <logback.version>1.5.16</logback.version>
+        <logback.version>1.5.18</logback.version>
     </properties>
 
     <dependencyManagement>

@@ -1,7 +1,7 @@
 import static java.lang.String.format
 import static java.util.Objects.requireNonNull
 import static org.forgerock.json.jose.utils.JoseSecretConstraints.allowedAlgorithm
-import static org.forgerock.openig.fapi.dcr.common.ErrorCode.UNKNOWN
+import static org.forgerock.openig.fapi.dcr.common.DcrErrorCode.UNKNOWN
 import static org.forgerock.openig.fapi.error.ErrorResponseUtils.errorResponseAsync
 import static org.forgerock.openig.fapi.jwks.JwkSetServicePurposes.signingPurpose
 import static org.forgerock.openig.tools.jwt.validation.Constraints.isInThePast;
@@ -24,7 +24,6 @@ import org.forgerock.json.jose.jws.SignedJwt
 import org.forgerock.json.jose.jws.SigningManager
 import org.forgerock.openig.fapi.apiclient.ApiClient
 import org.forgerock.openig.fapi.apiclient.ApiClientFapiContext
-import org.forgerock.openig.tools.jwt.validation.JwtClaimConstraint
 import org.forgerock.openig.tools.jwt.validation.JwtConstraint
 import org.forgerock.openig.tools.jwt.validation.JwtValidator
 import org.forgerock.openig.tools.jwt.validation.JwtValidatorResult

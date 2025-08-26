@@ -39,47 +39,39 @@ if(Objects.nonNull(uriQuery)){
  - curl -i -v http://ig:80/repo/users?_queryFilter=userName+eq+%22<Cloud platform user name>%22
  - curl -i -v http://ig:80/repo/users/<Cloud platform user ID>
  */
+idmService.send(context, userRequest)
+          .thenAsync(closeSilently(response -> {
+              logger.debug(SCRIPT_NAME + "Back from IDM")
+              def userResponseStatus = userResponse.getStatus();
+              logger.debug(SCRIPT_NAME + " status {}", userResponseStatus)
+              if (userResponseStatus != Status.OK) {
+                  return errorResponse("User details not found", userResponseStatus)
+              }
+              return response.getEntity()
+                             .getJsonAsync()
+                             .then(json -> {
+                                 if(queryFilter){
+                                     if(json.isEmpty()){
+                                         return errorResponse("User details not found", Status.NOT_FOUND)
+                                     }
+                                     userResponseObject = userResponseContent.getJson().result[0]
+                                 }
+                                 def responseObj = [
+                                         "id": json._id,
+                                         "userName": json.userName,
+                                         "givenName": json.givenName,
+                                         "surname": json.sn,
+                                         "mail": json.mail,
+                                         "accountStatus": json.accountStatus
+                                 ]
 
-http.send(userRequest).then(userResponse -> {
-    userRequest.close()
-    logger.debug(SCRIPT_NAME + "Back from IDM")
+                                 def responseJson = JsonOutput.toJson(responseObj)
+                                 logger.debug(SCRIPT_NAME + "Final JSON " + responseJson)
 
-    def userResponseStatus = userResponse.getStatus();
-    logger.debug(SCRIPT_NAME + " status {}", userResponseStatus)
-
-    if (userResponseStatus != Status.OK) {
-        return errorResponse("User details not found", userResponseStatus)
-    }
-
-    def userResponseContent = userResponse.getEntity()
-
-    logger.debug(SCRIPT_NAME + "response JSON {}", userResponseContent.getJson().result)
-
-    // build response Object
-    def userResponseObject = userResponseContent.getJson()
-    if(queryFilter){
-        if(userResponseContent.getJson().result.isEmpty()){
-            return errorResponse("User details not found", Status.NOT_FOUND)
-        }
-        userResponseObject = userResponseContent.getJson().result[0]
-    }
-
-    def responseObj = [
-            "id": userResponseObject._id,
-            "userName": userResponseObject.userName,
-            "givenName": userResponseObject.givenName,
-            "surname": userResponseObject.sn,
-            "mail": userResponseObject.mail,
-            "accountStatus": userResponseObject.accountStatus
-    ]
-
-    def responseJson = JsonOutput.toJson(responseObj)
-    logger.debug(SCRIPT_NAME + "Final JSON " + responseJson)
-
-    response.entity = responseJson;
-    return response
-
-}).then(response -> { return response })
+                                 response.entity = responseJson;
+                                 return response
+                             });
+          }), neverThrownAsync())
 
 def errorResponse(String message, userResponseStatus) {
     logger.error(SCRIPT_NAME + message)

@@ -207,7 +207,7 @@ private SignedJwt reconstructJwt(String jwtString, Class jwtClass) {
     } catch (InvalidJwtException ignored) {
         // Presuming a JSON failure, let's assume XML, and manage through the basic String representation
         logger.debug("Failed to parse JSON-based JWT payload, assuming XML and trying string-based payload")
-        return jwtReconstruction.reconstructJwtFromString(jwtString, jwtClass);
+        return jwtReconstruction.reconstructJwtFromOctetSequence(jwtString, jwtClass)
     }
 }
 

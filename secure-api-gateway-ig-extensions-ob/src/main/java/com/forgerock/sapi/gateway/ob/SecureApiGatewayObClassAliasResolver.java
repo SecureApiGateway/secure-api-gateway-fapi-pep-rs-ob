@@ -21,6 +21,7 @@ import java.util.Map;
 import org.forgerock.openig.alias.ClassAliasResolver;
 
 import com.forgerock.sapi.gateway.ob.consent.ConsentRequestAccessAuthorisationFilter;
+import com.forgerock.sapi.gateway.ob.consent.RepoApiErrorTransformFilter;
 import com.forgerock.sapi.gateway.ob.jws.signer.CompactSerializationJwsSigner;
 
 public class SecureApiGatewayObClassAliasResolver implements ClassAliasResolver {
@@ -29,6 +30,7 @@ public class SecureApiGatewayObClassAliasResolver implements ClassAliasResolver 
     static {
         ALIASES.put("ConsentRequestAccessAuthorisationFilter", ConsentRequestAccessAuthorisationFilter.class);
         ALIASES.put("CompactSerializationJwsSigner", CompactSerializationJwsSigner.class);
+        ALIASES.put("RepoApiErrorTransformFilter", RepoApiErrorTransformFilter.Heaplet.class);
     }
 
     /**

@@ -71,6 +71,11 @@
               "referer"
             ]
           }
+        },
+        {
+          "name": "RepoApiErrorTransformFilter",
+          "type": "RepoApiErrorTransformFilter",
+          "comment": "Ensure error responses match OAuth2 standard"
         }
       ],
       "handler": "FRReverseProxyHandler"

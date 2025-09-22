@@ -14,7 +14,7 @@ import java.time.Instant
 
 import javax.swing.SpringLayout
 
-// OPENI-9436: Use local reimplementation of JwtReconstruction to handle XML payloads
+// OPENIG-9436: Use local reimplementation of JwtReconstruction to handle XML payloads
 import org.forgerock.json.jose.common.JwtReconstruction
 import com.forgerock.sapi.gateway.jwt.OctetSequenceJwsReconstruction
 
@@ -36,12 +36,12 @@ import org.forgerock.util.time.Duration
 
 import groovy.json.JsonSlurper
 
-/*
- * JWS spec: https://www.rfc-editor.org/rfc/rfc7515#page-7
- */
 /**
- * Subject to waiver for earlier versions as per
- * https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1112670669/W007
+ * Process file payment and consent requests where the data is represented in the request entity (rather than the JWS
+ * payload), and verified using a detached signature in the JWS header.
+ *
+ * Subject to waiver for earlier versions as per spec:
+ * <a href="https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1112670669/W007">Open Banking waiver 007</a>
  *
  * If ASPSPs are still using v3.1.3 or earlier, they must support the parameter b64 to be false,
  * and any TPPs using these ASPSPs must do the same.
@@ -49,6 +49,10 @@ import groovy.json.JsonSlurper
  * If ASPSPs have updated to v3.1.4 or later, they must not include the b64 claim in the header,
  * and any TPPs using these ASPSPs must do the same.
  *
+ * See also: <a href="https://www.rfc-editor.org/rfc/rfc7515#page-7">the JWS spec</a> and
+ * example detached payloads in <a href=
+ * "https://openbankinguk.github.io/read-write-api-site3/v4.0/references/usage-examples/file-payments-usage-examples.html"
+ * >Open Banking Read/ Write API for file payments</a>.
  */
 
 SCRIPT_NAME = null
@@ -192,7 +196,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
                               jwtElements[2]
                   })
                   .then({rebuiltJwt ->
-                      reconstructJwt(rebuiltJwt, SignedJwt.class)
+                      reconstructJwt(rebuiltJwt, SignedJwt.class, contentType)
                   })
                   .thenAsync({signedJwt ->
                       // Validate the payload and verify sig with ApiClient signing key
@@ -201,17 +205,36 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
                                  .thenAsync(ignored -> next.handle(context, request),
                                             sigException -> fail(Status.UNAUTHORIZED,
                                                                  sigException.getErrorDescription()))
-                  })
+                  },
+                             jwtException -> fail(Status.BAD_REQUEST, jwtException.getErrorDescription())
+    )
 }
 
-private SignedJwt reconstructJwt(String jwtString, Class jwtClass) {
-    try {
-        // First try reconstructing JSON-based JWT
-        return jwtReconstruction.reconstructJwt(jwtString, jwtClass);
-    } catch (InvalidJwtException ignored) {
-        // Presuming a JSON failure, let's assume XML, and manage through the basic String representation
-        logger.debug("Failed to parse JSON-based JWT payload, assuming XML and trying octet-sequnce payload")
-        return octetSequenceReconstruction.reconstructJwt(jwtString, jwtClass)
+private SignedJwt reconstructJwt(String jwtString, Class jwtClass, String contentType)
+        throws ProcessDetachedSigException {
+    if (contentType != null) {
+        logger.warn("Document received with unknown content type - assuming 'application/json'")
+    }
+    if (contentType.startsWith("application/json")) {
+        // For JSON document payload, expect JWT claims representation
+        try {
+            return jwtReconstruction.reconstructJwt(jwtString, jwtClass);
+        } catch (InvalidJwtException invalidJwtException) {
+            throw new ProcessDetachedSigException("Failed to parse JSON-based document payload" +
+                                                          " - check supported formats and content type: "
+                                                          + invalidJwtException.getMessage())
+        }
+    } else if (contentType.startsWith("text/xml")) {
+        // For XML document payload, manage through the octet-sequence representation
+        try {
+            return octetSequenceReconstruction.reconstructJwt(jwtString, jwtClass)
+        } catch (InvalidJwtException invalidJwtException) {
+            throw new ProcessDetachedSigException("Failed to parse octet-sequence-based document payload" +
+                                                          " - check supported formats and content type: "
+                                                          + invalidJwtException.getMessage())
+        }
+    } else {
+        logger.warn("Document received with unsupported content type {}", contentType)
     }
 }
 
@@ -385,7 +408,7 @@ ApiClient apiClient() {
  * Report a processing failure.
  * @param status HTTP status
  * @param message error message
- * @return Pomise of a response
+ * @return Promise of a response
  */
 Promise<Response, NeverThrowsException> fail(Status status, String message) {
     logger.error(SCRIPT_NAME + message)

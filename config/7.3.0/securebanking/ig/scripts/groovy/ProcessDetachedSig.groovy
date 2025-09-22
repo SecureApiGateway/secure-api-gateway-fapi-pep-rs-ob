@@ -15,8 +15,8 @@ import java.time.Instant
 import javax.swing.SpringLayout
 
 // OPENI-9436: Use local reimplementation of JwtReconstruction to handle XML payloads
-// import org.forgerock.json.jose.common.JwtReconstruction
-import com.forgerock.sapi.gateway.jwt.JwtReconstruction
+import org.forgerock.json.jose.common.JwtReconstruction
+import com.forgerock.sapi.gateway.jwt.OctetSequenceJwsReconstruction
 
 import org.forgerock.json.jose.exceptions.InvalidJwtException
 import org.forgerock.json.jose.jws.JwsAlgorithm
@@ -94,6 +94,7 @@ void scriptInit(Request request) {
         fapiInteractionId = "No x-fapi-interaction-id"
     }
     jwtReconstruction = new JwtReconstruction().recognizedHeaders(IAT_CRIT_CLAIM, ISS_CRIT_CLAIM, TAN_CRIT_CLAIM)
+    octetSequenceReconstruction = new OctetSequenceJwsReconstruction().recognizedHeaders(IAT_CRIT_CLAIM, ISS_CRIT_CLAIM, TAN_CRIT_CLAIM)
     SCRIPT_NAME = "[ProcessDetachedSig] (" + fapiInteractionId + ") - "
     logger.debug(SCRIPT_NAME + "Running...")
 }
@@ -111,7 +112,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     // routeArgClockSkewAllowance is a org.forgerock.util.time.Duration
     // (see docs: https://backstage.forgerock.com/docs/ig/2024.3/reference/preface.html#definition-duration)
     clockSkewAllowance = Duration.duration(routeArgClockSkewAllowance).toJavaDuration()
-    logger.info(SCRIPT_NAME + "Configured clock skew allowance: " + clockSkewAllowance)
+    logger.debug(SCRIPT_NAME + "Configured clock skew allowance: " + clockSkewAllowance)
 
     def method = request.method
     if (method != "POST") {
@@ -120,14 +121,17 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
         return next.handle(context, request)
     }
 
+    def contentType = request.headers.getFirst(ContentTypeHeader.NAME)
+    logger.debug(SCRIPT_NAME + "request.content-type: {}", (contentType != null ? contentType : "unset"))
+
     // Parse api version from the request path
-    logger.debug(SCRIPT_NAME + "request.uri.path: " + request.uri.path)
+    logger.debug(SCRIPT_NAME + "request.uri.path: {}", request.uri.path)
     String apiVersionRegex = "(v(\\d+.)?(\\d+.)?(\\*|\\d+))"
     def match = (request.uri.path =~ apiVersionRegex)
     def apiVersion = "";
     if (match.find()) {
         apiVersion = match.group(1)
-        logger.debug(SCRIPT_NAME + "API version: " + apiVersion)
+        logger.debug(SCRIPT_NAME + "API version: {}", apiVersion)
     } else {
         return fail(Status.BAD_REQUEST, "Can't parse API version for inbound request")
     }
@@ -154,7 +158,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     // - If claim is present, and is set to false, and API < 3.1.4 then accept and validate as non base64 payload
 
     String jwsHeaderDecoded = new String(jwsHeaderEncoded.decodeBase64Url())
-    logger.debug(SCRIPT_NAME + "Got JWT header: " + jwsHeaderDecoded)
+    logger.debug(SCRIPT_NAME + "Got JWT header: {}", jwsHeaderDecoded)
     def jwsHeaderDataStructure = new JsonSlurper().parseText(jwsHeaderDecoded)
 
     def isApiVersionPre314 = PRE_3_1_4_VERSIONS.contains(apiVersion)
@@ -203,11 +207,11 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
 private SignedJwt reconstructJwt(String jwtString, Class jwtClass) {
     try {
         // First try reconstructing JSON-based JWT
-        return jwtReconstruction.reconstructJwtFromJsonClaims(jwtString, jwtClass);
+        return jwtReconstruction.reconstructJwt(jwtString, jwtClass);
     } catch (InvalidJwtException ignored) {
         // Presuming a JSON failure, let's assume XML, and manage through the basic String representation
-        logger.debug("Failed to parse JSON-based JWT payload, assuming XML and trying string-based payload")
-        return jwtReconstruction.reconstructJwtFromString(jwtString, jwtClass);
+        logger.debug("Failed to parse JSON-based JWT payload, assuming XML and trying octet-sequnce payload")
+        return octetSequenceReconstruction.reconstructJwt(jwtString, jwtClass)
     }
 }
 

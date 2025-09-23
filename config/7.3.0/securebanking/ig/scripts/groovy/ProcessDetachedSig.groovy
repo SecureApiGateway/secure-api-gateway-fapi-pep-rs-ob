@@ -16,7 +16,7 @@ import javax.swing.SpringLayout
 
 // OPENIG-9436: Use local reimplementation of JwtReconstruction to handle XML payloads
 import org.forgerock.json.jose.common.JwtReconstruction
-import com.forgerock.sapi.gateway.jwt.OctetSequenceJwsReconstruction
+import org.forgerock.openig.fapi.jwt.OctetSequenceJwsReconstruction
 
 import org.forgerock.json.jose.exceptions.InvalidJwtException
 import org.forgerock.json.jose.jws.JwsAlgorithm

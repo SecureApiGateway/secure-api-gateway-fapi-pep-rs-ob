@@ -196,7 +196,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
                               jwtElements[2]
                   })
                   .then({rebuiltJwt ->
-                      reconstructJwt(rebuiltJwt, SignedJwt.class, contentType)
+                      reconstructJwt(rebuiltJwt, contentType)
                   })
                   .thenAsync({signedJwt ->
                       // Validate the payload and verify sig with ApiClient signing key
@@ -210,32 +210,32 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
     )
 }
 
-private SignedJwt reconstructJwt(String jwtString, Class jwtClass, String contentType)
+private SignedJwt reconstructJwt(String jwtString, String contentType)
         throws ProcessDetachedSigException {
-    if (contentType != null) {
+    if (contentType == null) {
         logger.warn("Document received with unknown content type - assuming 'application/json'")
     }
-    if (contentType.startsWith("application/json")) {
+    if (contentType == null || contentType.startsWith("application/json")) {
         // For JSON document payload, expect JWT claims representation
         try {
-            return jwtReconstruction.reconstructJwt(jwtString, jwtClass);
+            return jwtReconstruction.reconstructJwt(jwtString, SignedJwt.class);
         } catch (InvalidJwtException invalidJwtException) {
             throw new ProcessDetachedSigException("Failed to parse JSON-based document payload" +
-                                                          " - check supported formats and content type: "
-                                                          + invalidJwtException.getMessage())
+                                                          " - check supported formats and content type: " +
+                                                          invalidJwtException.getMessage())
         }
-    } else if (contentType.startsWith("text/xml")) {
+    }
+    if (contentType.startsWith("text/xml")) {
         // For XML document payload, manage through the octet-sequence representation
         try {
-            return octetSequenceReconstruction.reconstructJwt(jwtString, jwtClass)
+            return octetSequenceReconstruction.reconstructJwt(jwtString)
         } catch (InvalidJwtException invalidJwtException) {
             throw new ProcessDetachedSigException("Failed to parse octet-sequence-based document payload" +
-                                                          " - check supported formats and content type: "
-                                                          + invalidJwtException.getMessage())
+                                                          " - check supported formats and content type: " +
+                                                          invalidJwtException.getMessage())
         }
-    } else {
-        logger.warn("Document received with unsupported content type {}", contentType)
     }
+    logger.warn("Document received with unsupported content type {}", contentType)
 }
 
 private Promise<Void, ProcessDetachedSigException> validateJwt(final SignedJwt signedJwt,

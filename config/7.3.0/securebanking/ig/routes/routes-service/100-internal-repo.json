@@ -28,11 +28,10 @@
                   "type": "ScriptableHandler",
                   "config": {
                     "type": "application/x-groovy",
-                    "clientHandler": "IDMClientHandler",
                     "file": "RepoApiClient.groovy",
                     "args": {
-                      "routeArgObjApiClient": "apiClient",
-                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}"
+                      "routeArgIdmService": "${heap[IdmService]}",
+                      "routeArgObjApiClient": "apiClient"
                     }
                   }
                 }
@@ -47,7 +46,7 @@
                     "clientHandler": "IDMClientHandler",
                     "file": "RepoUser.groovy",
                     "args": {
-                      "routeArgIdmBaseUri": "https://&{identity.platform.fqdn}",
+                      "routeArgIdmService": "${heap[IdmService]}",
                       "routeArgObjUser": "&{user.object}"
                     }
                   }

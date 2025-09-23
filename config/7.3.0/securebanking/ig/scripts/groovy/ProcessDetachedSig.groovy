@@ -212,7 +212,7 @@ Promise<Response, NeverThrowsException> filter(Context context, Request request,
 
 private SignedJwt reconstructJwt(String jwtString, String contentType)
         throws ProcessDetachedSigException {
-    if (contentType != null) {
+    if (contentType == null) {
         logger.warn("Document received with unknown content type - assuming 'application/json'")
     }
     if (contentType == null || contentType.startsWith("application/json")) {

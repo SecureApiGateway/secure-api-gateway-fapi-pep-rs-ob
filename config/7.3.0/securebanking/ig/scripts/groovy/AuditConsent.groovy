@@ -61,5 +61,9 @@ next.handle(context, request).thenOnResult(response -> {
 
     // Send the event
     auditService.handleCreate(context, auditEventRequest("ObConsentTopic", auditEvent))
-    logger.debug(SCRIPT_NAME + "audited event for consentId: " + consentId)
+                .thenOnResultOrException(ignored -> {
+                    logger.debug(SCRIPT_NAME + "Audited event for consentId: {}", consentId)
+                }, e -> {
+                    logger.warn("An error occurred while sending the audit event [{}]", auditEvent, e)
+                })
 })

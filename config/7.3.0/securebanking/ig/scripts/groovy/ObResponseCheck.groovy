@@ -39,9 +39,6 @@ Promise<Response, NeverThrowsException> filter(final Context context,
                                                final Handler next) {
     return next.handle(context, request)
                .thenAsync(response -> {
-                   logger.debug("XXX: response={}", response)
-                   logger.debug("XXX: response.status={}", response.status)
-
                    Status status = response.getStatus()
                    if (status.isSuccessful()) {
                        return newResponsePromise(response)

@@ -1,4 +1,8 @@
-import org.forgerock.http.protocol.*
+import static org.forgerock.http.protocol.Response.newResponsePromise
+
+import static org.forgerock.json.JsonValue.field
+import static org.forgerock.json.JsonValue.json
+import static org.forgerock.json.JsonValue.object
 import com.forgerock.sapi.gateway.rest.HttpHeaderNames
 
 /**
@@ -27,11 +31,9 @@ logger.debug(SCRIPT_NAME + 'Comparing token intent id {} with request intent id 
 if (requestIntentId && accessTokenIntentId == requestIntentId) {
     // Request is valid, allow it to pass
     return next.handle(context, request)
-} else {
-    Response response = new Response(Status.UNAUTHORIZED)
-    String message = 'consentId from the request does not match the openbanking_intent_id claim from the access token'
-    logger.error(SCRIPT_NAME + message)
-    response.headers['Content-Type'] = 'application/json'
-    response.entity = "{ \"error\":\"" + message + "\"}"
-    return response
 }
+String message = 'consentId from the request does not match the openbanking_intent_id claim from the access token'
+logger.error(SCRIPT_NAME + message)
+Response errorResponse = new Response(Status.UNAUTHORIZED)
+        .setEntity(json(object(field("error", message))))
+return newResponsePromise(errorResponse)

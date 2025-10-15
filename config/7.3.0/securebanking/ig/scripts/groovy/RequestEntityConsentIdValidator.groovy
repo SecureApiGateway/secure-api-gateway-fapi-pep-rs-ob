@@ -1,4 +1,8 @@
-import org.forgerock.http.protocol.*
+import static org.forgerock.http.protocol.Response.newResponsePromise
+
+import static org.forgerock.json.JsonValue.field
+import static org.forgerock.json.JsonValue.json
+import static org.forgerock.json.JsonValue.object
 import com.forgerock.sapi.gateway.rest.HttpHeaderNames
 
 /**
@@ -19,19 +23,20 @@ if (!accessTokenIntentId) {
 }
 
 // Get the intent Id from the request body
-def requestIntentId = request.entity.getJson().Data.ConsentId
+return request.entity.getJsonAsync()
+        .then(json -> new JsonValue(json).expect(Map.class))
+        .then(json -> json.get("Data").get("ConsentId").asString())
+        .thenAsync(requestIntentId -> {
+            logger.debug(SCRIPT_NAME + 'Comparing token intent id {} with request intent id {}', accessTokenIntentId, requestIntentId)
+            // Compare the id's and only allow the filter chain to proceed if they exists and they match
+            if (requestIntentId != null && accessTokenIntentId.equals(requestIntentId)) {
+                return next.handle(context, request)
+            }
+            String message = 'consentId from the request does not match the openbanking_intent_id claim from the access token'
+            logger.error(SCRIPT_NAME + message)
+            Response errorResponse = new Response(Status.UNAUTHORIZED)
+                    .setEntity(json(object(field("error", message))))
+            return newResponsePromise(errorResponse)
+        })
 
-logger.debug(SCRIPT_NAME + 'Comparing token intent id {} with request intent id {}', accessTokenIntentId, requestIntentId)
 
-// Compare the id's and only allow the filter chain to proceed if they exists and they match
-if (requestIntentId && accessTokenIntentId == requestIntentId) {
-    // Request is valid, allow it to pass
-    return next.handle(context, request)
-} else {
-    Response response = new Response(Status.UNAUTHORIZED)
-    String message = 'consentId from the request does not match the openbanking_intent_id claim from the access token'
-    logger.error(SCRIPT_NAME + message)
-    response.headers['Content-Type'] = 'application/json'
-    response.entity = "{ \"error\":\"" + message + "\"}"
-    return response
-}

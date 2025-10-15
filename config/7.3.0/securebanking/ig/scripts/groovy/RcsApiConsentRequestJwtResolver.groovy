@@ -6,26 +6,51 @@
  * - /decision which submits the consent decision, in this call the POST body contains a json object with the jwt in the "consentJwt" field
  */
 
+import static org.forgerock.util.promise.Promises.newPromise;
+
 def fapiInteractionId = request.getHeaders().getFirst("x-fapi-interaction-id")
 if(fapiInteractionId == null) fapiInteractionId = "No x-fapi-interaction-id"
 SCRIPT_NAME = "[RcsApiConsentRequestJwtResolver] (" + fapiInteractionId + ") - "
 logger.debug(SCRIPT_NAME + "Running...")
 
-def requestPath = contexts.router.remainingUri
-if (requestPath.endsWith("/")) {
-    requestPath = requestPath.substring(0, requestPath.length() - 1)
-}
-def consentJwt
-if (requestPath.endsWith("/details")) {
-    consentJwt = request.entity.getString()
-} else if (requestPath.endsWith("/decision")) {
-    consentJwt = request.entity.getJson().consentJwt
-} else {
-    logger.error(SCRIPT_NAME + " unsupported RCS backend uri: " + requestPath)
-    return new Response(Status.BAD_REQUEST)
+// Obtain the RCS consent JWT from the request
+return filter(context, request, next)
+
+/**
+ * Filter implementation extract the RCS consent details or decision from the request and locate it on the
+ * AttributesContext for use by downstream filters.
+ * @param context the Context
+ * @param request the request
+ * @param next the next Handler
+ * @return Promise of the downstream Response
+ */
+Promise<Response, NeverThrowsException> filter(final Context context,
+                                               final Request request,
+                                               final Handler next) {
+    return extractConsentJwt(request)
+            .then(consentJwt -> attributes.consentRequestJwt = consentJwt,
+                  exception -> new Response(Status.BAD_REQUEST).setEntity(exception.getMessage()))
+            .thenAsync(unused -> next.handle(context, request))
 }
 
-// Add the jwt to the attributes context so that it can be used by other filters
-attributes.consentRequestJwt = consentJwt
-
-next.handle(context, request)
+Promise<String, IOException> extractConsentJwt(Request request) {
+    return newPromise(() -> {
+        def requestPath = contexts.router.remainingUri
+        if (requestPath.endsWith("/")) {
+            requestPath = requestPath.substring(0, requestPath.length() - 1)
+        }
+        return requestPath
+    })
+            .thenAsync(requestPath -> {
+                if (requestPath.endsWith("/details")) {
+                    return request.entity.getStringAsync()
+                } else if (requestPath.endsWith("/decision")) {
+                    return request.entity
+                                  .getJsonAsync()
+                                  .then(requestJson -> requestJson.get("consentJwt"))
+                } else {
+                    return newExceptionPromise(
+                            new IllegalArgumentException("Unsupported RCS backend URI: " + requestPath))
+                }
+            })
+}

@@ -42,8 +42,16 @@ Promise<Response, NeverThrowsException> handle(final Context unusedContext, fina
 
     logger.debug(SCRIPT_NAME + "Obtaining API client data from repo {}", apiClientUri)
     return http.send(apiClientRequest)
-               .thenAlways(() -> closeSilently(apiClientRequest))
-               .thenAsync(apiClientResponse -> handleApiClientResponse(apiClientResponse))
+            .thenAlways(() -> closeSilently(apiClientRequest))
+            .thenAsync(apiClientResponse -> handleApiClientResponse(apiClientResponse))
+            .thenCatch(exception -> {
+                logger.error(SCRIPT_NAME + "Exception obtaining API client data from repo {}", apiClientUri, exception)
+                fail(apiClientResponse.getStatus(), exception.getMessage())
+            })
+            .thenCatchRuntimeException(exception -> {
+                logger.error(SCRIPT_NAME + "Exception obtaining API client data from repo {}", apiClientUri, exception)
+                fail(apiClientResponse.getStatus(), exception.getMessage())
+            })
 }
 
 private String extractApiClientId(Request request) {
@@ -61,10 +69,7 @@ private Promise<Response, NeverThrowsException> handleApiClientResponse(Response
     logger.debug(SCRIPT_NAME + "Handling API client response")
     return processResponseContent(apiClientResponse)
             .thenAlways(() -> closeSilently(apiClientResponse))
-            .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson),
-                  exception -> {
-                      fail(apiClientResponseStatus, exception.getMessage())
-                  })
+            .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson))
 }
 
 private Promise<JsonValue, Exception> processResponseContent(final Response apiClientResponse) {

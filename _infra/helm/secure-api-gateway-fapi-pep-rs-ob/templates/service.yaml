@@ -14,3 +14,19 @@ spec:
       protocol: {{  .Values.service.protocol }}
   selector:
     app: fapi-pep-rs
+---
+apiVersion: {{ .Values.service.apiVersion }}
+kind: Service
+metadata:
+  name: fapi-pep-rs-admin
+  labels:
+    app: fapi-pep-rs
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: fapi-pep-rs-admin
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPortAdmin }}
+      protocol: {{  .Values.service.protocol }}
+  selector:
+    app: fapi-pep-rs

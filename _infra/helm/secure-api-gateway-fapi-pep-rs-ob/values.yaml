@@ -89,6 +89,7 @@ deployment:
   strategyType: "RollingUpdate"
 
 ingress:
+  enableStudio: true
   rsMtls:
     annotations:
       authTlsSecret: fapi-pep-rs-mtls-ca-certs
@@ -101,12 +102,6 @@ ingress:
     tls:
       host: "replace-me"
       secretName: fapi-pep-rs-tls-cert
-  rsIGSstudio:
-    host: "replace-me"
-    tls:
-      host: "replace-me"
-      secretName: fapi-pep-rs-tls-cert
-
 
 secrets:
   igAgentID: "replace-me"
@@ -134,6 +129,8 @@ service:
   protocol: "TCP"
   # Host Machine port that traffic is diverted too - in this case the nodes
   targetPort: 8080
+  # Host Machine port that traffic is diverted too for Admin - in this case the nodes
+  targetPortAdmin: 8085
   # See - https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   # Type of service to create. Other types are: NodePort | LoadBalancer | ExternalName
   type: "ClusterIP"

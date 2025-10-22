@@ -67,6 +67,7 @@ spec:
                 port:
                   number: 80
             path: /api
+            pathType: Prefix
         {{ end }}
           - backend:
               service:

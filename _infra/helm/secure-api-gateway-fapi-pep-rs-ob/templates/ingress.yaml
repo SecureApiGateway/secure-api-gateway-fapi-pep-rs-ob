@@ -56,10 +56,17 @@ spec:
         {{- if eq .Values.ingress.enableStudio true }}
           - backend:
               service:
-                name: {{ .Chart.Name }}-admin
+                name: fapi-pep-rs-admin
                 port:
                   number: 80
             path: /studio
+            pathType: Prefix
+          - backend:
+              service:
+                name: fapi-pep-rs-admin
+                port:
+                  number: 80
+            path: /api
             pathType: Prefix
         {{ end }}
           - backend:

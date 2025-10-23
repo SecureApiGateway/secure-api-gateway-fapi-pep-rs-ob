@@ -51,31 +51,39 @@ Promise<Response, NeverThrowsException> handle(final Context unusedContext, fina
     userRequest.setMethod('GET');
     def userRequestUri = null
     boolean isQuery = false
+    String userId = uriPathElements[uriPathElements.size() - 1]
     // Condition IDM request to retrieve the user data by user name or by user ID
     if (Objects.nonNull(uriQuery)) {
         logger.debug(SCRIPT_NAME + "Looking up API User by filter {}", uriQuery)
         userRequestUri = routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjUser + "?" + uriQuery
         isQuery = true
     } else {
-        logger.debug(SCRIPT_NAME + "Looking up API User by user ID {}", uriPathElements[ uriPathElements.size() - 1 ])
-        userRequestUri = routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjUser + "/" + uriPathElements[
-                uriPathElements.size() - 1 ]
+        logger.debug(SCRIPT_NAME + "Looking up API User by user ID {}", userId)
+        userRequestUri = routeArgIdmBaseUri + "/openidm/managed/" + routeArgObjUser + "/" + userId
     }
     userRequest.setUri(userRequestUri)
 
     logger.debug(SCRIPT_NAME + "Obtaining User data from repo {}", userRequestUri)
     return http.send(userRequest)
-               .thenAlways(() -> closeSilently(userRequest))
-               .thenAsync(userResponse -> handleUserResponse(userResponse, isQuery))
+            .thenAlways(() -> closeSilently(userRequest))
+            .thenAsync(userResponse -> handleUserResponse(userResponse, isQuery))
+            .thenCatch(exception -> {
+                logger.error(SCRIPT_NAME + "Exception looking up API User by user ID {} (repo {})", userId, userRequestUri, exception)
+                fail(userResponse.getStatus(), exception.getMessage())
+            })
+            .thenCatchRuntimeException(exception -> {
+                logger.error(SCRIPT_NAME + "Exception looking up API User by user ID {} (repo {})", userId, userRequestUri, exception)
+                fail(userResponse.getStatus(), exception.getMessage())
+            })
 }
 
 private Promise<Response, NeverThrowsException> handleUserResponse(Response userResponse, boolean isQuery) {
     logger.debug(SCRIPT_NAME + "Handling user response")
     return processResponseContent(userResponse)
             .thenAlways(() -> closeSilently(userResponse))
-            .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson, isQuery),
+            .then(userResponseJson -> transformUserResponse(userResponseJson, isQuery),
                   exception -> {
-                      fail(apiClientResponseStatus, exception.getMessage())
+                      fail(userResponse.getStatus(), exception.getMessage())
                   })
 }
 
@@ -105,7 +113,7 @@ private static Promise<JsonValue, Exception> getJsonContentAsync(final Response 
                    })
 }
 
-private Response transformApiClientResponse(JsonValue userResponseJson, boolean isQuery) {
+private Response transformUserResponse(JsonValue userResponseJson, boolean isQuery) {
     JsonValue userResponseJson2 = userResponseJson
     if (isQuery) {
         if (userResponseJson.get("result").isEmpty()) {

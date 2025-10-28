@@ -29,11 +29,6 @@ data:
   # Where to store the IG Truststore
   IG_TRUSTSTORE_PATH: {{ .Values.configmap.igTruststorePath }}
   USER_OBJECT: {{ .Values.configmap.userObject }}
-  # Additional OB Config
-  IG_OB_ASPSP_SIGNING_KEYSTORE_ALIAS: {{ .Values.configmap.igOBASPSPSigningKeystoreAlias }}
-  IG_OB_ASPSP_SIGNING_KEYSTORE_PATH: {{ .Values.configmap.igOBASPSPSigningKeystorePath }}
-  IG_OB_ASPSP_SIGNING_KEYSTORE_TYPE: {{ .Values.configmap.igOBASPSPSigningKeystoreType }}
-  IG_OB_ASPSP_SIGNING_KID: {{ .Values.configmap.igOBASPSPSigningKid }}
   OB_ASPSP_ORG_ID: {{ .Values.configmap.obASPSPOrgID }}
   OB_ASPSP_SOFTWARE_ID: {{ .Values.configmap.obASPSPSoftwareID }}
   RCS_API_INTERNAL_SVC: {{ .Values.configmap.rcsAPIInternalSVC }}

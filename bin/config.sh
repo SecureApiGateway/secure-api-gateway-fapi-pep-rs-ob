@@ -25,6 +25,7 @@ begins_with_short_option()
 # THE DEFAULTS INITIALIZATION - POSITIONALS
 _positionals=()
 
+# Profile defaults to cdk if not provided
 _arg_profile="${_PROFILE:-securebanking}"
 _arg_environment="${_ENVIRONMENT:-dev}"
 _arg_version="${_VERSION:-7.3.0}"
@@ -184,7 +185,6 @@ clean_config()
 
 init_config()
 {
-  echo "${PROFILE_ROOT}/$1"
   if [ -d "${PROFILE_ROOT}/$1" ]; then
     echo "*********************************************************************************************"
     echo "Initialisation of 'docker/$_arg_version/$1' for [$_arg_environment] environment in [$_arg_ig_mode] mode"
@@ -197,10 +197,23 @@ init_config()
     cp -r "${PROFILE_ROOT}/$1/config/$_arg_environment/config" "$DOCKER_ROOT/$1/"
     jq --arg mode "$(echo $_arg_ig_mode | tr '[:lower:]' '[:upper:]')" '.mode = $mode' "$DOCKER_ROOT/$1/config/"admin.json > "$DOCKER_ROOT/$1/config/"admin.json.tmp
     mv "$DOCKER_ROOT/$1/config/"admin.json.tmp "$DOCKER_ROOT/$1/config/"admin.json
-    echo "IG mode $_arg_ig_mode, environment $_arg_environment"
-    echo "copy ${PROFILE_ROOT}/$1/routes-service/ to $DOCKER_ROOT/$1/config"
-    cp -r "${PROFILE_ROOT}/$1/routes-service/" "$DOCKER_ROOT/$1/config"
+    echo "IG mode $_arg_ig_mode"
+    if [ "$_arg_ig_mode" == "development" ]; then
+      init_routes_dev "$1"
+    else
+      echo "copy ${PROFILE_ROOT}/$1/routes/ to $DOCKER_ROOT/$1/config"
+      cp -r "${PROFILE_ROOT}/$1/routes/" "$DOCKER_ROOT/$1/config"
+    fi
   fi
+}
+
+init_routes_dev(){
+  echo "copy ${PROFILE_ROOT}/$1/routes/ to $DOCKER_ROOT/$1/config"
+  if [ ! -d "$DOCKER_ROOT/ig-local/config/routes" ]; then
+    echo "Creating the Directory $DOCKER_ROOT/$1/config/routes"
+    mkdir "$DOCKER_ROOT/$1/config/routes"
+  fi
+  find "${PROFILE_ROOT}/$1/routes/"*/ -type f -print0 | xargs -0 -I {} cp {} "$DOCKER_ROOT/$1/config/routes/"
 }
 
 # Show the differences between the source configuration and the current Docker configuration

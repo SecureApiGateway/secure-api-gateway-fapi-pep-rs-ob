@@ -55,7 +55,7 @@ deployment:
   # Config for the liveness probe
   livenessProbe:
     failureThreshold: 3
-    initialDelaySeconds: 160
+    initialDelaySeconds: 120
     path: "/health/liveness"
     periodSeconds: 30
     successThreshold: 1
@@ -67,7 +67,7 @@ deployment:
   # Config for the readiness probe
   readinessProbe:
     failureThreshold: 3
-    initialDelaySeconds: 120
+    initialDelaySeconds: 60
     periodSeconds: 30
     path: "/health/readiness"
     successThreshold: 1

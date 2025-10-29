@@ -55,7 +55,7 @@ deployment:
   # Config for the liveness probe
   livenessProbe:
     failureThreshold: 3
-    initialDelaySeconds: 5
+    initialDelaySeconds: 160
     path: "/health/liveness"
     periodSeconds: 30
     successThreshold: 1
@@ -66,8 +66,8 @@ deployment:
     host: "mongodb"
   # Config for the readiness probe
   readinessProbe:
-    initialDelaySeconds: 5
     failureThreshold: 3
+    initialDelaySeconds: 120
     periodSeconds: 30
     path: "/health/readiness"
     successThreshold: 1

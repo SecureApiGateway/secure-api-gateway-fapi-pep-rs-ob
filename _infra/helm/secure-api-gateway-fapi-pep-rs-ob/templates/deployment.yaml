@@ -58,7 +58,7 @@ spec:
             failureThreshold: {{ .Values.deployment.livenessProbe.failureThreshold }}
             httpGet:
               path: {{ .Values.deployment.livenessProbe.path }}
-              port: {{ .Values.deployment.containerPort }}
+              port: {{ .Values.deployment.containerAdminPort }}
             initialDelaySeconds: {{ .Values.deployment.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deployment.livenessProbe.periodSeconds }}
             successThreshold: {{ .Values.deployment.livenessProbe.successThreshold }}

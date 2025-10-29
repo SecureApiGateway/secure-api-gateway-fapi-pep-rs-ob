@@ -101,7 +101,7 @@
       }
     },
     {
-      "name": "ApiProtectionFilter",
+      "name": "apiProtectionFilter",
       "type": "ChainOfFilters",
       "config": {
         "filters": [
@@ -128,7 +128,7 @@
       }
     },
     {
-      "name": "MetricsProtectionFilter",
+      "name": "metricsProtectionFilter",
       "type": "ScriptableFilter",
       "config": {
         "type": "application/x-groovy",
@@ -153,6 +153,6 @@
   "mode": "DEVELOPMENT",
   "studioProtectionFilter": "StudioProtectionFilter-AOF",
   "_studioProtectionFilter.comment": "The referenced filter is temporary only to apply IP constraints",
-  "apiProtectionFilter": "ApiProtectionFilter",
-  "metricsProtectionFilter": "MetricsProtectionFilter"
+  "apiProtectionFilter": "apiProtectionFilter",
+  "metricsProtectionFilter": "metricsProtectionFilter"
 }

@@ -55,21 +55,17 @@ deployment:
   # Config for the liveness probe
   livenessProbe:
     failureThreshold: 3
-    initialDelaySeconds: 120
-    path: "/health/liveness"
+    initialDelaySeconds: 60
+    path: "/health/live"
     periodSeconds: 30
     successThreshold: 1
     timeoutSeconds: 5
-  # RS Connects to the mongodb instance
-  mongodb:
-    # Full name of the mongodb deployment
-    host: "mongodb"
   # Config for the readiness probe
   readinessProbe:
     failureThreshold: 3
-    initialDelaySeconds: 60
+    initialDelaySeconds: 30
     periodSeconds: 30
-    path: "/health/readiness"
+    path: "/health/ready"
     successThreshold: 1
     timeoutSeconds: 5
   # How many pods are to run in the deployment

@@ -6,7 +6,7 @@
       "capture": "all"
     },
     {
-      "name": "ApiProtectionFilter",
+      "name": "apiProtectionFilter",
       "type": "ScriptableFilter",
       "config": {
         "type": "application/x-groovy",
@@ -14,7 +14,7 @@
       }
     },
     {
-      "name": "MetricsProtectionFilter",
+      "name": "metricsProtectionFilter",
       "type": "ScriptableFilter",
       "config": {
         "type": "application/x-groovy",

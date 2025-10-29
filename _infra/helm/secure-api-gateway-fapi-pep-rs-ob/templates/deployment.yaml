@@ -44,11 +44,11 @@ spec:
           image: {{ .Values.deployment.image.repo }}:{{ default .Chart.AppVersion .Values.deployment.image.tag }}
           imagePullPolicy: {{ .Values.deployment.image.imagePullPolicy }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.deployment.containerPort }}
           readinessProbe:
             httpGet:
               path: {{ .Values.deployment.readinessProbe.path }}
-              port: {{ .Values.deployment.containerPort }}
+              port: {{ .Values.deployment.containerAdminPort }}
             periodSeconds: {{ .Values.deployment.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.deployment.readinessProbe.failureThreshold }}
             successThreshold: {{ .Values.deployment.readinessProbe.successThreshold }}

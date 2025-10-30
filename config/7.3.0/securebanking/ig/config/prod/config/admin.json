@@ -36,5 +36,8 @@
       }
     }
   ],
+  "adminConnector": {
+    "port": 8085
+  },
   "mode": "PRODUCTION"
 }

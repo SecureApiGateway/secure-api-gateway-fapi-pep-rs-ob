@@ -46,7 +46,6 @@
     </parent>
 
     <properties>
-        <secure-api-gateway.fapi-pep-as.version>5.0.5-SNAPSHOT</secure-api-gateway.fapi-pep-as.version>
         <openig.version>2025.11.0-SNAPSHOT</openig.version>
         <nimbus-jose.version>9.40</nimbus-jose.version>
         <bouncy-castle.version>1.78.1</bouncy-castle.version>

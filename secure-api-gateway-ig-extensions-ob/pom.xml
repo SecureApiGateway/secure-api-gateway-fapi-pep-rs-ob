@@ -82,12 +82,6 @@
             <artifactId>openig-fapi</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <!-- OPENIG-9436 - temporary reimplemented JwtReconstruction -->
-            <groupId>com.forgerock.sapi.gateway</groupId>
-            <artifactId>secure-api-gateway-ig-extensions</artifactId>
-            <version>${secure-api-gateway.fapi-pep-as.version}</version>
-        </dependency>
 
         <!-- Test dependencies -->
         <dependency>

@@ -56,11 +56,6 @@
         <!-- Extension Java modules -->
         <dependency>
             <groupId>com.forgerock.sapi.gateway</groupId>
-            <artifactId>secure-api-gateway-ig-extensions</artifactId>
-            <version>${secure-api-gateway.fapi-pep-as.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgerock.sapi.gateway</groupId>
             <artifactId>secure-api-gateway-ig-extensions-ob</artifactId>
             <version>${project.version}</version>
         </dependency>

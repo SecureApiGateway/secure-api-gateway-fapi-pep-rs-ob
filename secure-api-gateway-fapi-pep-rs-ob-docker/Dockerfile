@@ -31,7 +31,6 @@ COPY --chown=forgerock:root 7.3.0/ig/lib /opt/ig/lib
 RUN rm -f /opt/ig/lib/bcprov-jdk18on-1.74.jar
 
 # Check that the IG jar exists before continuing
-RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-[0-9.]*.jar
 RUN test -f /opt/ig/lib/secure-api-gateway-ig-extensions-ob-[0-9.]*.jar
 
 COPY --chown=forgerock:root 7.3.0/ig/config /var/ig/config/

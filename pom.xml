@@ -19,10 +19,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.forgerock.sapi.gateway</groupId>
-    <artifactId>secure-api-gateway-fapi-pep-rs-ob</artifactId>
-    <version>5.0.5-SNAPSHOT</version>
+    <parent>
+        <groupId>com.forgerock.sapi.gateway</groupId>
+        <artifactId>secure-api-gateway-parent</artifactId>
+        <version>5.0.6-SNAPSHOT</version>
+    </parent>
 
+    <artifactId>secure-api-gateway-fapi-pep-rs-ob</artifactId>
+    <version>5.0.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>secure-api-gateway-fapi-pep-rs-ob</name>
     <description>Secure API Gateway FAPI PEP RS OB components</description>
@@ -39,49 +43,15 @@
         <module>secure-api-gateway-fapi-pep-rs-ob-docker</module>
     </modules>
 
-    <parent>
-        <groupId>com.forgerock.sapi.gateway</groupId>
-        <artifactId>secure-api-gateway-parent</artifactId>
-        <version>5.0.4-SNAPSHOT</version>
-    </parent>
-
-    <properties>
-        <openig.version>2026.3.0-SNAPSHOT</openig.version>
-        <nimbus-jose.version>9.40</nimbus-jose.version>
-        <bouncy-castle.version>1.78.1</bouncy-castle.version>
-        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <!-- IG BOM -->
-            <dependency>
-                <groupId>org.forgerock.openig</groupId>
-                <artifactId>openig-bom</artifactId>
-                <version>${openig.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>org.forgerock.openig</groupId>
-                <artifactId>openig-fapi</artifactId>
-                <version>${openig.version}</version>
-            </dependency>
-            <!-- Third party -->
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>${nimbus-jose.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:${project.scm.url}</developerConnection>
         <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
         <tag>HEAD</tag>
     </scm>
+    <properties>
+        <bouncy-castle.version>1.78.1</bouncy-castle.version>
+    </properties>
 
     <repositories>
         <repository>
@@ -93,15 +63,6 @@
             <id>maven.forgerock.org-community-snapshots</id>
             <name>maven.forgerock.org-snapshots</name>
             <url>https://maven.forgerock.org/artifactory/community</url>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo1.maven.org/maven2</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </repository>
         <repository>
             <id>forgerock-internal-releases</id>
@@ -172,11 +133,6 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>${maven-resources-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

@@ -49,9 +49,6 @@
         <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
         <tag>HEAD</tag>
     </scm>
-    <properties>
-        <bouncy-castle.version>1.78.1</bouncy-castle.version>
-    </properties>
 
     <repositories>
         <repository>

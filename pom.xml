@@ -26,7 +26,7 @@
     </parent>
 
     <artifactId>secure-api-gateway-fapi-pep-rs-ob</artifactId>
-    <version>5.0.6-SNAPSHOT</version>
+    <version>5.0.6</version>
     <packaging>pom</packaging>
     <name>secure-api-gateway-fapi-pep-rs-ob</name>
     <description>Secure API Gateway FAPI PEP RS OB components</description>
@@ -47,7 +47,7 @@
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:${project.scm.url}</developerConnection>
         <url>https://github.com/SecureApiGateway/secure-api-gateway-fapi-pep-rs-ob.git</url>
-        <tag>HEAD</tag>
+        <tag>v5.0.6</tag>
     </scm>
 
     <repositories>

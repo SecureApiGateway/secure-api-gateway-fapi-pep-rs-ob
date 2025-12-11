@@ -6,6 +6,7 @@ import static org.forgerock.json.JsonValue.field
 import static org.forgerock.json.JsonValue.json
 import static org.forgerock.json.JsonValue.object
 import static org.forgerock.util.Closeables.closeSilently
+import static org.forgerock.util.Function.identity
 import static org.forgerock.openig.util.JsonValues.listOf
 
 import org.forgerock.util.promise.NeverThrowsException
@@ -111,7 +112,7 @@ private Response transformApiClientResponse(JsonValue userResponseJson, boolean 
         if (userResponseJson.get("result").isEmpty()) {
             return fail(NOT_FOUND, "User details not found")
         }
-        userResponseJson2 = userResponseJson.get("result").as(listOf(JsonValue::asString).get(0))
+        userResponseJson2 = userResponseJson.get("result").as(listOf(identity())).get(0)
     }
     JsonValue transformedResponseJson = json(object(
             field("id", userResponseJson2.get("_id")),

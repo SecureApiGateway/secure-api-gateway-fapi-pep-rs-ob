@@ -225,7 +225,8 @@ private SignedJwt reconstructJwt(String jwtString, String contentType)
                                                           invalidJwtException.getMessage())
         }
     }
-    if (contentType.startsWith("text/xml") || contentType.startsWith("text/plain") || contentType.startsWith("text/csv")) {
+    if (contentType.startsWith("text/xml") || contentType.startsWith("text/plain")
+            || contentType.startsWith("text/csv")) {
         // For XML document payload, manage through the octet-sequence representation - N.B. some customers may require
         // text and CSV batch file payment uploads.
         try {

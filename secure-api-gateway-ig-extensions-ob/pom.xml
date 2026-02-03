@@ -30,7 +30,7 @@
 
     <properties>
         <legal.path.header>../legal/LICENSE-HEADER.txt</legal.path.header>
-        <logback.version>1.5.21</logback.version>
+        <logback.version>1.5.27</logback.version>
     </properties>
 
     <dependencyManagement>

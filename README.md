@@ -185,9 +185,7 @@ to the samples.
 | AM_REALM                | users realm                      |                     
 | USER_OBJECT             | idm user object                  |                     
 | IG_CLIENT_ID            | IG client id                     |                     
-| IG_CLIENT_SECRET        | IG client secret                 |                        
-| IG_IDM_USER             | Ig service account user          |                 
-| IG_IDM_PASSWORD         | Ig service account user password |                    
+| IG_CLIENT_SECRET        | IG client secret                 |                     
 | IG_AGENT_ID             | IG agent id                      |          
 | IG_AGENT_PASSWORD       | IG agent password                |
 | IG_RCS_SECRET           | IG RCS secret passphrase         |

@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "routesServiceScanInterval": "disabled"
+  },
+  "handler": {
+    "name": "_router",
+    "type": "Router",
+    "config": {
+      "scanInterval": "disabled",
+      "directory": "${openig.configDirectory}/routes"
+    }
+  }
+}

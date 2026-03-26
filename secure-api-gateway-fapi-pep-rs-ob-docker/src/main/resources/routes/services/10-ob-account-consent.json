@@ -1,7 +1,6 @@
 {
   "comment": "Open Banking Account Access Consents",
   "name": "10 - Open Banking Account Access Consent",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/account-access-consents')}",
   "handler": {
@@ -60,11 +59,8 @@
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
-              "clock": "${heap['Clock']}",
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
-              "role": "AISP",
-              "event": "CREATE"
+              "role": "AISP"
             }
           }
         },

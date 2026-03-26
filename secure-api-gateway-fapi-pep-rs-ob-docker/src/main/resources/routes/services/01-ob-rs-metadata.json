@@ -1,7 +1,6 @@
 {
   "comment": "Return Open Banking endpoints supported by Resource Server",
   "name": "01 - Open Banking RS Metadata",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/discovery')}",
   "handler": {

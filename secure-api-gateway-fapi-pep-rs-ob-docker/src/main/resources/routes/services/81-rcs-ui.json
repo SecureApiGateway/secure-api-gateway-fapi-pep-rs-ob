@@ -1,7 +1,6 @@
 {
   "comment": "PSU access to RCS UI, ensure PSU is authenticated",
   "name": "81 - RCS UI Access",
-  "auditService": "AuditService-OB-Route",
   "condition": "${find(request.uri.path, '^/rcs/ui/consent')}",
   "baseURI": "http://&{rcs.ui.internal.svc}:8080",
   "capture": [

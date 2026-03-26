@@ -1,6 +1,5 @@
 {
   "name": "58 - Open Banking RS File Payment Consent",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/file-payment-consents((?!file).)*$')}",
   "handler": {
@@ -92,11 +91,8 @@
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
-              "clock": "${heap['Clock']}",
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
-              "role": "PISP",
-              "event": "CREATE"
+              "role": "PISP"
             }
           }
         },

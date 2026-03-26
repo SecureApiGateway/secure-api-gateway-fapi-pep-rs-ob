@@ -1,6 +1,5 @@
 {
   "name": "66 - Open Banking RS Funds confirmation Consent",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/cbpii/funds-confirmation-consents')}",
   "handler": {
@@ -59,7 +58,6 @@
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
               "clock": "${heap['Clock']}",
               "consentIdLocator": "response.entity.getJson().Data.ConsentId",
               "role": "CBPII",

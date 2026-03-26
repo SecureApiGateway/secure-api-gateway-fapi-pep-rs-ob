@@ -1,6 +1,5 @@
 {
   "name": "11 - Open Banking Account Access",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/aisp/accounts')}",
   "capture": [
@@ -87,17 +86,14 @@
           }
         },
         {
-          "comment": "Prepare consent audit trail - from attributes context",
+          "comment": "Extend access audit with Consent - from attributes context",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
-              "clock": "${heap['Clock']}",
               "consentIdLocator": "contexts.attributes.attributes.openbanking_intent_id",
-              "role": "AISP",
-              "event": "EXEC"
+              "role": "AISP"
             }
           }
         },

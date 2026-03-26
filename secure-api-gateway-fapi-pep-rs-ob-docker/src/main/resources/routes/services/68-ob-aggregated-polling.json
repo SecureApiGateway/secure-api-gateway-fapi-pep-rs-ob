@@ -16,7 +16,6 @@
           "name": "fapiResourceFilterChain",
           "type": "FapiResourceFilterChain",
           "config": {
-            "auditService" : "fapiAuditService",
             "clientCertificate": "${pemCertificate(urlDecode(request.headers['ssl-client-cert'][0]))}",
             "scopes": [],
             "allowedGrantType": "client_credentials",

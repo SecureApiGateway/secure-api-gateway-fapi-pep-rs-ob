@@ -1,6 +1,5 @@
 {
   "name": "12 - Open Banking Account Access multiple routes",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/(aisp/balances|aisp/transactions|aisp/beneficiaries|aisp/direct-debits|aisp/standing-orders|aisp/products|aisp/offers|aisp/party|aisp/scheduled-payments|aisp/statements)')}",
   "capture": [
@@ -87,17 +86,14 @@
           }
         },
         {
-          "comment": "Prepare consent audit trail",
+          "comment": "Extend access audit with Consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
-              "clock": "${heap['Clock']}",
               "consentIdLocator": "contexts.attributes.attributes.openbanking_intent_id",
-              "role": "AISP",
-              "event": "EXEC"
+              "role": "AISP"
             }
           }
         },

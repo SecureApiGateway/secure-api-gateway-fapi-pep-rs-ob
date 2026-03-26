@@ -1,7 +1,6 @@
 {
   "comment": "PSU access to RCS API (called from the UI via the browser), ensures that the PSU is authorized to access the consent",
   "name": "83 - RCS API Access",
-  "auditService": "AuditService-OB-Route",
   "condition": "${find(request.uri.path, '^/rcs/api/')}",
   "baseURI": "http://&{rcs.api.internal.svc}:8080",
   "capture": [

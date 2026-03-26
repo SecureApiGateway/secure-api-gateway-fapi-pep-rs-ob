@@ -1,6 +1,5 @@
 {
   "name": "68 - Open Banking Aggregated polling API",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/events$')}",
   "capture": [

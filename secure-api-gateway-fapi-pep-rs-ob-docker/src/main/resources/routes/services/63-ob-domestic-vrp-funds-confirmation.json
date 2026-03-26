@@ -1,6 +1,5 @@
 {
   "name": "63 - Open Banking RS Domestic VRP Funds Confirmation",
-  "auditService": "AuditService-OB-Route",
   "baseURI": "${urls.rsBaseUri}",
   "condition": "${find(request.uri.path, '^/rs/open-banking/v(\\\\d+.)?(\\\\d+.)?(\\\\*|\\\\d+)/pisp/domestic-vrp-consents/.*/funds-confirmation$')}",
   "capture": [
@@ -114,17 +113,14 @@
           }
         },
         {
-          "comment": "Prepare consent audit trail",
+          "comment": "Extend access audit with Consent",
           "type": "ScriptableFilter",
           "config": {
             "type": "application/x-groovy",
             "file": "AuditConsent.groovy",
             "args": {
-              "auditService": "${heap['AuditService-OB-Consent']}",
-              "clock": "${heap['Clock']}",
               "consentIdLocator": "contexts.attributes.attributes.openbanking_intent_id",
-              "role": "PISP",
-              "event": "EXEC"
+              "role": "PISP"
             }
           }
         },

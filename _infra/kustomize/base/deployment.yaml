@@ -66,13 +66,13 @@ spec:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
-            - mountPath: /var/ig/secrets/truststore
+            - mountPath: /var/gateway/secrets/truststore
               name: new-truststore
               readOnly: true
-            - mountPath: /var/ig/secrets/open-banking
+            - mountPath: /var/gateway/secrets/open-banking
               name: ig-ob-signing-key
               readOnly: true
-            - mountPath: /var/ig/secrets/test-trusted-directory
+            - mountPath: /var/gateway/secrets/test-trusted-directory
               name: test-trusted-dir-keystore
               readOnly: true
       initContainers:

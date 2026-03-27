@@ -85,6 +85,8 @@ deployment:
     maxSurge: "50%"
     maxUnavailable: "25%"
   strategyType: "RollingUpdate"
+  ig:
+    instanceDir: "/var/gateway"
 
 ingress:
   enableStudio: true

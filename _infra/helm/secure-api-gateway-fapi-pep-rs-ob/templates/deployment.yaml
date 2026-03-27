@@ -64,10 +64,10 @@ spec:
             successThreshold: {{ .Values.deployment.livenessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.deployment.livenessProbe.timeoutSeconds }}
           volumeMounts:
-            - mountPath: /var/ig/secrets/truststore
+            - mountPath: {{ .Values.deployment.ig.instanceDir }}/secrets/truststore
               name: new-truststore
               readOnly: true
-            - mountPath: /var/ig/secrets/open-banking
+            - mountPath: {{ .Values.deployment.ig.instanceDir }}/secrets/open-banking
               name: ig-ob-signing-key
               readOnly: true
           env:

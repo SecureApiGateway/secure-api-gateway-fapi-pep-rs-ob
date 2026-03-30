@@ -36,7 +36,7 @@ next.handle(context, request)
         binding.contexts = contexts
         consentId = new GroovyShell(binding).evaluate(consentIdLocator)
 
-        contexts.AccessAuditExtension.extendWith('ob-consent-id', consentId)
+        contexts.accessAuditExtension.extendWith('ob-consent-id', consentId)
                                      .extendWith('ob-consent-role', role);
 
 })

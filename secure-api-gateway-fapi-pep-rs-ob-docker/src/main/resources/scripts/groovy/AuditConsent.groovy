@@ -29,7 +29,6 @@ next.handle(context, request)
             logger.info(SCRIPT_NAME + "No Content response, skipping audit")
             return
         }
-        logger.info(SCRIPT_NAME + context)
 
         def binding = new Binding()
         binding.response = response

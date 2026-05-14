@@ -22,11 +22,11 @@
     <parent>
         <groupId>com.forgerock.sapi.gateway</groupId>
         <artifactId>secure-api-gateway-parent</artifactId>
-        <version>5.2.0-SNAPSHOT</version>
+        <version>5.3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>secure-api-gateway-fapi-pep-rs-ob</artifactId>
-    <version>5.2.0-SNAPSHOT</version>
+    <version>5.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>secure-api-gateway-fapi-pep-rs-ob</name>
     <description>Secure API Gateway FAPI PEP RS OB components</description>

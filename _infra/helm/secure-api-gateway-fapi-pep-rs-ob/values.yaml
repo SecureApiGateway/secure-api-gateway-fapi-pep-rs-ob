@@ -13,8 +13,6 @@ configmap:
   igOBASPSPSigningKeystorePath: "/secrets/open-banking/ig-ob-signing-key.p12"
   igOBASPSPSigningKeystoreType: "PKCS12"
   igOBASPSPSigningKid: "zBlb3x2klab0COMzC5ROYxNo8n4"
-  igTestDirectoryEnabled: "true"
-  igTruststorePath: "/secrets/truststore/igtruststore"
   obASPSPOrgID: "0015800001041REAAY"
   obASPSPSoftwareID: "YZyyZHejcCGRrWkh3OfkLI"
   rcsAPIInternalSVC: "remote-consent-service"
@@ -27,7 +25,6 @@ configmap:
   rsInternalSVC: "test-facility-bank"
   rsMtlsFQDN: "rs-mtls.sapig.dev-cdk-ob.forgerock.financial"
   sapigType: "ob"
-  testDirectoryFQDN: "test-trusted-directory.dev-cdk-ob.forgerock.financial"
   userObject: "user"
   AIC:
     identityDefaultUserAuthenticationService: "PasswordGrant"

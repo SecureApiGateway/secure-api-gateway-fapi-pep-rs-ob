@@ -147,21 +147,19 @@
       }
     },
     {
-      "name": "TrustManager-OB",
+      "name": "OBTrustManager",
       "type": "SecretsTrustManager",
       "config": {
-        "certificateVerificationSecretId": "ca.ob.secret.id",
+        "certificateVerificationSecretId": "ig.ob.truststore",
         "secretsProvider": {
-          "type": "KeyStoreSecretStore",
+          "type": "FileSystemSecretStore",
           "config": {
-            "file": "&{ig.instance.dir}&{ig.truststore.path}",
-            "storeType": "PKCS12",
-            "storePasswordSecretId": "ig.truststore.password",
-            "secretsProvider": "SystemAndEnvSecretStore-IAM",
-            "mappings": [{
-              "secretId": "ca.ob.secret.id",
-              "aliasesMatching": [".*"]
-            }]
+            "directory": "&{ig.instance.dir}/secrets/truststore",
+            "format": {
+              "name": "pemPropertyFormat",
+              "type": "PemPropertyFormat"
+            },
+            "suffix": ".pem"
           }
         }
       }
@@ -174,7 +172,7 @@
         "tls": {
           "type": "ClientTlsOptions",
           "config": {
-            "trustManager": "TrustManager-OB"
+            "trustManager": "OBTrustManager"
           }
         }
       }
@@ -183,9 +181,22 @@
       "name": "JwkSetService",
       "type": "CachingJwkSetService",
       "config": {
-        "endpointHandler": "OBClientHandler",
-        "maxCacheEntries": 500,
-        "expireAfterWriteDuration": "30 minutes"
+        "endpointHandler": {
+          "type": "DispatchHandler",
+          "config": {
+            "bindings": [
+              {
+                "condition": "${request.uri.host == 'keystore.openbankingtest.org.uk'}",
+                "handler": "OBClientHandler"
+              },
+              {
+                "handler": "ForgeRockClientHandler"
+              }
+            ]
+          }
+        },
+        "cacheMaxSize": 500,
+        "cacheTimeout": "24 hours"
       }
     },
     {

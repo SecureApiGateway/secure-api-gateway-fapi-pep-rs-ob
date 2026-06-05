@@ -1,5 +1,5 @@
 #
-# Copyright © 2020-2026 ForgeRock AS (obst@forgerock.com)
+# Copyright © 2020-2026 Ping Identity Corporation (obst@forgerock.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ USER forgerock
 RUN mkdir ${IG_INSTANCE_DIR}/secrets
 
 # Copy all config files into the docker image.
-COPY --chown=forgerock:root configuration/bin/import-pem-certs.sh /home/forgerock
 COPY --chown=forgerock:root dependencies ${IG_INSTANCE_DIR}/extra
 COPY --chown=forgerock:root configuration/scripts ${IG_INSTANCE_DIR}/scripts
 COPY --chown=forgerock:root configuration/config ${IG_INSTANCE_DIR}/config

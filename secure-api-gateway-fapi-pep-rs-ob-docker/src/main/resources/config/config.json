@@ -1,7 +1,4 @@
 {
-  "properties": {
-    "routesServiceScanInterval": "disabled"
-  },
   "handler": {
     "name": "_router",
     "type": "Router",

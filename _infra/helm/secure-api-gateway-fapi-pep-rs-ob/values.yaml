@@ -86,7 +86,6 @@ deployment:
     instanceDir: "/var/gateway"
 
 ingress:
-  enableStudio: true
   rsMtls:
     annotations:
       authTlsSecret: fapi-pep-rs-mtls-ca-certs
@@ -107,8 +106,6 @@ secrets:
   igClientSecret: "replace-me"
   igIDMPassword: "replace-me"
   igIDMUser: "replace-me"
-  igMetricsPassword: "replace-me"
-  igMetricsUsername: "replace-me"
   igOBASPSPSigningKeystoreKeypass: "replace-me"
   igOBASPSPSigningKeystoreStorepass: "replace-me"
   igTruststorePassword: "replace-me"

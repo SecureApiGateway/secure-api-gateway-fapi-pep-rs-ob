@@ -53,22 +53,6 @@ spec:
     - host: {{ .Values.ingress.rsSapig.host }}
       http:
         paths:
-        {{- if eq .Values.ingress.enableStudio true }}
-          - backend:
-              service:
-                name: fapi-pep-rs-admin
-                port:
-                  number: 80
-            path: /studio
-            pathType: Prefix
-          - backend:
-              service:
-                name: fapi-pep-rs-admin
-                port:
-                  number: 80
-            path: /api
-            pathType: Prefix
-        {{ end }}
           - backend:
               service:
                 name: fapi-pep-rs

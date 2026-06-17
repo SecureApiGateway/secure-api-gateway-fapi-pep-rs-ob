@@ -1,59 +1,73 @@
 ---
-configmap:
-  # Version of the Kubernetes API to use
-  apiVersion: "v1"
-  amRealm: "alpha"
-  asFQDN: "as-sapig.dev-cdk-ob.forgerock.financial"
-  baseFQDN: "dev-cdk-ob.forgerock.financial"
-  certIssuer: "null-issuer"
-  cloudType: "CDK"
-  gatewayDataRepoURI: "http://fapi-pep-rs:80"
-  identityPlatformFQDN: "iam.dev-cdk-ob.forgerock.financial"
-  igOBASPSPSigningKeystoreAlias: "jwtsigner"
-  igOBASPSPSigningKeystorePath: "/secrets/open-banking/ig-ob-signing-key.p12"
-  igOBASPSPSigningKeystoreType: "PKCS12"
-  igOBASPSPSigningKid: "zBlb3x2klab0COMzC5ROYxNo8n4"
-  obASPSPOrgID: "0015800001041REAAY"
-  obASPSPSoftwareID: "YZyyZHejcCGRrWkh3OfkLI"
-  rcsAPIInternalSVC: "remote-consent-service"
-  rcsConsentResponseJWTIssuer: "secure-open-banking-rcs"
-  rcsConsentResponseJWTSigningKeyID: "rcs-jwt-signer"
-  rcsConsentStoreURI: "http://remote-consent-service:8080/consent/store"
-  rcsUIInternalSVC: "remote-consent-service-user-interface"
-  rsAPIURI: "http://test-facility-bank:8080"
-  rsFQDN: "rs-sapig.dev-cdk-ob.forgerock.financial"
-  rsInternalSVC: "test-facility-bank"
-  rsMtlsFQDN: "rs-mtls.sapig.dev-cdk-ob.forgerock.financial"
-  sapigType: "ob"
-  userObject: "user"
-  AIC:
-    identityDefaultUserAuthenticationService: "PasswordGrant"
-    identityGoogleSecretStoreName: "ESV"
-    identityGoogleSecretStoreOAuth2CACertsSecretName: "esv-sapig-ob-am-oauth2-ca-certs"
+authorizationServer:
+  baseFqdn: "dev-cdk-ob.forgerock.financial"
+  fqdn: "as-sapig.dev-cdk-ob.forgerock.financial"
+  realm: "alpha"
+
+identityPlatform:
+  fqdn: "iam.dev-cdk-ob.forgerock.financial"
+  type: "CDK"
+
+resourceServer:
+  fqdn: "rs-sapig.dev-cdk-ob.forgerock.financial"
+  mtlsFqdn: "rs-mtls.sapig.dev-cdk-ob.forgerock.financial"
+  gatewayDataRepoUri: "http://fapi-pep-rs:80"
+  # Base64-encoded values — use: echo -n 'your-value' | base64
+  oauth2Client:
+    id: "replace-me"
+    secret: "replace-me"
+  idm:
+    user: "replace-me"
+    password: "replace-me"
+  agent:
+    id: "replace-me"
+    password: "replace-me"
+  ob:
+    signingKeystore:
+      alias: "jwtsigner"
+      path: "/secrets/open-banking/ig-ob-signing-key.p12"
+      type: "PKCS12"
+      kid: "zBlb3x2klab0COMzC5ROYxNo8n4"
+      storepass: "replace-me"
+      keypass: "replace-me"
+    aspsp:
+      orgId: "0015800001041REAAY"
+      softwareId: "YZyyZHejcCGRrWkh3OfkLI"
+    rcs:
+      apiInternalSvc: "remote-consent-service"
+      consentResponseJwtIssuer: "secure-open-banking-rcs"
+      consentResponseJwtSigningKeyId: "rcs-jwt-signer"
+      consentStoreUri: "http://remote-consent-service:8080/consent/store"
+      uiInternalSvc: "remote-consent-service-user-interface"
+    api:
+      uri: "http://test-facility-bank:8080"
+      internalSvc: "test-facility-bank"
+
+mongodb:
+  testFacility:
+    username: "replace-me"
+    password: "replace-me"
+  consent:
+    username: "replace-me"
+    password: "replace-me"
+
+aic:
+  identityDefaultUserAuthenticationService: "PasswordGrant"
+  identityGoogleSecretStoreName: "ESV"
+  identityGoogleSecretStoreOAuth2CACertsSecretName: "esv-sapig-ob-am-oauth2-ca-certs"
 
 deployment:
   # Affinity Configuration
   affinity: {}
-  # Version of the Kubernetes API to use
-  apiVersion: "apps/v1"
-  # Container port exposed by a pod or deployment
-  containerPort: 8080
-  containerAdminPort: 8085
   image:
-    # Repo And Tag are not provided here as the value for the repo will be unique for each user/customer as they will be building their own docker images and push to their own Container Registries 
-    # The tag will use the .AppVersion as the default, meaning that customers who want to install V1 will get V1.0.0 of the software - you may supply a hard coded version if required  
-    # The values for each of these should be supplied in the .Values folder of an individual deployment within the specification repository - See https://github.com/SecureApiGateway/SecureApiGateway/wiki/Deployment#repositories
+    # repo and tag must be supplied at deploy time
     # repo:
     # tag:
-    # We want to pull the image down each time we do a deployment, required if using 'latest' tag
     imagePullPolicy: Always
-  # Additonal Java config - Needs further explanation
-  # See https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ for further info on Liveness and Readiness Probes
   # Config for the liveness probe
   livenessProbe:
     failureThreshold: 3
     initialDelaySeconds: 60
-    path: "/health/live"
     periodSeconds: 30
     successThreshold: 1
     timeoutSeconds: 5
@@ -62,12 +76,10 @@ deployment:
     failureThreshold: 3
     initialDelaySeconds: 30
     periodSeconds: 30
-    path: "/health/ready"
     successThreshold: 1
     timeoutSeconds: 5
   # How many pods are to run in the deployment
   replicas: 1
-  # See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ 
   # Resource Requests and Limits
   resources:
     limits:
@@ -75,56 +87,17 @@ deployment:
     requests:
       cpu: "200m"
       memory: "512Mi"
-  # See https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/
-  # Allows you to have multiple versions of the deployment in the same cluster, kubernetes will create new pods and scale down old when performing an upgrade 
-  # Depending on the values set below. Other strategyTypes are: Recreate | Blue/ Green (or Red / Black) deployments | Canary | Dark deployments
   rollingUpdate:
     maxSurge: "50%"
     maxUnavailable: "25%"
   strategyType: "RollingUpdate"
-  ig:
-    instanceDir: "/var/gateway"
 
 ingress:
-  rsMtls:
-    annotations:
-      authTlsSecret: fapi-pep-rs-mtls-ca-certs
-    host: "replace-me"
-    tls:
-      host: "replace-me"
-      secretName: fapi-pep-rs-mtls-tls-cert
-  rsSapig:
-    host: "replace-me"
-    tls:
-      host: "replace-me"
-      secretName: fapi-pep-rs-tls-cert
-
-secrets:
-  igAgentID: "replace-me"
-  igAgentPassword: "replace-me"
-  igClientID: "replace-me"
-  igClientSecret: "replace-me"
-  igIDMPassword: "replace-me"
-  igIDMUser: "replace-me"
-  igOBASPSPSigningKeystoreKeypass: "replace-me"
-  igOBASPSPSigningKeystoreStorepass: "replace-me"
-  igTruststorePassword: "replace-me"
-  mongodbConsentPassword: "replace-me"
-  mongodbConsentUsername: "replace-me"
-  mongodbTestFacilityPassword: "replace-me"
-  mongodbTestFacilityUsername: "replace-me"
+  mtls:
+    serverCertSecret: fapi-pep-rs-mtls-tls-cert
+    clientCaSecret: fapi-pep-rs-mtls-ca-certs
+  tls:
+    serverCertSecret: fapi-pep-rs-tls-cert
 
 service:
-  # Version of the Kubernetes API to use
-  apiVersion: "v1"
-  # Container port exposed by a pod or deployment
   port: 80
-  # Protocol the service will use
-  protocol: "TCP"
-  # Host Machine port that traffic is diverted too - in this case the nodes
-  targetPort: 8080
-  # Host Machine port that traffic is diverted too for Admin - in this case the nodes
-  targetPortAdmin: 8085
-  # See - https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  # Type of service to create. Other types are: NodePort | LoadBalancer | ExternalName
-  type: "ClusterIP"

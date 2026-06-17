@@ -14,17 +14,18 @@
 # limitations under the License.
 #
 
-FROM ${docker.openig-image}
+FROM ${docker.ig-fapi-pep-rs-image}
 # Switching back to forgerock user, app will run as this
 USER forgerock
-# Create dir where secrets can be mounted into
-RUN mkdir ${IG_INSTANCE_DIR}/secrets
 
-# Copy all config files into the docker image.
+# Layer OB-specific dependencies, scripts, routes and audit schemas on top of Core RS.
+# secrets/ and config/ (admin.json, config.json, logback.xml) are already provided by the base image.
+# Remove Core RS routes/services directory before copying OB routes to avoid stale routes.
+RUN rm -rf ${IG_INSTANCE_DIR}/config/routes/services
 COPY --chown=forgerock:root dependencies ${IG_INSTANCE_DIR}/extra
 COPY --chown=forgerock:root configuration/scripts ${IG_INSTANCE_DIR}/scripts
 COPY --chown=forgerock:root configuration/config ${IG_INSTANCE_DIR}/config
 COPY --chown=forgerock:root configuration/audit-schemas ${IG_INSTANCE_DIR}/audit-schemas/
 
-# Check that the IG jar exists before continuing
+# Check that the OB extension jar exists before continuing
 RUN test -f ${IG_INSTANCE_DIR}/extra/secure-api-gateway-ig-extensions-ob-[0-9.]*.jar

@@ -34,18 +34,12 @@
         <docker.image.name>fapi-pep-rs-ob</docker.image.name>
         <docker.resources.directory>${project.build.directory}/generated-config</docker.resources.directory>
         <docker.lib.directory>${project.build.directory}/generated-lib</docker.lib.directory>
+        <!-- Base image — the Core RS image already contains IG, BouncyCastle and core RS config -->
+        <docker.ig-fapi-pep-rs-image>gcr.io/forgerock-io/ig-fapi-pep-rs/docker-build:latest</docker.ig-fapi-pep-rs-image>
     </properties>
 
     <dependencies>
-        <!-- Dependencies Required by Groovy scripts -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk18on</artifactId>
-        </dependency>
+        <!-- OB-specific dependencies required by Groovy scripts — BouncyCastle is already in the base image -->
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>

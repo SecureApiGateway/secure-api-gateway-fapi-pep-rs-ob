@@ -5,33 +5,33 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
-    nginx.ingress.kubernetes.io/auth-tls-secret: {{ .Release.Namespace }}/{{ .Values.ingress.rsMtls.annotations.authTlsSecret }}
+    nginx.ingress.kubernetes.io/auth-tls-secret: {{ .Release.Namespace }}/{{ .Values.ingress.mtls.clientCaSecret }}
     nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
     nginx.ingress.kubernetes.io/large-client-header-buffers: "4 128k"
     nginx.ingress.kubernetes.io/proxy-body-size: "64m"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
     nginx.ingress.kubernetes.io/proxy-buffering: "on"
     nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers_size: "256k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
     nginx.ingress.kubernetes.io/error-log-level: "debug"
-  name: rs-mtls
+  name: {{ .Chart.Name }}-mtls
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.rsMtls.host }}
+    - host: {{ .Values.resourceServer.mtlsFqdn }}
       http:
         paths:
           - backend:
               service:
-                name: fapi-pep-rs
+                name: {{ .Chart.Name }}
                 port:
                   number: 80
             path: /rs/
             pathType: Prefix
   tls:
     - hosts:
-        - {{ .Values.ingress.rsMtls.tls.host }}
-      secretName: {{ .Values.ingress.rsMtls.tls.secretName }}
+        - {{ .Values.resourceServer.mtlsFqdn }}
+      secretName: {{ .Values.ingress.mtls.serverCertSecret }}
 ---
 # Ingress for access to routes protected with TLS
 apiVersion: networking.k8s.io/v1
@@ -44,23 +44,23 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
     nginx.ingress.kubernetes.io/proxy-buffering: "on"
     nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers_size: "256k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
     nginx.ingress.kubernetes.io/error-log-level: "debug"
-  name: rs-sapig
+  name: {{ .Chart.Name }}-tls
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.rsSapig.host }}
+    - host: {{ .Values.resourceServer.fqdn }}
       http:
         paths:
           - backend:
               service:
-                name: fapi-pep-rs
+                name: {{ .Chart.Name }}
                 port:
                   number: 80
             path: /
             pathType: Prefix
   tls:
     - hosts:
-        - {{ .Values.ingress.rsSapig.tls.host }}
-      secretName: {{ .Values.ingress.rsSapig.tls.secretName }}
+        - {{ .Values.resourceServer.fqdn }}
+      secretName: {{ .Values.ingress.tls.serverCertSecret }}

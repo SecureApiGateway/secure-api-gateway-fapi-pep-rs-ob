@@ -1,52 +1,38 @@
 ---
-apiVersion: {{ .Values.configmap.apiVersion }}
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: rs-sapig-deployment-config
+  name: {{ .Chart.Name }}-config
 data:
-  BASE_FQDN: {{ .Values.configmap.baseFQDN }}
-  IDENTITY_PLATFORM_FQDN: {{ .Values.configmap.identityPlatformFQDN }}
-  RS_FQDN: {{ .Values.configmap.rsFQDN }}
-  AS_FQDN: {{ .Values.configmap.asFQDN }}
-  RS_MTLS_FQDN: {{ .Values.configmap.rsMtlsFQDN }}
-  # --Environment Settings for SAPIG & Cloud Platform--
-  # ---SAPIG---
-  # core: base sapig
-  # ob: Open Banking specification of sapig
-  SAPIG_TYPE: {{ .Values.configmap.sapigType }}
-  # ---Cloud---
-  # CDK value: (Cloud Developer's Kit) development identity platform
-  # CDM value: CDM (Cloud Deployment Model)
-  # FIDC value: FIDC (Forgerock Identity Cloud) identity cloud platform
-  CLOUD_TYPE: {{ .Values.configmap.cloudType }}
-  #--Additional Config--
-  AM_REALM: {{ .Values.configmap.amRealm }}
-  CERT_ISSUER: {{ .Values.configmap.certIssuer }}
-  # Connection settings for the IG hosted data repo
-  GATEWAY_DATA_REPO_URI: {{ .Values.configmap.gatewayDataRepoURI }}
-  USER_OBJECT: {{ .Values.configmap.userObject }}
-  # Additional OB Config
-  IG_OB_ASPSP_SIGNING_KEYSTORE_ALIAS: {{ .Values.configmap.igOBASPSPSigningKeystoreAlias }}
-  IG_OB_ASPSP_SIGNING_KEYSTORE_PATH: {{ .Values.configmap.igOBASPSPSigningKeystorePath }}
-  IG_OB_ASPSP_SIGNING_KEYSTORE_TYPE: {{ .Values.configmap.igOBASPSPSigningKeystoreType }}
-  IG_OB_ASPSP_SIGNING_KID: {{ .Values.configmap.igOBASPSPSigningKid }}
-  OB_ASPSP_ORG_ID: {{ .Values.configmap.obASPSPOrgID }}
-  OB_ASPSP_SOFTWARE_ID: {{ .Values.configmap.obASPSPSoftwareID }}
-  RCS_API_INTERNAL_SVC: {{ .Values.configmap.rcsAPIInternalSVC }}
-  RCS_CONSENT_RESPONSE_JWT_ISSUER: {{ .Values.configmap.rcsConsentResponseJWTIssuer }}
-  RCS_CONSENT_RESPONSE_JWT_SIGNINGKEYID: {{ .Values.configmap.rcsConsentResponseJWTSigningKeyID }}
-  RCS_CONSENT_STORE_URI: {{ .Values.configmap.rcsConsentStoreURI }}
-  RCS_UI_INTERNAL_SVC: {{ .Values.configmap.rcsUIInternalSVC }}
-  # RCS connection settings for the RS API
-  RS_API_URI: {{ .Values.configmap.rsAPIURI }}
-  RS_INTERNAL_SVC: {{ .Values.configmap.rsInternalSVC }}
+  BASE_FQDN: {{ .Values.authorizationServer.baseFqdn | quote }}
+  AS_FQDN: {{ .Values.authorizationServer.fqdn | quote }}
+  AM_REALM: {{ .Values.authorizationServer.realm | quote }}
+  IDENTITY_PLATFORM_FQDN: {{ .Values.identityPlatform.fqdn | quote }}
+  CLOUD_TYPE: {{ .Values.identityPlatform.type | quote }}
+  RS_FQDN: {{ .Values.resourceServer.fqdn | quote }}
+  RS_MTLS_FQDN: {{ .Values.resourceServer.mtlsFqdn | quote }}
+  GATEWAY_DATA_REPO_URI: {{ .Values.resourceServer.gatewayDataRepoUri | quote }}
+  IG_OB_ASPSP_SIGNING_KEYSTORE_ALIAS: {{ .Values.resourceServer.ob.signingKeystore.alias | quote }}
+  IG_OB_ASPSP_SIGNING_KEYSTORE_PATH: {{ .Values.resourceServer.ob.signingKeystore.path | quote }}
+  IG_OB_ASPSP_SIGNING_KEYSTORE_TYPE: {{ .Values.resourceServer.ob.signingKeystore.type | quote }}
+  IG_OB_ASPSP_SIGNING_KID: {{ .Values.resourceServer.ob.signingKeystore.kid | quote }}
+  OB_ASPSP_ORG_ID: {{ .Values.resourceServer.ob.aspsp.orgId | quote }}
+  OB_ASPSP_SOFTWARE_ID: {{ .Values.resourceServer.ob.aspsp.softwareId | quote }}
+  RCS_API_INTERNAL_SVC: {{ .Values.resourceServer.ob.rcs.apiInternalSvc | quote }}
+  RCS_CONSENT_RESPONSE_JWT_ISSUER: {{ .Values.resourceServer.ob.rcs.consentResponseJwtIssuer | quote }}
+  RCS_CONSENT_RESPONSE_JWT_SIGNINGKEYID: {{ .Values.resourceServer.ob.rcs.consentResponseJwtSigningKeyId | quote }}
+  RCS_CONSENT_STORE_URI: {{ .Values.resourceServer.ob.rcs.consentStoreUri | quote }}
+  RCS_UI_INTERNAL_SVC: {{ .Values.resourceServer.ob.rcs.uiInternalSvc | quote }}
+  RS_API_URI: {{ .Values.resourceServer.ob.api.uri | quote }}
+  RS_INTERNAL_SVC: {{ .Values.resourceServer.ob.api.internalSvc | quote }}
+{{- if eq .Values.identityPlatform.type "FIDC" }}
 ---
-apiVersion: {{ .Values.configmap.apiVersion }}
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ob-aic-deployment-config
+  name: {{ .Chart.Name }}-aic-config
 data:
-  #--AIC Specific--
-  IDENTITY_DEFAULT_USER_AUTHENTICATION_SERVICE: {{ .Values.configmap.AIC.identityDefaultUserAuthenticationService }}
-  IDENTITY_GOOGLE_SECRET_STORE_NAME: {{ .Values.configmap.AIC.identityGoogleSecretStoreName }}
-  IDENTITY_GOOGLE_SECRET_STORE_OAUTH2_CA_CERTS_SECRET_NAME: {{ .Values.configmap.AIC.identityGoogleSecretStoreOAuth2CACertsSecretName }}
+  IDENTITY_DEFAULT_USER_AUTHENTICATION_SERVICE: {{ .Values.aic.identityDefaultUserAuthenticationService | quote }}
+  IDENTITY_GOOGLE_SECRET_STORE_NAME: {{ .Values.aic.identityGoogleSecretStoreName | quote }}
+  IDENTITY_GOOGLE_SECRET_STORE_OAUTH2_CA_CERTS_SECRET_NAME: {{ .Values.aic.identityGoogleSecretStoreOAuth2CACertsSecretName | quote }}
+{{- end }}

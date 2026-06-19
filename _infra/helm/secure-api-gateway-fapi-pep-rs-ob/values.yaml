@@ -12,6 +12,7 @@ resourceServer:
   fqdn: "rs-sapig.dev-cdk-ob.forgerock.financial"
   mtlsFqdn: "rs-mtls.sapig.dev-cdk-ob.forgerock.financial"
   gatewayDataRepoUri: "http://fapi-pep-rs-ob:80"
+  userObject: "user"
   # Base64-encoded values — use: echo -n 'your-value' | base64
   oauth2Client:
     id: "replace-me"

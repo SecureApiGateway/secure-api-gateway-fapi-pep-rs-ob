@@ -12,6 +12,7 @@ data:
   RS_FQDN: {{ .Values.resourceServer.fqdn | quote }}
   RS_MTLS_FQDN: {{ .Values.resourceServer.mtlsFqdn | quote }}
   GATEWAY_DATA_REPO_URI: {{ .Values.resourceServer.gatewayDataRepoUri | quote }}
+  USER_OBJECT: {{ .Values.resourceServer.userObject | quote }}
   IG_OB_ASPSP_SIGNING_KEYSTORE_ALIAS: {{ .Values.resourceServer.ob.signingKeystore.alias | quote }}
   IG_OB_ASPSP_SIGNING_KEYSTORE_PATH: {{ .Values.resourceServer.ob.signingKeystore.path | quote }}
   IG_OB_ASPSP_SIGNING_KEYSTORE_TYPE: {{ .Values.resourceServer.ob.signingKeystore.type | quote }}

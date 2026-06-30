@@ -2,39 +2,9 @@ name: Nightly - Build and Deploy on Base Image Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 5 * * 1-5'
 jobs:
-  check-base-image:
-    runs-on: ubuntu-22.04
-    name: Check Base Image Update
-    outputs:
-      updated-today: ${{ steps.check.outputs.updated }}
-    steps:
-      - name: Auth to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.DEV_GAR_KEY }}
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2.1.0
-      - name: Check if base image was updated today
-        id: check
-        run: |
-          TODAY=$(date -u +%Y-%m-%d)
-          IMAGE_DATE=$(gcloud container images list-tags gcr.io/forgerock-io/ig-fapi-pep-rs/docker-build \
-            --filter="tags:latest" \
-            --format="value(timestamp.datetime)" | cut -c1-10)
-          echo "Today (UTC): $TODAY"
-          echo "Image last updated (UTC): $IMAGE_DATE"
-          if [[ "$IMAGE_DATE" == "$TODAY" ]]; then
-            echo "Base image was updated today — triggering build"
-            echo "updated=true" >> $GITHUB_OUTPUT
-          else
-            echo "Base image was not updated today — skipping build"
-            echo "updated=false" >> $GITHUB_OUTPUT
-          fi
   run_merge-template:
-    needs: check-base-image
-    if: needs.check-base-image.outputs.updated-today == 'true'
     name: Merge - Build and Deploy
     uses: SecureApiGateway/secure-api-gateway-ci/.github/workflows/reusable-merge.yml@main
     secrets: inherit

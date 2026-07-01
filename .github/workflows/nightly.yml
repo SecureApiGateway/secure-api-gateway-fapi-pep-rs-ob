@@ -2,7 +2,7 @@ name: Nightly - Build and Deploy on Base Image Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 5 * * 1-5'
+    - cron: '0 1 * * 1-5'
 jobs:
   run_merge-template:
     name: Merge - Build and Deploy

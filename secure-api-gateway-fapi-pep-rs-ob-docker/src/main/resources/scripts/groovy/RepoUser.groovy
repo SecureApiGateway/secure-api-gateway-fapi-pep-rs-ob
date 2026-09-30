@@ -90,7 +90,7 @@ private Promise<Response, NeverThrowsException> handleUserResponse(Response user
     logger.debug(SCRIPT_NAME + "Handling user response")
     return processResponseContent(userResponse)
             .thenAlways(() -> closeSilently(userResponse))
-            .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson, isQuery),
+            .then(userResponseJson -> transformUserResponse(userResponseJson, isQuery),
                   exception -> {
                       fail(INTERNAL_SERVER_ERROR, exception.getMessage())
                   })
@@ -122,7 +122,7 @@ private static Promise<JsonValue, Exception> getJsonContentAsync(final Response 
                    })
 }
 
-private Response transformApiClientResponse(JsonValue userResponseJson, boolean isQuery) {
+private Response transformUserResponse(JsonValue userResponseJson, boolean isQuery) {
     JsonValue userResponseJson2 = userResponseJson
     if (isQuery) {
         if (userResponseJson.get("result").isEmpty()) {

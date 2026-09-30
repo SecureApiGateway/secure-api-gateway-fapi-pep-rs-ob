@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import static org.forgerock.http.protocol.Response.newResponsePromise
+import static org.forgerock.http.protocol.Status.BAD_REQUEST
+import static org.forgerock.http.protocol.Status.INTERNAL_SERVER_ERROR
 import static org.forgerock.http.protocol.Status.OK
 import static org.forgerock.json.JsonValue.field
 import static org.forgerock.json.JsonValue.json
@@ -78,7 +80,7 @@ private Promise<Response, NeverThrowsException> handleApiClientResponse(Response
             .thenAlways(() -> closeSilently(apiClientResponse))
             .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson),
                   exception -> {
-                      fail(apiClientResponseStatus, exception.getMessage())
+                      fail(INTERNAL_SERVER_ERROR, exception.getMessage())
                   })
 }
 

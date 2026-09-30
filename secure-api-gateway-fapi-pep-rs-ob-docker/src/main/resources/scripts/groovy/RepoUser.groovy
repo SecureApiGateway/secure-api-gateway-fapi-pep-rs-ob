@@ -15,6 +15,7 @@
  */
 import static org.forgerock.http.protocol.Response.newResponsePromise
 import static org.forgerock.http.protocol.Status.BAD_REQUEST
+import static org.forgerock.http.protocol.Status.INTERNAL_SERVER_ERROR
 import static org.forgerock.http.protocol.Status.NOT_FOUND
 import static org.forgerock.http.protocol.Status.OK
 import static org.forgerock.json.JsonValue.field
@@ -91,7 +92,7 @@ private Promise<Response, NeverThrowsException> handleUserResponse(Response user
             .thenAlways(() -> closeSilently(userResponse))
             .then(apiClientResponseJson -> transformApiClientResponse(apiClientResponseJson, isQuery),
                   exception -> {
-                      fail(apiClientResponseStatus, exception.getMessage())
+                      fail(INTERNAL_SERVER_ERROR, exception.getMessage())
                   })
 }
 
@@ -105,9 +106,9 @@ private Promise<JsonValue, Exception> processResponseContent(final Response user
     ContentTypeHeader contentTypeHeader = ContentTypeHeader.valueOf(userResponse)
     String contentType = contentTypeHeader != null ? contentTypeHeader.getType() : null
     if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("application/json")) {
-        logger.error("API client endpoint response has unexpected content-type {}", contentType)
+        logger.error("User endpoint response has unexpected content-type {}", contentType)
         return newExceptionPromise(
-                new IOException("Failed to get API Client details - unexpected content " + contentType))
+                new IOException("Failed to get User details - unexpected content " + contentType))
     }
     return getJsonContentAsync(userResponse)
 }

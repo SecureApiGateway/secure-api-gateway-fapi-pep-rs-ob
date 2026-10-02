@@ -3,53 +3,54 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: fapi-pep-rs
-    app.kubernetes.io/component: fapi-pep-rs
-    app.kubernetes.io/instance: fapi-pep-rs
-    app.kubernetes.io/name: pingid
+    app: {{ .Chart.Name }}
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Chart.Name }}
     app.kubernetes.io/part-of: pingid
     tier: middle
-  name: fapi-pep-rs
+  name: {{ .Chart.Name }}
 spec:
   replicas: {{ .Values.deployment.replicas }}
   strategy:
     type: {{ .Values.deployment.strategyType }}
-    {{ if eq .Values.deployment.strategyType "RollingUpdate" }}
+    {{- if eq .Values.deployment.strategyType "RollingUpdate" }}
     rollingUpdate:
       maxSurge: {{ .Values.deployment.rollingUpdate.maxSurge }}
       maxUnavailable: {{ .Values.deployment.rollingUpdate.maxUnavailable }}
-    {{ end }}
+    {{- end }}
   selector:
     matchLabels:
-      app: fapi-pep-rs
-      app.kubernetes.io/component: fapi-pep-rs
-      app.kubernetes.io/instance: fapi-pep-rs
-      app.kubernetes.io/name: pingid
+      app: {{ .Chart.Name }}
+      app.kubernetes.io/component: {{ .Chart.Name }}
+      app.kubernetes.io/instance: {{ .Chart.Name }}
       app.kubernetes.io/part-of: pingid
       tier: middle
   template:
     metadata:
       labels:
-        app: fapi-pep-rs
-        app.kubernetes.io/component: fapi-pep-rs
-        app.kubernetes.io/instance: fapi-pep-rs
-        app.kubernetes.io/name: pingid
+        app: {{ .Chart.Name }}
+        app.kubernetes.io/component: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Chart.Name }}
         app.kubernetes.io/part-of: pingid
         tier: middle
     spec:
       affinity:
         {{- toYaml .Values.deployment.affinity | nindent 8 }}
+      securityContext:
+        runAsGroup: 0
+        runAsUser: 11111
+        fsGroup: 11111
       containers:
-        - name: fapi-pep-rs
+        - name: {{ .Chart.Name }}
           image: {{ .Values.deployment.image.repo }}:{{ default .Chart.AppVersion .Values.deployment.image.tag }}
           imagePullPolicy: {{ .Values.deployment.image.imagePullPolicy }}
           ports:
-            - containerPort: {{ .Values.deployment.containerPort }}
+            - containerPort: 8080
           readinessProbe:
             failureThreshold: {{ .Values.deployment.readinessProbe.failureThreshold }}
             httpGet:
-              path: {{ .Values.deployment.readinessProbe.path }}
-              port: {{ .Values.deployment.containerAdminPort }}
+              path: /health/ready
+              port: 8085
             initialDelaySeconds: {{ .Values.deployment.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deployment.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.deployment.readinessProbe.successThreshold }}
@@ -57,17 +58,17 @@ spec:
           livenessProbe:
             failureThreshold: {{ .Values.deployment.livenessProbe.failureThreshold }}
             httpGet:
-              path: {{ .Values.deployment.livenessProbe.path }}
-              port: {{ .Values.deployment.containerAdminPort }}
+              path: /health/live
+              port: 8085
             initialDelaySeconds: {{ .Values.deployment.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deployment.livenessProbe.periodSeconds }}
             successThreshold: {{ .Values.deployment.livenessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.deployment.livenessProbe.timeoutSeconds }}
           volumeMounts:
-            - mountPath: {{ .Values.deployment.ig.instanceDir }}/secrets/truststore
+            - mountPath: /var/gateway/secrets/truststore
               name: ig-ob-truststore
               readOnly: true
-            - mountPath: {{ .Values.deployment.ig.instanceDir }}/secrets/open-banking
+            - mountPath: /var/gateway/secrets/open-banking
               name: ig-ob-signing-key
               readOnly: true
           env:
@@ -81,18 +82,15 @@ spec:
                   fieldPath: status.podIP
           envFrom:
             - secretRef:
-                name: rs-sapig-secrets
+                name: {{ .Chart.Name }}-secrets
             - configMapRef:
-                name: rs-sapig-deployment-config
-            {{ if eq .Values.configmap.cloudType "FIDC" }}
+                name: {{ .Chart.Name }}-config
+            {{- if eq .Values.identityPlatform.type "FIDC" }}
             - configMapRef:
-                name: ob-aic-deployment-config
-            {{ end }}
+                name: {{ .Chart.Name }}-aic-config
+            {{- end }}
           resources:
             {{- toYaml .Values.deployment.resources | nindent 12 }}
-      securityContext:
-        runAsGroup: 0
-        runAsUser: 11111
       tolerations:
         - effect: NoSchedule
           key: kubernetes.io/arch
@@ -104,7 +102,7 @@ spec:
             secretName: ig-truststore-pem
             items:
               - key: ig-truststore.pem
-                path: ig.ob.truststore.pem # - is not allowed in secret id
+                path: ig.ob.truststore.pem
         - name: ig-ob-signing-key
           secret:
             optional: false

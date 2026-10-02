@@ -1,32 +1,32 @@
 ---
-apiVersion: {{ .Values.service.apiVersion }}
+apiVersion: v1
 kind: Service
 metadata:
-  name: fapi-pep-rs
+  name: {{ .Chart.Name }}
   labels:
-    app: fapi-pep-rs
+    app: {{ .Chart.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
-    - name: fapi-pep-rs
+    - name: {{ .Chart.Name }}
       port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
-      protocol: {{  .Values.service.protocol }}
+      targetPort: 8080
+      protocol: TCP
   selector:
-    app: fapi-pep-rs
+    app: {{ .Chart.Name }}
 ---
-apiVersion: {{ .Values.service.apiVersion }}
+apiVersion: v1
 kind: Service
 metadata:
-  name: fapi-pep-rs-admin
+  name: {{ .Chart.Name }}-admin
   labels:
-    app: fapi-pep-rs
+    app: {{ .Chart.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
-    - name: fapi-pep-rs-admin
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPortAdmin }}
-      protocol: {{  .Values.service.protocol }}
+    - name: {{ .Chart.Name }}-admin
+      port: 8085
+      targetPort: 8085
+      protocol: TCP
   selector:
-    app: fapi-pep-rs
+    app: {{ .Chart.Name }}

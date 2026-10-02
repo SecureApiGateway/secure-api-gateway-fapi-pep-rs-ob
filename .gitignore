@@ -35,3 +35,4 @@ forgeops-toolbox/
 /docker/gatling/gradle/
 **/.java-version
 pom.xml.versionsBackup
+.python-version
